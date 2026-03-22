@@ -6,9 +6,9 @@ import { usePathname } from "next/navigation";
 export default function Navbar() {
   const pathname = usePathname();
 
-  const linkClass = (path: string) =>
+  const linkClass = (path) =>
     `transition-all duration-200 ease-in-out transform hover:scale-110 hover:text-blue-600 ${
-      pathname === path
+      pathname.startsWith(path)
         ? "text-blue-600 font-semibold scale-110"
         : "text-black"
     }`;
@@ -23,18 +23,23 @@ export default function Navbar() {
 
       {/* Center Menu */}
       <div className="flex gap-10 mx-auto font-medium">
+        
         <Link href="/" className={linkClass("/")}>
           Home
         </Link>
+
         <Link href="/tutorial" className={linkClass("/tutorial")}>
           Tutorial
         </Link>
-        <Link href="/estimate" className={linkClass("/estimate")}>
+
+        <Link href="/estimate-builder" className={linkClass("/estimate-builder")}>
           Estimate Builder
         </Link>
+
         <Link href="/contact" className={linkClass("/contact")}>
           Contact
         </Link>
+
       </div>
 
       {/* Spacer */}
