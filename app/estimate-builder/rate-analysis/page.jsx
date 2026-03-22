@@ -11,6 +11,61 @@ import {
 
 import { CSS } from "@dnd-kit/utilities";
 
+// Numeric Input with two-decimal formatting
+function NumericInput({ value, onChange, onBlur }) {
+  const [displayValue, setDisplayValue] = useState(() => 
+    value !== undefined && value !== null ? value.toFixed(2) : "0.00"
+  );
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    // If the value changes externally (e.g., from calculation), update display
+    if (document.activeElement !== inputRef.current) {
+      setDisplayValue(value !== undefined && value !== null ? value.toFixed(2) : "0.00");
+    }
+  }, [value]);
+
+  const handleFocus = () => {
+    // Show raw number without trailing .00
+    const raw = value !== undefined && value !== null ? value.toString() : "";
+    setDisplayValue(raw);
+  };
+
+  const handleChange = (e) => {
+    const raw = e.target.value;
+    setDisplayValue(raw);
+    // Let parent know the raw number (preserve what user typed)
+    const num = parseFloat(raw);
+    if (!isNaN(num)) {
+      onChange(num);
+    } else {
+      onChange(0);
+    }
+  };
+
+  const handleBlur = () => {
+    // Format to two decimals
+    let num = parseFloat(displayValue);
+    if (isNaN(num)) num = 0;
+    const formatted = num.toFixed(2);
+    setDisplayValue(formatted);
+    onChange(parseFloat(formatted));
+    if (onBlur) onBlur();
+  };
+
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      value={displayValue}
+      onFocus={handleFocus}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      className="text-center w-full"
+    />
+  );
+}
+
 export default function RateAnalysisPage() {
   const [rows, setRows] = useState([]);
   const [itemCode, setItemCode] = useState("");
@@ -62,17 +117,13 @@ export default function RateAnalysisPage() {
     return { ...row, netAfterDeduct, totalLead, total, netTotal };
   };
 
-  const handleNumber = (val) => val.replace(/[^0-9.]/g, "");
-
   const updateRow = (i, field, value) => {
     const updated = [...rows];
-
     if (["description", "unit", "materialType", "specs"].includes(field)) {
       updated[i][field] = value;
     } else {
-      updated[i][field] = Number(handleNumber(value));
+      updated[i][field] = value;
     }
-
     updated[i] = calculateRow(updated[i]);
     setRows(updated);
   };
@@ -118,6 +169,11 @@ export default function RateAnalysisPage() {
     setRows(newRows.map((r,i)=>({...r,srNo:i+1})));
   };
 
+  const formatNumber = (num) => {
+    if (num === undefined || num === null) return "0.00";
+    return num.toFixed(2);
+  };
+
   return (
     <div className="p-4 bg-yellow-50 min-h-screen text-black">
 
@@ -151,21 +207,21 @@ export default function RateAnalysisPage() {
             <thead className="bg-gray-200">
               <tr>
                 <th className="border p-2 text-center">☰</th>
-                <th className="border p-2 text-center">Sr</th>
-                <th className="border p-2 text-center">SSR</th>
-                <th className="border p-2 text-center w-[420px]">Description</th>
+                <th className="border p-2 text-center">Sr. No.</th>
+                <th className="border p-2 text-center">S.S.R. Item No.</th>
+                <th className="border p-2 text-center w-[420px]">Description of the Item in Brief</th>
                 <th className="border p-2 text-center">Unit</th>
-                <th className="border p-2 text-center">Basic Rate</th>
-                <th className="border p-2 text-center">Deduct</th>
-                <th className="border p-2 text-center">Net</th>
-                <th className="border p-2 text-center">Material</th>
-                <th className="border p-2 text-center">Qty</th>
-                <th className="border p-2 text-center">Lead</th>
-                <th className="border p-2 text-center">Total Lead</th>
-                <th className="border p-2 text-center">Total</th>
-                <th className="border p-2 text-center">Tribal</th>
-                <th className="border p-2 text-center">Net Total</th>
-                <th className="border p-2 text-center">Specs</th>
+                <th className="border p-2 text-center">Basic Rate (Rs.Ps.)</th>
+                <th className="border p-2 text-center">Deduct for scada</th>
+                <th className="border p-2 text-center">Net amount after deducting scada (5-6)</th>
+                <th className="border p-2 text-center">Type of material required</th>
+                <th className="border p-2 text-center">Qty of material reqd</th>
+                <th className="border p-2 text-center">Net lead charges</th>
+                <th className="border p-2 text-center">Total lead charges (Rs.Ps)</th>
+                <th className="border p-2 text-center">Total (Rs.-Ps.) (7+11)</th>
+                <th className="border p-2 text-center">TRIBL 10% -Non Tribal 0%</th>
+                <th className="border p-2 text-center">Net Total Amount (Rs.-Ps.) (12+13)</th>
+                <th className="border p-2 text-center">specifications</th>
                 <th className="border text-center">🔄</th>
                 <th className="border text-center">❌</th>
               </tr>
@@ -179,10 +235,10 @@ export default function RateAnalysisPage() {
                     <td colSpan={18} className="border text-center">
                       <button
                         onClick={()=>setInsertIndex(insertIndex===i?null:i)}
-                        className={`px-4 ${
+                        className={`px-4 transition-all duration-200 ${
                           insertIndex===i
                             ? "bg-blue-500 text-white font-bold scale-110"
-                            : "text-blue-600"
+                            : "text-blue-600 hover:scale-105"
                         }`}
                       >
                         ➕ Insert Here
@@ -196,6 +252,7 @@ export default function RateAnalysisPage() {
                     updateRow={updateRow}
                     deleteRow={deleteRow}
                     refreshRow={refreshRow}
+                    formatNumber={formatNumber}
                   />
                 </React.Fragment>
               ))}
@@ -238,20 +295,24 @@ function AutoTextarea({ value, onChange }) {
   );
 }
 
-function SortableRow({ row, index, updateRow, deleteRow, refreshRow }) {
+function SortableRow({ row, index, updateRow, deleteRow, refreshRow, formatNumber }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: row.id });
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition,
+  };
+
   return (
-    <tr
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }}
-      className="text-center"
-    >
-      <td {...attributes} {...listeners} className="border p-2">☰</td>
+    <tr ref={setNodeRef} style={style} className="text-center hover:bg-yellow-50">
+      <td
+        {...attributes}
+        {...listeners}
+        className="border p-2 cursor-grab active:cursor-grabbing hover:bg-gray-100 transition-colors"
+      >
+        ☰
+      </td>
       <td className="border p-2">{row.srNo}</td>
       <td className="border p-2">{row.ssr}</td>
 
@@ -270,22 +331,20 @@ function SortableRow({ row, index, updateRow, deleteRow, refreshRow }) {
       </td>
 
       <td className="border p-2">
-        <input
+        <NumericInput
           value={row.basicRate}
-          onChange={(e) => updateRow(index, "basicRate", e.target.value)}
-          className="text-center w-full"
+          onChange={(val) => updateRow(index, "basicRate", val)}
         />
       </td>
 
       <td className="border p-2">
-        <input
+        <NumericInput
           value={row.deduct}
-          onChange={(e) => updateRow(index, "deduct", e.target.value)}
-          className="text-center w-full"
+          onChange={(val) => updateRow(index, "deduct", val)}
         />
       </td>
 
-      <td className="border p-2">{row.netAfterDeduct}</td>
+      <td className="border p-2">{formatNumber(row.netAfterDeduct)}</td>
 
       <td className="border p-2">
         <AutoTextarea
@@ -295,33 +354,30 @@ function SortableRow({ row, index, updateRow, deleteRow, refreshRow }) {
       </td>
 
       <td className="border p-2">
-        <input
+        <NumericInput
           value={row.qty}
-          onChange={(e) => updateRow(index, "qty", e.target.value)}
-          className="text-center w-full"
+          onChange={(val) => updateRow(index, "qty", val)}
         />
       </td>
 
       <td className="border p-2">
-        <input
+        <NumericInput
           value={row.lead}
-          onChange={(e) => updateRow(index, "lead", e.target.value)}
-          className="text-center w-full"
+          onChange={(val) => updateRow(index, "lead", val)}
         />
       </td>
 
-      <td className="border p-2">{row.totalLead}</td>
-      <td className="border p-2">{row.total}</td>
+      <td className="border p-2">{formatNumber(row.totalLead)}</td>
+      <td className="border p-2">{formatNumber(row.total)}</td>
 
       <td className="border p-2">
-        <input
+        <NumericInput
           value={row.tribal}
-          onChange={(e) => updateRow(index, "tribal", e.target.value)}
-          className="text-center w-full"
+          onChange={(val) => updateRow(index, "tribal", val)}
         />
       </td>
 
-      <td className="border p-2">{row.netTotal}</td>
+      <td className="border p-2">{formatNumber(row.netTotal)}</td>
 
       <td className="border p-2">
         <AutoTextarea
@@ -331,11 +387,21 @@ function SortableRow({ row, index, updateRow, deleteRow, refreshRow }) {
       </td>
 
       <td className="border p-2">
-        <button onClick={() => refreshRow(index)}>🔄</button>
+        <button
+          onClick={() => refreshRow(index)}
+          className="hover:bg-gray-200 rounded p-1 transition-colors"
+        >
+          🔄
+        </button>
       </td>
 
       <td className="border p-2">
-        <button onClick={() => deleteRow(row.id)}>❌</button>
+        <button
+          onClick={() => deleteRow(row.id)}
+          className="hover:bg-red-100 rounded p-1 transition-colors"
+        >
+          ❌
+        </button>
       </td>
     </tr>
   );
