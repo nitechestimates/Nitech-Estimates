@@ -11,7 +11,7 @@ import { CSS } from "@dnd-kit/utilities";
 import Tabs from "../components/Tabs";
 
 // Numeric Input (3 decimals, Enter key)
-function NumericInput({ value, onChange, disabled = false }) {
+function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
   const [displayValue, setDisplayValue] = useState(
     value !== undefined && value !== null ? value.toString() : "0"
   );
@@ -66,6 +66,7 @@ function NumericInput({ value, onChange, disabled = false }) {
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       disabled={disabled}
+      placeholder={placeholder}
       className={`text-center w-full border rounded px-1 py-0.5 ${disabled ? "bg-gray-100" : ""}`}
     />
   );
@@ -103,7 +104,17 @@ export default function RateAnalysisPage() {
   const [insertIndex, setInsertIndex] = useState(null);
   const [nameOfWork, setNameOfWork] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
+  const [materialList, setMaterialList] = useState([]);
 
+  // Load material list
+  useEffect(() => {
+    fetch("/api/material-list")
+      .then(res => res.json())
+      .then(data => setMaterialList(data))
+      .catch(err => console.error("Failed to load material list", err));
+  }, []);
+
+  // Load RA data from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("ra_rows");
     if (saved) setRows(JSON.parse(saved));
@@ -130,7 +141,15 @@ export default function RateAnalysisPage() {
       basicRate: completedRate,
       specs: data["Additional Specification"] || "",
       deduct: 0,
-      materials: [{ id: Date.now().toString() + "-mat1", name: "", qty: 0, lead: 0 }],
+      materials: [
+        {
+          id: Date.now().toString() + "-mat1",
+          name: "",
+          qty: 0,
+          distance: 0,
+          lead: 0,
+        },
+      ],
       tribal: 0,
     });
 
@@ -170,6 +189,7 @@ export default function RateAnalysisPage() {
       id: Date.now().toString() + "-mat" + Math.random(),
       name: "",
       qty: 0,
+      distance: 0,
       lead: 0,
     });
     setRows(updated);
@@ -183,6 +203,7 @@ export default function RateAnalysisPage() {
         id: Date.now().toString() + "-mat-empty",
         name: "",
         qty: 0,
+        distance: 0,
         lead: 0,
       });
     }
@@ -209,7 +230,15 @@ export default function RateAnalysisPage() {
       basicRate: completedRate,
       specs: data["Additional Specification"],
       deduct: 0,
-      materials: [{ id: Date.now().toString() + "-mat1", name: "", qty: 0, lead: 0 }],
+      materials: [
+        {
+          id: Date.now().toString() + "-mat1",
+          name: "",
+          qty: 0,
+          distance: 0,
+          lead: 0,
+        },
+      ],
       tribal: 0,
     });
     setRows(updated);
@@ -225,6 +254,18 @@ export default function RateAnalysisPage() {
   };
 
   const formatNumber = (num) => (num !== undefined && num !== null ? num.toFixed(3) : "0.000");
+
+  const fetchLeadCharge = async (material, distance) => {
+    if (!material || distance === undefined) return null;
+    try {
+      const res = await fetch(`/api/lead-charge?material=${encodeURIComponent(material)}&distance=${distance}`);
+      const data = await res.json();
+      return data.lead;
+    } catch (err) {
+      console.error("Lead fetch error", err);
+      return null;
+    }
+  };
 
   return (
     <div className="p-4 bg-yellow-50 min-h-screen text-black">
@@ -253,23 +294,26 @@ export default function RateAnalysisPage() {
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
           <div className="overflow-x-auto">
-            <table className="w-full border text-xs bg-white" style={{ minWidth: "1200px" }}>
+            <table className="w-full border text-xs bg-white" style={{ minWidth: "1400px" }}>
               <thead className="bg-gray-200">
-                <tr>
+                <tr className="text-center">
                   <th className="border p-2">☰</th>
                   <th className="border p-2">Sr</th>
                   <th className="border p-2">SSR</th>
-                  <th className="border p-2 w-[420px]">Description</th>
+                  <th className="border p-2 w-[350px]">Description</th>
                   <th className="border p-2">Unit</th>
                   <th className="border p-2">Basic Rate</th>
                   <th className="border p-2">Deduct</th>
                   <th className="border p-2">Net (5-6)</th>
-                  <th className="border p-2" colSpan="3">Type of material required</th>
+                  <th className="border p-2 w-[120px]">Material</th>
+                  <th className="border p-2 w-[80px]">Qty</th>
+                  <th className="border p-2 w-[100px]">Distance (km)</th>
+                  <th className="border p-2 w-[100px]">Lead (Rs)</th>
                   <th className="border p-2">Total Lead</th>
-                  <th className="border p-2">Total (7+11)</th>
+                  <th className="border p-2">Total (7+12)</th>
                   <th className="border p-2">Tribal</th>
                   <th className="border p-2">Net Total</th>
-                  <th className="border p-2">Specs</th>
+                  <th className="border p-2 w-[200px]">Specs</th>
                   <th className="border p-2">🔄</th>
                   <th className="border p-2">❌</th>
                 </tr>
@@ -279,7 +323,7 @@ export default function RateAnalysisPage() {
                   <React.Fragment key={row.id}>
                     {/* Insert row */}
                     <tr>
-                      <td colSpan="18" className="border text-center">
+                      <td colSpan="19" className="border text-center">
                         <button
                           onClick={() => setInsertIndex(insertIndex === i ? null : i)}
                           className={`px-4 transition-all ${
@@ -301,6 +345,8 @@ export default function RateAnalysisPage() {
                       deleteRow={deleteRow}
                       refreshRow={refreshRow}
                       formatNumber={formatNumber}
+                      fetchLeadCharge={fetchLeadCharge}
+                      materialList={materialList}
                     />
                   </React.Fragment>
                 ))}
@@ -323,6 +369,8 @@ function SortableRow({
   deleteRow,
   refreshRow,
   formatNumber,
+  fetchLeadCharge,
+  materialList,
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: row.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -345,25 +393,61 @@ function SortableRow({
         <NumericInput value={row.deduct} onChange={(val) => updateRow(index, "deduct", val)} />
       </td>
       <td className="border p-2 text-center">{formatNumber(row.netAfterDeduct)}</td>
-      <td className="border p-2" colSpan="3">
+
+      {/* Material rows – lead is now read‑only */}
+      <td className="border p-2" colSpan="4">
         <div className="space-y-2">
           {row.materials.map((mat, matIdx) => (
             <div key={mat.id} className="flex gap-1 items-center border-b pb-1">
+              <select
+                value={mat.name}
+                onChange={(e) => {
+                  const newName = e.target.value;
+                  updateMaterial(index, matIdx, "name", newName);
+                  if (mat.distance) {
+                    fetchLeadCharge(newName, mat.distance).then(lead => {
+                      if (lead !== null) updateMaterial(index, matIdx, "lead", lead);
+                    });
+                  }
+                }}
+                className="w-32 p-1 border text-center"
+              >
+                <option value="">Select material</option>
+                {materialList.map(matName => (
+                  <option key={matName} value={matName}>{matName}</option>
+                ))}
+              </select>
+              <NumericInput
+                value={mat.qty}
+                onChange={(val) => updateMaterial(index, matIdx, "qty", val)}
+                placeholder="Qty"
+              />
+              <NumericInput
+                value={mat.distance}
+                onChange={async (val) => {
+                  updateMaterial(index, matIdx, "distance", val);
+                  if (mat.name) {
+                    const lead = await fetchLeadCharge(mat.name, val);
+                    if (lead !== null) updateMaterial(index, matIdx, "lead", lead);
+                  }
+                }}
+                placeholder="km"
+              />
+              {/* Lead field – disabled (read‑only) */}
               <input
                 type="text"
-                placeholder="Material"
-                value={mat.name}
-                onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)}
-                className="w-28 p-1 border text-center"
+                value={mat.lead ? mat.lead.toFixed(2) : "0.00"}
+                readOnly
+                className="text-center w-24 border rounded px-1 py-0.5 bg-gray-100"
+                placeholder="Lead"
               />
-              <NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} />
-              <NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} />
-              <button onClick={() => removeMaterial(index, matIdx)} className="text-red-500 hover:text-red-700">✕</button>
+              <button onClick={() => removeMaterial(index, matIdx)} className="text-red-500">✕</button>
             </div>
           ))}
-          <button onClick={() => addMaterial(index)} className="text-xs text-blue-600 hover:text-blue-800">+ Add material</button>
+          <button onClick={() => addMaterial(index)} className="text-xs text-blue-600">+ Add material</button>
         </div>
       </td>
+
       <td className="border p-2 text-center">{formatNumber(row.totalLead)}</td>
       <td className="border p-2 text-center">{formatNumber(row.total)}</td>
       <td className="border p-2">
