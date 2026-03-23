@@ -1,32 +1,12 @@
 "use client";
-import Link from "next/link";
+import Tabs from "../components/Tabs";
 
-export default function EstimateBuilderPage() {
+export default function AbstractPage() {
   return (
-    <div className="p-10">
-      <h1 className="text-2xl font-bold mb-6">Estimate Builder</h1>
-
-      <div className="flex flex-col gap-4 w-[300px]">
-
-        <Link href="/estimate-builder/rate-analysis">
-          <div className="p-4 bg-blue-500 text-white text-center rounded">
-            Rate Analysis
-          </div>
-        </Link>
-
-        <Link href="/estimate-builder/summary">
-          <div className="p-4 bg-green-500 text-white text-center rounded">
-            Abstract
-          </div>
-        </Link>
-
-        <Link href="/estimate-builder/measurement">
-          <div className="p-4 bg-purple-500 text-white text-center rounded">
-            Measurement Sheet
-          </div>
-        </Link>
-
-      </div>
+    <div className="p-4 bg-yellow-50 min-h-screen text-black">
+      <Tabs />
+      <h1 className="text-2xl font-bold mb-4">Abstract</h1>
+      <p>This page will display the abstract of the estimate.</p>
     </div>
   );
 }
