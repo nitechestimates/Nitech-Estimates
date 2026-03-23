@@ -1,12 +1,7 @@
-import Navbar from "../../components/Navbar";
-
-export default function Tutorial() {
+export default function TutorialPage() {
   return (
-    <div>
-      <Navbar />
-      <div className="p-10 text-2xl font-bold">
-        Tutorial Page (Coming Soon)
-      </div>
+    <div className="p-10">
+      <h1 className="text-2xl font-bold">Tutorial Page</h1>
     </div>
   );
 }
