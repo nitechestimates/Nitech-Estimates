@@ -1,0 +1,13 @@
+[33m3a26dcc[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mestimate-builder[m[33m, [m[1;31morigin/estimate-builder[m[33m)[m Make lead field read-only, auto-fetch from leads.json
+[33m1eb46c6[m Add tabs navigation and remove duplicate page
+[33me3a1676[m Rename summary folder to abstract and update main menu link
+[33m1bbdbc5[m Remove accidentally added stray file
+[33mc9a17b7[m Measurement sheet: multi-measurement, decimal formatting, smart sync, Enter key
+[33m60e25ab[m Updated navbar with estimate builder routing and active highlight fix
+[33m993b555[m Added numeric input formatting + UI improvements
+[33m74001cf[m Fixed Rate Analysis page + drag insert + calculations
+[33m60a50c2[m Rate Analysis page complete with SSR auto-fill and UI
+[33m4131835[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m Fix line endings
+[33m73cb12e[m Base setup done: Next.js + API + JSON + estimate page
+[33m43fe5e8[m added navbar, pages, UI improvements
+[33mfa28596[m initial commit

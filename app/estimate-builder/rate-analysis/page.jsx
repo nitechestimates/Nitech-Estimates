@@ -127,38 +127,56 @@ export default function RateAnalysisPage() {
 
   const addItem = async () => {
     if (!itemCode) return;
-    const res = await fetch(`/api/get-item?code=${itemCode}`);
-    const data = await res.json();
-    const completedRate =
-      parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
 
-    const newRow = calculateRow({
-      id: Date.now().toString(),
-      srNo: 0,
-      ssr: itemCode,
-      description: data["Description of the item"] || "",
-      unit: data["Unit"] || "",
-      basicRate: completedRate,
-      specs: data["Additional Specification"] || "",
-      deduct: 0,
-      materials: [
-        {
-          id: Date.now().toString() + "-mat1",
-          name: "",
-          qty: 0,
-          distance: 0,
-          lead: 0,
-        },
-      ],
-      tribal: 0,
-    });
+    try {
+      const code = itemCode.trim();
 
-    let updated = [...rows];
-    if (insertIndex !== null) updated.splice(insertIndex, 0, newRow);
-    else updated.push(newRow);
-    setRows(updated.map((r, i) => ({ ...r, srNo: i + 1 })));
-    setInsertIndex(null);
-    setItemCode("");
+      const res = await fetch(`/api/get-item?code=${code}`);
+      const data = await res.json();
+
+      console.log("API DATA:", data);
+
+      if (!data || data.error) {
+        alert("Item not found!");
+        return;
+      }
+
+      const completedRate =
+        parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
+
+      const newRow = calculateRow({
+        id: Date.now().toString(),
+        srNo: 0,
+        ssr: code,
+        description: data["Description of the item"] || "",
+        unit: data["Unit"] || "",
+        basicRate: completedRate,
+        specs: data["Additional Specification"] || "",
+        deduct: 0,
+        materials: [
+          {
+            id: Date.now().toString() + "-mat1",
+            name: "",
+            qty: 0,
+            distance: 0,
+            lead: 0,
+          },
+        ],
+        tribal: 0,
+      });
+
+      let updated = [...rows];
+
+      if (insertIndex !== null) updated.splice(insertIndex, 0, newRow);
+      else updated.push(newRow);
+
+      setRows(updated.map((r, i) => ({ ...r, srNo: i + 1 })));
+
+      setInsertIndex(null);
+      setItemCode("");
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
   };
 
   const calculateRow = (row) => {
@@ -217,18 +235,24 @@ export default function RateAnalysisPage() {
 
   const refreshRow = async (i) => {
     if (!confirm("Revert to default SSR values? Your edits will be lost.")) return;
-    const code = rows[i].ssr;
+
+    const code = rows[i].ssr.trim();
     const res = await fetch(`/api/get-item?code=${code}`);
     const data = await res.json();
+
+    if (!data || data.error) return;
+
     const completedRate =
       parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
+
     const updated = [...rows];
+
     updated[i] = calculateRow({
       ...updated[i],
-      description: data["Description of the item"],
-      unit: data["Unit"],
+      description: data["Description of the item"] || "",
+      unit: data["Unit"] || "",
       basicRate: completedRate,
-      specs: data["Additional Specification"],
+      specs: data["Additional Specification"] || "",
       deduct: 0,
       materials: [
         {
@@ -241,6 +265,7 @@ export default function RateAnalysisPage() {
       ],
       tribal: 0,
     });
+
     setRows(updated);
   };
 
@@ -316,7 +341,7 @@ export default function RateAnalysisPage() {
                   <th className="border p-2 w-[200px]">Specs</th>
                   <th className="border p-2">🔄</th>
                   <th className="border p-2">❌</th>
-                </tr>
+                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, i) => (
