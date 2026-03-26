@@ -1,7 +1,7 @@
-export default function TutorialPage() {
+export default function Tutorial() {
   return (
-    <div className="p-10">
-      <h1 className="text-2xl font-bold">Tutorial Page</h1>
+    <div className="p-10 text-2xl font-bold">
+      Tutorial Page (Coming Soon)
     </div>
   );
 }

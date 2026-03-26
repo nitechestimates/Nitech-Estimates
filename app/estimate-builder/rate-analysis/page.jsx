@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -10,7 +12,35 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import Tabs from "../components/Tabs";
 
-// Numeric Input (3 decimals, Enter key)
+// ========== Helper: map material name to category ==========
+function getCategoryFromMaterial(materialName) {
+  const normalized = materialName.toLowerCase().trim();
+  const mapping = {
+    "Concrete Blocks  (Form)": ["concrete block", "form", "hollow block"],
+    "Murum, Building Rubish, Earth": ["murrum", "building rubbish", "earth"],
+    "Excavated Rock    soling stone": ["excavated rock", "soling stone"],
+    "Sand, (crush metal)  Stone below 40 mm, Normal Brick sider aggre. Timber": [
+      "sand", "stone below 40", "brick", "aggregate", "timber", "cr. metal", "brick sider"
+    ],
+    "Stone aggregate 40mm Normal size and above": ["stone aggregate 40mm", "stone aggregate above"],
+    "Cement, Lime, Stone Block, GI, CI, CC & AC Pipes /  Sheet& Plate,  Glass in packs, Distemper, AC Sheet, Fitting Iron Sheet": [
+      "cement", "lime", "stone block", "pipe", "sheet", "plate", "glass", "distemper", "ac sheet", "fitting iron"
+    ],
+    "Bricks           1000 nos      1cum=500 Bricks": ["brick"],
+    "Tiles Half Round Tiles / Roofing Tiles / Manglore Tiles": ["tile", "roofing", "half round", "manlore"],
+    "Steel        (MS, TMT, H.Y.S.D.) Structural Steel": ["steel", "ms", "tmt", "hysd", "structural"],
+    "Flooring Tiles Ceramic/ Marbonate": ["ceramic", "marble", "granite", "flooring tile"],
+  };
+
+  for (const [category, keywords] of Object.entries(mapping)) {
+    if (keywords.some(kw => normalized.includes(kw))) {
+      return category;
+    }
+  }
+  return null;
+}
+
+// ========== Numeric Input ==========
 function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
   const [displayValue, setDisplayValue] = useState(
     value !== undefined && value !== null ? value.toString() : "0"
@@ -72,7 +102,7 @@ function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
   );
 }
 
-// Auto-expand textarea
+// ========== Auto-expand textarea ==========
 function AutoTextarea({ value, onChange }) {
   const ref = useRef(null);
   const adjustHeight = () => {
@@ -99,12 +129,29 @@ function AutoTextarea({ value, onChange }) {
 }
 
 export default function RateAnalysisPage() {
+  const { data: session } = useSession();
+  const searchParams = useSearchParams();
+
+  const loadId = searchParams.get("load");
+  const nameFromURL = searchParams.get("name");
+
   const [rows, setRows] = useState([]);
   const [itemCode, setItemCode] = useState("");
   const [insertIndex, setInsertIndex] = useState(null);
-  const [nameOfWork, setNameOfWork] = useState("");
+  const [nameOfWork, setNameOfWork] = useState(nameFromURL || "");
   const [isLoaded, setIsLoaded] = useState(false);
   const [materialList, setMaterialList] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [currentEstimateId, setCurrentEstimateId] = useState(null);
+  const [leadSettings, setLeadSettings] = useState({});
+
+  // Load lead settings from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("leadSettings");
+    if (saved) {
+      setLeadSettings(JSON.parse(saved));
+    }
+  }, []);
 
   // Load material list
   useEffect(() => {
@@ -114,16 +161,56 @@ export default function RateAnalysisPage() {
       .catch(err => console.error("Failed to load material list", err));
   }, []);
 
-  // Load RA data from localStorage
+  // Load RA data from localStorage (skip if loading from DB)
   useEffect(() => {
+    if (loadId) {
+      setIsLoaded(true);
+      return;
+    }
+
     const saved = localStorage.getItem("ra_rows");
     if (saved) setRows(JSON.parse(saved));
     setIsLoaded(true);
-  }, []);
+  }, [loadId]);
 
+  // Save to localStorage when rows change
   useEffect(() => {
     if (isLoaded) localStorage.setItem("ra_rows", JSON.stringify(rows));
   }, [rows, isLoaded]);
+
+  // Load estimate from database if loadId is present
+  useEffect(() => {
+    if (!loadId) return;
+
+    fetch(`/api/estimate/${loadId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          const loadedRows = data.data.rows.map((r, i) => ({
+            ...r,
+            srNo: i + 1,
+          }));
+          setRows(loadedRows);
+          setNameOfWork(data.data.nameOfWork);
+          setCurrentEstimateId(data.data._id);
+          localStorage.setItem("ra_rows", JSON.stringify(loadedRows));
+        }
+      })
+      .catch((err) => console.error("Load error:", err));
+  }, [loadId]);
+
+  // Update name if URL parameter changes
+  useEffect(() => {
+    if (nameFromURL) setNameOfWork(nameFromURL);
+  }, [nameFromURL]);
+
+  const calculateRow = (row) => {
+    const netAfterDeduct = row.basicRate - row.deduct;
+    const totalLead = row.materials.reduce((sum, m) => sum + (m.qty * m.lead), 0);
+    const total = netAfterDeduct + totalLead;
+    const netTotal = total + row.tribal;
+    return { ...row, netAfterDeduct, totalLead, total, netTotal };
+  };
 
   const addItem = async () => {
     if (!itemCode) return;
@@ -133,8 +220,6 @@ export default function RateAnalysisPage() {
 
       const res = await fetch(`/api/get-item?code=${code}`);
       const data = await res.json();
-
-      console.log("API DATA:", data);
 
       if (!data || data.error) {
         alert("Item not found!");
@@ -158,7 +243,6 @@ export default function RateAnalysisPage() {
             id: Date.now().toString() + "-mat1",
             name: "",
             qty: 0,
-            distance: 0,
             lead: 0,
           },
         ],
@@ -179,14 +263,6 @@ export default function RateAnalysisPage() {
     }
   };
 
-  const calculateRow = (row) => {
-    const netAfterDeduct = row.basicRate - row.deduct;
-    const totalLead = row.materials.reduce((sum, m) => sum + (m.qty * m.lead), 0);
-    const total = netAfterDeduct + totalLead;
-    const netTotal = total + row.tribal;
-    return { ...row, netAfterDeduct, totalLead, total, netTotal };
-  };
-
   const updateRow = (i, field, value) => {
     const updated = [...rows];
     updated[i][field] = value;
@@ -196,7 +272,17 @@ export default function RateAnalysisPage() {
 
   const updateMaterial = (rowIndex, matIndex, field, value) => {
     const updated = [...rows];
-    updated[rowIndex].materials[matIndex][field] = value;
+    const mat = updated[rowIndex].materials[matIndex];
+
+    mat[field] = value;
+
+    // When material name changes, update lead using the category's stored leadCharge
+    if (field === "name") {
+      const category = getCategoryFromMaterial(mat.name);
+      const leadCharge = leadSettings[category]?.leadCharge || 0;
+      mat.lead = leadCharge;
+    }
+
     updated[rowIndex] = calculateRow(updated[rowIndex]);
     setRows(updated);
   };
@@ -207,7 +293,6 @@ export default function RateAnalysisPage() {
       id: Date.now().toString() + "-mat" + Math.random(),
       name: "",
       qty: 0,
-      distance: 0,
       lead: 0,
     });
     setRows(updated);
@@ -221,7 +306,6 @@ export default function RateAnalysisPage() {
         id: Date.now().toString() + "-mat-empty",
         name: "",
         qty: 0,
-        distance: 0,
         lead: 0,
       });
     }
@@ -259,7 +343,6 @@ export default function RateAnalysisPage() {
           id: Date.now().toString() + "-mat1",
           name: "",
           qty: 0,
-          distance: 0,
           lead: 0,
         },
       ],
@@ -280,29 +363,107 @@ export default function RateAnalysisPage() {
 
   const formatNumber = (num) => (num !== undefined && num !== null ? num.toFixed(3) : "0.000");
 
-  const fetchLeadCharge = async (material, distance) => {
-    if (!material || distance === undefined) return null;
-    try {
-      const res = await fetch(`/api/lead-charge?material=${encodeURIComponent(material)}&distance=${distance}`);
-      const data = await res.json();
-      return data.lead;
-    } catch (err) {
-      console.error("Lead fetch error", err);
-      return null;
+  const saveEstimate = async () => {
+    if (!session) {
+      alert("You must be logged in to save an estimate.");
+      return;
     }
+
+    if (!nameOfWork.trim()) {
+      alert("Please enter a Name of Work.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch("/api/estimate/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nameOfWork,
+          rows,
+          estimateId: currentEstimateId,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        if (data.updated) {
+          alert("Estimate updated!");
+        } else {
+          alert("Estimate saved!");
+          if (data.id) setCurrentEstimateId(data.id);
+        }
+      } else {
+        alert(data.error || "Failed to save.");
+      }
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("An error occurred while saving.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ========== NEW: Refresh lead charges from localStorage ==========
+  const refreshLeadCharges = () => {
+    const saved = localStorage.getItem("leadSettings");
+    if (!saved) {
+      alert("No lead settings found. Please set distances in the Leads page first.");
+      return;
+    }
+    const freshSettings = JSON.parse(saved);
+    setLeadSettings(freshSettings); // update the state for future selections
+
+    // Update all existing materials with the new lead charges
+    const updatedRows = rows.map(row => {
+      const updatedMaterials = row.materials.map(mat => {
+        if (mat.name) {
+          const category = getCategoryFromMaterial(mat.name);
+          const newLeadCharge = freshSettings[category]?.leadCharge || 0;
+          return { ...mat, lead: newLeadCharge };
+        }
+        return mat;
+      });
+      const updatedRow = { ...row, materials: updatedMaterials };
+      return calculateRow(updatedRow);
+    });
+
+    setRows(updatedRows);
+    alert("Lead charges refreshed from Leads page.");
   };
 
   return (
     <div className="p-4 bg-yellow-50 min-h-screen text-black">
       <Tabs />
-      <div className="mb-4">
-        <span className="font-bold">Name of Work: </span>
-        <input
-          value={nameOfWork}
-          onChange={(e) => setNameOfWork(e.target.value)}
-          className="border p-1 w-[400px]"
-        />
+
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <span className="font-bold">Name of Work: </span>
+          <input
+            value={nameOfWork}
+            onChange={(e) => setNameOfWork(e.target.value)}
+            className="border p-2 w-[400px] rounded"
+            placeholder="Enter Name of Work"
+          />
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={refreshLeadCharges}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Refresh Lead Charges
+          </button>
+          <button
+            onClick={saveEstimate}
+            disabled={saving}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Estimate"}
+          </button>
+        </div>
       </div>
+
       <div className="flex gap-2 mb-4">
         <input
           value={itemCode}
@@ -332,23 +493,21 @@ export default function RateAnalysisPage() {
                   <th className="border p-2">Net (5-6)</th>
                   <th className="border p-2 w-[120px]">Material</th>
                   <th className="border p-2 w-[80px]">Qty</th>
-                  <th className="border p-2 w-[100px]">Distance (km)</th>
-                  <th className="border p-2 w-[100px]">Lead (Rs)</th>
+                  <th className="border p-2 w-[100px]">Lead (Rs.)</th>
                   <th className="border p-2">Total Lead</th>
-                  <th className="border p-2">Total (7+12)</th>
+                  <th className="border p-2">Total (7+11)</th>
                   <th className="border p-2">Tribal</th>
                   <th className="border p-2">Net Total</th>
                   <th className="border p-2 w-[200px]">Specs</th>
                   <th className="border p-2">🔄</th>
                   <th className="border p-2">❌</th>
-                 </tr>
+                  </tr>
               </thead>
               <tbody>
                 {rows.map((row, i) => (
                   <React.Fragment key={row.id}>
-                    {/* Insert row */}
                     <tr>
-                      <td colSpan="19" className="border text-center">
+                      <td colSpan="18" className="border text-center">
                         <button
                           onClick={() => setInsertIndex(insertIndex === i ? null : i)}
                           className={`px-4 transition-all ${
@@ -370,7 +529,6 @@ export default function RateAnalysisPage() {
                       deleteRow={deleteRow}
                       refreshRow={refreshRow}
                       formatNumber={formatNumber}
-                      fetchLeadCharge={fetchLeadCharge}
                       materialList={materialList}
                     />
                   </React.Fragment>
@@ -394,7 +552,6 @@ function SortableRow({
   deleteRow,
   refreshRow,
   formatNumber,
-  fetchLeadCharge,
   materialList,
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: row.id });
@@ -419,58 +576,44 @@ function SortableRow({
       </td>
       <td className="border p-2 text-center">{formatNumber(row.netAfterDeduct)}</td>
 
-      {/* Material rows – lead is now read‑only */}
-      <td className="border p-2" colSpan="4">
-        <div className="space-y-2">
-          {row.materials.map((mat, matIdx) => (
-            <div key={mat.id} className="flex gap-1 items-center border-b pb-1">
-              <select
-                value={mat.name}
-                onChange={(e) => {
-                  const newName = e.target.value;
-                  updateMaterial(index, matIdx, "name", newName);
-                  if (mat.distance) {
-                    fetchLeadCharge(newName, mat.distance).then(lead => {
-                      if (lead !== null) updateMaterial(index, matIdx, "lead", lead);
-                    });
-                  }
-                }}
-                className="w-32 p-1 border text-center"
-              >
-                <option value="">Select material</option>
-                {materialList.map(matName => (
-                  <option key={matName} value={matName}>{matName}</option>
-                ))}
-              </select>
-              <NumericInput
-                value={mat.qty}
-                onChange={(val) => updateMaterial(index, matIdx, "qty", val)}
-                placeholder="Qty"
-              />
-              <NumericInput
-                value={mat.distance}
-                onChange={async (val) => {
-                  updateMaterial(index, matIdx, "distance", val);
-                  if (mat.name) {
-                    const lead = await fetchLeadCharge(mat.name, val);
-                    if (lead !== null) updateMaterial(index, matIdx, "lead", lead);
-                  }
-                }}
-                placeholder="km"
-              />
-              {/* Lead field – disabled (read‑only) */}
-              <input
-                type="text"
-                value={mat.lead ? mat.lead.toFixed(2) : "0.00"}
-                readOnly
-                className="text-center w-24 border rounded px-1 py-0.5 bg-gray-100"
-                placeholder="Lead"
-              />
-              <button onClick={() => removeMaterial(index, matIdx)} className="text-red-500">✕</button>
-            </div>
-          ))}
-          <button onClick={() => addMaterial(index)} className="text-xs text-blue-600">+ Add material</button>
-        </div>
+      {/* Material selection */}
+      <td className="border p-2">
+        {row.materials.map((mat, matIdx) => (
+          <div key={mat.id} className="mb-1">
+            <select
+              value={mat.name}
+              onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)}
+              className="w-full p-1 border"
+            >
+              <option value="">Select material</option>
+              {materialList.map(matName => (
+                <option key={matName} value={matName}>{matName}</option>
+              ))}
+            </select>
+          </div>
+        ))}
+      </td>
+
+      {/* Quantity column */}
+      <td className="border p-2">
+        {row.materials.map((mat, matIdx) => (
+          <div key={mat.id} className="mb-1">
+            <NumericInput
+              value={mat.qty}
+              onChange={(val) => updateMaterial(index, matIdx, "qty", val)}
+              placeholder="Qty"
+            />
+          </div>
+        ))}
+      </td>
+
+      {/* Lead column (auto-calculated) */}
+      <td className="border p-2">
+        {row.materials.map((mat) => (
+          <div key={mat.id} className="mb-1 text-center">
+            {mat.lead.toFixed(2)}
+          </div>
+        ))}
       </td>
 
       <td className="border p-2 text-center">{formatNumber(row.totalLead)}</td>

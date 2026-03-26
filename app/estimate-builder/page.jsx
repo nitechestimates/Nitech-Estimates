@@ -1,21 +1,27 @@
 "use client";
-import Link from "next/link";
 
-export default function EstimateBuilderPage() {
+import { useRouter } from "next/navigation";
+
+export default function EstimateBuilderHome() {
+  const router = useRouter();
+
   return (
-    <div className="p-10">
-      <h1 className="text-2xl font-bold mb-6">Estimate Builder</h1>
-      <div className="flex flex-col gap-4 w-[300px]">
-        <Link href="/estimate-builder/rate-analysis">
-          <div className="p-4 bg-blue-500 text-white text-center rounded">Rate Analysis</div>
-        </Link>
-        <Link href="/estimate-builder/abstract">
-          <div className="p-4 bg-green-500 text-white text-center rounded">Abstract</div>
-        </Link>
-        <Link href="/estimate-builder/measurement">
-          <div className="p-4 bg-purple-500 text-white text-center rounded">Measurement Sheet</div>
-        </Link>
-      </div>
+    <div className="flex flex-col items-center justify-center h-[80vh] gap-6">
+      <h1 className="text-3xl font-bold">Estimate Builder</h1>
+
+      <button
+        onClick={() => router.push("/estimate-builder/create")}
+        className="bg-blue-500 text-white px-6 py-3 rounded text-lg"
+      >
+        Create New Estimate
+      </button>
+
+      <button
+        onClick={() => router.push("/estimate-builder/history")}
+        className="bg-gray-500 text-white px-6 py-3 rounded text-lg"
+      >
+        View Old Estimates
+      </button>
     </div>
   );
 }

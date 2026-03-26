@@ -9,6 +9,7 @@ export default function Tabs() {
     { name: "Rate Analysis", href: "/estimate-builder/rate-analysis" },
     { name: "Measurement Sheet", href: "/estimate-builder/measurement" },
     { name: "Abstract", href: "/estimate-builder/abstract" },
+    { name: "Leads", href: "/estimate-builder/leads" },
   ];
 
   return (

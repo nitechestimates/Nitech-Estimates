@@ -33,7 +33,8 @@ export default function AbstractPage() {
     const rows = parsedRA.map((raItem, idx) => {
       const msItem = msMap.get(raItem.id);
       const totalQty = msItem?.totalQty || 0;
-      const rate = raItem.netAfterDeduct || 0; // use net rate after deduct
+      // ✅ Use netTotal (basic rate - deduct + lead + tribal)
+      const rate = raItem.netTotal || raItem.netAfterDeduct || 0;
       const amount = totalQty * rate;
 
       return {
