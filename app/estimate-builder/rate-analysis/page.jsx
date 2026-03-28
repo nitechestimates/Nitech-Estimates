@@ -97,12 +97,12 @@ function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
       onKeyDown={handleKeyDown}
       disabled={disabled}
       placeholder={placeholder}
-      className={`text-center w-full border rounded px-1 py-0.5 ${disabled ? "bg-gray-100" : ""}`}
+      className="text-center w-full border rounded px-1 py-0.5 h-[26px] disabled:bg-gray-100"
     />
   );
 }
 
-// ========== Auto-expand textarea ==========
+// ========== Auto-expand textarea with break-keep ==========
 function AutoTextarea({ value, onChange }) {
   const ref = useRef(null);
   const adjustHeight = () => {
@@ -123,7 +123,7 @@ function AutoTextarea({ value, onChange }) {
       ref={ref}
       value={value}
       onChange={handleChange}
-      className="w-full resize-none overflow-hidden bg-transparent p-1 text-left"
+      className="w-full resize-none overflow-hidden bg-transparent p-1 text-left break-keep"
     />
   );
 }
@@ -405,7 +405,7 @@ export default function RateAnalysisPage() {
     }
   };
 
-  // ========== NEW: Refresh lead charges from localStorage ==========
+  // ========== Refresh lead charges from localStorage ==========
   const refreshLeadCharges = () => {
     const saved = localStorage.getItem("leadSettings");
     if (!saved) {
@@ -479,8 +479,8 @@ export default function RateAnalysisPage() {
 
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-          <div className="overflow-x-auto">
-            <table className="w-full border text-xs bg-white" style={{ minWidth: "1400px" }}>
+          <div className="overflow-x-auto relative">
+            <table className="w-full border text-xs bg-white relative" style={{ minWidth: "1400px" }}>
               <thead className="bg-gray-200">
                 <tr className="text-center">
                   <th className="border p-2">☰</th>
@@ -499,15 +499,14 @@ export default function RateAnalysisPage() {
                   <th className="border p-2">Tribal</th>
                   <th className="border p-2">Net Total</th>
                   <th className="border p-2 w-[200px]">Specs</th>
-                  <th className="border p-2">🔄</th>
-                  <th className="border p-2">❌</th>
-                  </tr>
+                  <th className="border p-2 sticky right-0 bg-gray-200 z-10 shadow-[-3px_0_5px_rgba(0,0,0,0.1)] w-[80px]">Actions</th>
+                </tr>
               </thead>
               <tbody>
                 {rows.map((row, i) => (
                   <React.Fragment key={row.id}>
                     <tr>
-                      <td colSpan="18" className="border text-center">
+                      <td colSpan="17" className="border text-center">
                         <button
                           onClick={() => setInsertIndex(insertIndex === i ? null : i)}
                           className={`px-4 transition-all ${
@@ -558,7 +557,7 @@ function SortableRow({
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   return (
-    <tr ref={setNodeRef} style={style} className="hover:bg-yellow-50">
+    <tr ref={setNodeRef} style={style} className="hover:bg-yellow-50 group">
       <td {...attributes} {...listeners} className="border p-2 text-center cursor-grab">☰</td>
       <td className="border p-2 text-center">{row.srNo}</td>
       <td className="border p-2 text-center">{row.ssr}</td>
@@ -566,7 +565,12 @@ function SortableRow({
         <AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} />
       </td>
       <td className="border p-2">
-        <AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} />
+        <input
+          type="text"
+          value={row.unit}
+          onChange={(e) => updateRow(index, "unit", e.target.value)}
+          className="w-full border-none focus:outline-none bg-transparent"
+        />
       </td>
       <td className="border p-2">
         <NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} />
@@ -576,41 +580,57 @@ function SortableRow({
       </td>
       <td className="border p-2 text-center">{formatNumber(row.netAfterDeduct)}</td>
 
-      {/* Material selection */}
-      <td className="border p-2">
+      {/* Material selection - no extra margins */}
+      <td className="border py-1 px-1 align-top">
         {row.materials.map((mat, matIdx) => (
-          <div key={mat.id} className="mb-1">
+          <div key={mat.id} className="flex items-center gap-1 leading-none">
             <select
               value={mat.name}
               onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)}
-              className="w-full p-1 border"
+              className="w-full h-[26px] border text-xs px-1"
             >
               <option value="">Select material</option>
               {materialList.map(matName => (
                 <option key={matName} value={matName}>{matName}</option>
               ))}
             </select>
+            {matIdx === row.materials.length - 1 ? (
+              <button
+                onClick={() => addMaterial(index)}
+                className="text-green-600 text-xs px-1 hover:scale-110 transition"
+                title="Add material"
+              >
+                + Add
+              </button>
+            ) : (
+              <button
+                onClick={() => removeMaterial(index, matIdx)}
+                className="text-red-600 text-xs px-1 hover:scale-110 transition"
+                title="Remove material"
+              >
+                −
+              </button>
+            )}
           </div>
         ))}
       </td>
 
-      {/* Quantity column */}
-      <td className="border p-2">
+      {/* Quantity column - no extra margin */}
+      <td className="border py-1 px-1 align-top">
         {row.materials.map((mat, matIdx) => (
-          <div key={mat.id} className="mb-1">
-            <NumericInput
-              value={mat.qty}
-              onChange={(val) => updateMaterial(index, matIdx, "qty", val)}
-              placeholder="Qty"
-            />
-          </div>
+          <NumericInput
+            key={mat.id}
+            value={mat.qty}
+            onChange={(val) => updateMaterial(index, matIdx, "qty", val)}
+            placeholder="Qty"
+          />
         ))}
       </td>
 
-      {/* Lead column (auto-calculated) */}
-      <td className="border p-2">
+      {/* Lead column - centered, no extra margin */}
+      <td className="border py-1 px-1 align-top">
         {row.materials.map((mat) => (
-          <div key={mat.id} className="mb-1 text-center">
+          <div key={mat.id} className="text-center h-[26px] flex items-center justify-center">
             {mat.lead.toFixed(2)}
           </div>
         ))}
@@ -625,11 +645,23 @@ function SortableRow({
       <td className="border p-2">
         <AutoTextarea value={row.specs} onChange={(e) => updateRow(index, "specs", e.target.value)} />
       </td>
-      <td className="border p-2 text-center">
-        <button onClick={() => refreshRow(index)}>🔄</button>
-      </td>
-      <td className="border p-2 text-center">
-        <button onClick={() => deleteRow(row.id)}>❌</button>
+      <td className="border p-2 text-center sticky right-0 bg-white group-hover:bg-yellow-50 z-10 shadow-[-3px_0_5px_rgba(0,0,0,0.1)]">
+        <div className="flex justify-center gap-3">
+          <button
+            onClick={() => refreshRow(index)}
+            title="Refresh"
+            className="transition-all duration-200 hover:scale-125 hover:rotate-180 active:scale-90"
+          >
+            🔄
+          </button>
+          <button
+            onClick={() => deleteRow(row.id)}
+            title="Delete"
+            className="transition-all duration-200 hover:scale-125 hover:text-red-600 active:scale-90"
+          >
+            ❌
+          </button>
+        </div>
       </td>
     </tr>
   );

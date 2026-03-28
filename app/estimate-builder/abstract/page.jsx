@@ -9,10 +9,11 @@ export default function AbstractPage() {
   const [abstractRows, setAbstractRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Load and merge RA and MS data
+  // Load and merge RA, MS, and custom abstract data
   const loadAbstract = () => {
     const raRows = localStorage.getItem("ra_rows");
     const msItems = localStorage.getItem("measurement_items");
+    const customData = JSON.parse(localStorage.getItem("abstract_custom_data") || "{}");
 
     if (!raRows) {
       setAbstractRows([]);
@@ -33,14 +34,20 @@ export default function AbstractPage() {
     const rows = parsedRA.map((raItem, idx) => {
       const msItem = msMap.get(raItem.id);
       const totalQty = msItem?.totalQty || 0;
-      // ✅ Use netTotal (basic rate - deduct + lead + tribal)
+      // Use netTotal (basic rate - deduct + lead + tribal)
       const rate = raItem.netTotal || raItem.netAfterDeduct || 0;
       const amount = totalQty * rate;
 
+      // Fetch saved custom typable fields (No. and L)
+      const savedCustom = customData[raItem.id] || { no: "", l: "" };
+
       return {
+        id: raItem.id,
         srNo: idx + 1,
         description: raItem.description,
         specs: raItem.specs || "",
+        no: savedCustom.no || "", // Typable No. column
+        l: savedCustom.l || "",   // Typable L / R.M. column
         qty: totalQty,
         unit: raItem.unit,
         rate: rate,
@@ -55,6 +62,23 @@ export default function AbstractPage() {
   useEffect(() => {
     loadAbstract();
   }, []);
+
+  // Handle typing in the custom columns
+  const handleCustomInputChange = (id, field, value) => {
+    // Update local state
+    const updatedRows = abstractRows.map((row) => {
+      if (row.id === id) {
+        return { ...row, [field]: value };
+      }
+      return row;
+    });
+    setAbstractRows(updatedRows);
+
+    // Persist to localStorage
+    const customData = JSON.parse(localStorage.getItem("abstract_custom_data") || "{}");
+    customData[id] = { ...customData[id], [field]: value };
+    localStorage.setItem("abstract_custom_data", JSON.stringify(customData));
+  };
 
   if (loading) {
     return (
@@ -85,8 +109,10 @@ export default function AbstractPage() {
           <thead className="bg-gray-200">
             <tr className="text-center">
               <th className="border p-2">Sr. No.</th>
-              <th className="border p-2 w-[400px]">DESCRIPTION OF ITEM</th>
+              <th className="border p-2 w-[350px]">DESCRIPTION OF ITEM</th>
               <th className="border p-2 w-[200px]">SPECIFICATIONS</th>
+              <th className="border p-2 w-[80px]">No.</th>
+              <th className="border p-2 w-[100px]">L (R.M.)</th>
               <th className="border p-2">QTY</th>
               <th className="border p-2">UNIT</th>
               <th className="border p-2">RATE (Rs.)</th>
@@ -99,6 +125,29 @@ export default function AbstractPage() {
                 <td className="border p-2 text-center">{row.srNo}</td>
                 <td className="border p-2 text-left">{row.description}</td>
                 <td className="border p-2 text-left">{row.specs}</td>
+                
+                {/* Typable No. Column */}
+                <td className="border p-2 text-center">
+                  <input
+                    type="text"
+                    className="w-full text-center border p-1 rounded"
+                    value={row.no}
+                    onChange={(e) => handleCustomInputChange(row.id, "no", e.target.value)}
+                    placeholder="-"
+                  />
+                </td>
+                
+                {/* Typable L / R.M. Column */}
+                <td className="border p-2 text-center">
+                  <input
+                    type="text"
+                    className="w-full text-center border p-1 rounded"
+                    value={row.l}
+                    onChange={(e) => handleCustomInputChange(row.id, "l", e.target.value)}
+                    placeholder="-"
+                  />
+                </td>
+
                 <td className="border p-2 text-right">{row.qty.toFixed(3)}</td>
                 <td className="border p-2 text-center">{row.unit}</td>
                 <td className="border p-2 text-right">{formatMoney(row.rate)}</td>
@@ -107,7 +156,7 @@ export default function AbstractPage() {
             ))}
             {abstractRows.length === 0 && (
               <tr>
-                <td colSpan="7" className="border p-2 text-center text-gray-500">
+                <td colSpan="9" className="border p-2 text-center text-gray-500">
                   No data. Please add items in Rate Analysis and Measurement Sheet.
                 </td>
               </tr>
@@ -116,7 +165,7 @@ export default function AbstractPage() {
           {abstractRows.length > 0 && (
             <tfoot className="bg-gray-100 font-bold">
               <tr>
-                <td colSpan="6" className="border p-2 text-right">Total Amount:</td>
+                <td colSpan="8" className="border p-2 text-right">Total Amount:</td>
                 <td className="border p-2 text-right">{formatMoney(totalAmount)}</td>
               </tr>
             </tfoot>

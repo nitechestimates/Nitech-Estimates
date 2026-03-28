@@ -27,25 +27,38 @@ function AutoTextarea({ value, onChange }) {
   );
 }
 
+// NumericInput supporting blank ("") values
 function NumericInput({ value, onChange, disabled = false }) {
   const [displayValue, setDisplayValue] = useState(
-    value !== undefined && value !== null ? value.toString() : "0"
+    value !== undefined && value !== null && value !== "" ? Number(value).toFixed(3) : ""
   );
   const inputRef = useRef(null);
 
   useEffect(() => {
     if (document.activeElement !== inputRef.current) {
-      const formatted = (value || 0).toFixed(3);
-      setDisplayValue(formatted);
+      if (value === "" || value === null || value === undefined) {
+        setDisplayValue("");
+      } else {
+        setDisplayValue(Number(value).toFixed(3));
+      }
     }
   }, [value]);
 
   const handleFocus = () => {
-    setDisplayValue((value || 0).toString());
+    if (value === "" || value === null || value === undefined) {
+      setDisplayValue("");
+    } else {
+      setDisplayValue(Number(value).toString());
+    }
   };
 
   const handleChange = (e) => {
     let raw = e.target.value;
+    if (raw === "") {
+      setDisplayValue("");
+      onChange("");
+      return;
+    }
     raw = raw.replace(/[^0-9.]/g, "");
     const parts = raw.split(".");
     if (parts.length > 2) raw = parts[0] + "." + parts.slice(1).join("");
@@ -54,15 +67,21 @@ function NumericInput({ value, onChange, disabled = false }) {
     setDisplayValue(raw);
     const num = parseFloat(raw);
     if (!isNaN(num)) onChange(num);
-    else if (raw === "") onChange(0);
   };
 
   const handleBlur = () => {
-    let num = parseFloat(displayValue);
-    if (isNaN(num)) num = 0;
-    const formatted = num.toFixed(3);
-    setDisplayValue(formatted);
-    onChange(num);
+    if (displayValue === "") {
+      onChange("");
+    } else {
+      let num = parseFloat(displayValue);
+      if (isNaN(num)) {
+        setDisplayValue("");
+        onChange("");
+      } else {
+        setDisplayValue(num.toFixed(3));
+        onChange(num);
+      }
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -82,7 +101,8 @@ function NumericInput({ value, onChange, disabled = false }) {
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       disabled={disabled}
-      className={`text-center w-full border rounded px-1 py-0.5 ${disabled ? "bg-gray-100" : ""}`}
+      className={`text-center w-full border rounded px-1 py-0.5 focus:bg-white transition-colors ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-transparent hover:bg-white"}`}
+      placeholder="-"
     />
   );
 }
@@ -143,12 +163,13 @@ export default function MeasurementPage() {
 
   const addMeasurement = (itemIndex) => {
     const updated = [...items];
+    // Start with completely blank ("") values
     updated[itemIndex].measurements.push({
       id: Date.now() + Math.random(),
-      no: 0,
-      l: 0,
-      b: 0,
-      h: 0,
+      no: "",
+      l: "",
+      b: "",
+      h: "",
       total: 0,
     });
     updated[itemIndex].totalQty = recalcItemTotal(updated[itemIndex]);
@@ -160,18 +181,25 @@ export default function MeasurementPage() {
     const updated = [...items];
     const meas = updated[itemIndex].measurements[measIndex];
     meas[field] = value;
-    const unit = updated[itemIndex].unit?.toLowerCase() || "";
-    if (unit.includes("cubic") || unit.includes("cu.m")) {
-      meas.total = (meas.no || 0) * (meas.l || 0) * (meas.b || 0) * (meas.h || 0);
-    } else if (unit.includes("square") || unit.includes("sq.m")) {
-      meas.total = (meas.no || 0) * (meas.l || 0) * (meas.b || 0);
-    } else if (unit.includes("running") || unit.includes("rm") || unit.includes("metre")) {
-      meas.total = (meas.no || 0) * (meas.l || 0);
-    } else if (unit.includes("number") || unit.includes("no")) {
-      meas.total = (meas.no || 0);
+    
+    // Helper to extract a clean number, treating blanks as null
+    const getVal = (val) => (val === "" || val === null || val === undefined || isNaN(val)) ? null : parseFloat(val);
+
+    const noVal = getVal(meas.no);
+    const lVal = getVal(meas.l);
+    const bVal = getVal(meas.b);
+    const hVal = getVal(meas.h);
+
+    // Filter out the nulls (blanks)
+    const factors = [noVal, lVal, bVal, hVal].filter(v => v !== null);
+
+    // If everything is blank, total is 0. Otherwise, multiply all the entered numbers together.
+    if (factors.length === 0) {
+      meas.total = 0;
     } else {
-      meas.total = (meas.no || 0) * (meas.l || 0) * (meas.b || 0) * (meas.h || 0);
+      meas.total = factors.reduce((acc, curr) => acc * curr, 1);
     }
+    
     updated[itemIndex].totalQty = recalcItemTotal(updated[itemIndex]);
     setItems(updated);
     localStorage.setItem("measurement_items", JSON.stringify(updated));
@@ -190,15 +218,6 @@ export default function MeasurementPage() {
     return item.measurements.reduce((sum, m) => sum + (m.total || 0), 0);
   };
 
-  const getActiveFields = (unit) => {
-    const u = unit?.toLowerCase() || "";
-    if (u.includes("cubic") || u.includes("cu.m")) return { l: true, b: true, h: true };
-    if (u.includes("square") || u.includes("sq.m")) return { l: true, b: true, h: false };
-    if (u.includes("running") || u.includes("rm") || u.includes("metre")) return { l: true, b: false, h: false };
-    if (u.includes("number") || u.includes("no")) return { l: false, b: false, h: false };
-    return { l: true, b: true, h: true };
-  };
-
   if (loading) return <div className="p-10">Loading...</div>;
 
   return (
@@ -212,27 +231,27 @@ export default function MeasurementPage() {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full border text-sm bg-white">
+        <table className="w-full border text-sm bg-white shadow-sm">
           <thead className="bg-gray-200">
             <tr className="text-center">
               <th className="border p-2">Sr. No.</th>
               <th className="border p-2 w-[400px]">DESCRIPTION OF ITEM</th>
-              <th className="border p-2">No.</th>
-              <th className="border p-2">L.</th>
-              <th className="border p-2">B/W</th>
-              <th className="border p-2">H/D.</th>
-              <th className="border p-2">TOTAL</th>
-              <th className="border p-2">UNIT</th>
-              <th className="border p-2"></th>
+              <th className="border p-2 w-[80px]">No.</th>
+              <th className="border p-2 w-[100px]">L.</th>
+              <th className="border p-2 w-[100px]">B/W</th>
+              <th className="border p-2 w-[100px]">H/D.</th>
+              <th className="border p-2 w-[120px]">TOTAL</th>
+              <th className="border p-2 w-[80px]">UNIT</th>
+              <th className="border p-2 w-[60px]"></th>
             </tr>
           </thead>
           <tbody>
             {items.map((item, itemIdx) => {
-              const active = getActiveFields(item.unit);
               return (
                 <React.Fragment key={item.id}>
-                  <tr className="bg-gray-50 border-t-2 border-gray-300">
-                    <td className="border p-2 text-center font-semibold">{item.srNo}</td>
+                  {/* Main Item Row */}
+                  <tr className="bg-gray-50 border-t-4 border-gray-300">
+                    <td className="border p-2 text-center font-bold text-gray-700">{item.srNo}</td>
                     <td className="border p-2">
                       <AutoTextarea
                         value={item.description}
@@ -244,37 +263,49 @@ export default function MeasurementPage() {
                         }}
                       />
                     </td>
-                    <td colSpan={5} className="border p-2 text-center text-sm text-gray-500">
+                    <td colSpan={5} className="border p-2 text-center font-semibold text-blue-800">
                       Total Qty: {item.totalQty.toFixed(3)} {item.unit}
                     </td>
-                    <td className="border p-2 text-center">{item.unit}</td>
+                    <td className="border p-2 text-center font-semibold">{item.unit}</td>
                     <td className="border p-2 text-center">
-                      <button onClick={() => addMeasurement(itemIdx)} className="text-green-600 hover:bg-green-100 rounded p-1">
+                      <button 
+                        onClick={() => addMeasurement(itemIdx)} 
+                        className="text-white bg-green-500 hover:bg-green-600 rounded px-2 py-1 text-xs font-bold transition-colors shadow-sm"
+                      >
                         + Add
                       </button>
                     </td>
                   </tr>
 
+                  {/* Measurement Sub-Rows */}
                   {item.measurements.map((meas, measIdx) => (
-                    <tr key={meas.id} className="hover:bg-yellow-50">
-                      <td className="border p-2 text-center"></td>
-                      <td className="border p-2 text-left text-xs text-gray-500"></td>
-                      <td className="border p-2">
+                    <tr key={meas.id} className="hover:bg-yellow-100 transition-colors">
+                      <td className="border p-2 text-center bg-gray-50"></td>
+                      <td className="border p-2 text-left text-xs text-gray-400 bg-gray-50">
+                        <span className="ml-4 italic">Measurement {measIdx + 1}</span>
+                      </td>
+                      <td className="border p-1 bg-white">
                         <NumericInput value={meas.no} onChange={(val) => updateMeasurement(itemIdx, measIdx, "no", val)} />
                       </td>
-                      <td className="border p-2">
-                        <NumericInput value={meas.l} onChange={(val) => updateMeasurement(itemIdx, measIdx, "l", val)} disabled={!active.l} />
+                      <td className="border p-1 bg-white">
+                        <NumericInput value={meas.l} onChange={(val) => updateMeasurement(itemIdx, measIdx, "l", val)} />
                       </td>
-                      <td className="border p-2">
-                        <NumericInput value={meas.b} onChange={(val) => updateMeasurement(itemIdx, measIdx, "b", val)} disabled={!active.b} />
+                      <td className="border p-1 bg-white">
+                        <NumericInput value={meas.b} onChange={(val) => updateMeasurement(itemIdx, measIdx, "b", val)} />
                       </td>
-                      <td className="border p-2">
-                        <NumericInput value={meas.h} onChange={(val) => updateMeasurement(itemIdx, measIdx, "h", val)} disabled={!active.h} />
+                      <td className="border p-1 bg-white">
+                        <NumericInput value={meas.h} onChange={(val) => updateMeasurement(itemIdx, measIdx, "h", val)} />
                       </td>
-                      <td className="border p-2 text-center">{meas.total.toFixed(3)}</td>
-                      <td className="border p-2 text-center">{item.unit}</td>
-                      <td className="border p-2 text-center">
-                        <button onClick={() => removeMeasurement(itemIdx, measIdx)} className="text-red-600 hover:bg-red-100 rounded p-1">
+                      <td className="border p-2 text-center font-bold text-blue-900 bg-gray-50">
+                        {meas.total === 0 ? "-" : meas.total.toFixed(3)}
+                      </td>
+                      <td className="border p-2 text-center text-gray-500 bg-gray-50">{item.unit}</td>
+                      <td className="border p-2 text-center bg-gray-50">
+                        <button 
+                          onClick={() => removeMeasurement(itemIdx, measIdx)} 
+                          className="text-red-500 hover:text-red-700 hover:bg-red-100 rounded p-1 transition-colors"
+                          title="Delete Measurement"
+                        >
                           ❌
                         </button>
                       </td>
@@ -288,8 +319,8 @@ export default function MeasurementPage() {
       </div>
 
       {items.length === 0 && (
-        <div className="mt-4 text-center text-gray-500">
-          No items found. Please add items in Rate Analysis first.
+        <div className="mt-8 text-center text-gray-500 p-8 border-2 border-dashed border-gray-300 rounded-lg">
+          No items found. Please add items in Rate Analysis first, then click "Sync from RA".
         </div>
       )}
     </div>
