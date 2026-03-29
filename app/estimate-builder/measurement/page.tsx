@@ -126,18 +126,28 @@ export default function MeasurementPage() {
   };
 
   const syncFromRA = () => {
-    const raRows = localStorage.getItem("ra_rows");
-    if (!raRows) {
+    const raRowsStr = localStorage.getItem("ra_rows");
+    const raBottomRowsStr = localStorage.getItem("ra_bottom_rows");
+
+    let parsedRA = [];
+    if (raRowsStr) parsedRA = JSON.parse(raRowsStr);
+
+    let parsedBottomRA = [];
+    if (raBottomRowsStr) parsedBottomRA = JSON.parse(raBottomRowsStr);
+
+    const allRaRows = [...parsedRA, ...parsedBottomRA];
+
+    if (allRaRows.length === 0) {
       setItems([]);
       localStorage.setItem("measurement_items", JSON.stringify([]));
       return;
     }
-    const parsedRA = JSON.parse(raRows);
+
     const existingMap = new Map();
     items.forEach((item) => existingMap.set(item.id, item));
 
     const newItems = [];
-    for (const raItem of parsedRA) {
+    for (const raItem of allRaRows) {
       const existing = existingMap.get(raItem.id);
       if (existing) {
         newItems.push({
@@ -157,13 +167,13 @@ export default function MeasurementPage() {
         });
       }
     }
+    
     setItems(newItems);
     localStorage.setItem("measurement_items", JSON.stringify(newItems));
   };
 
   const addMeasurement = (itemIndex) => {
     const updated = [...items];
-    // Start with completely blank ("") values
     updated[itemIndex].measurements.push({
       id: Date.now() + Math.random(),
       no: "",
@@ -182,7 +192,6 @@ export default function MeasurementPage() {
     const meas = updated[itemIndex].measurements[measIndex];
     meas[field] = value;
     
-    // Helper to extract a clean number, treating blanks as null
     const getVal = (val) => (val === "" || val === null || val === undefined || isNaN(val)) ? null : parseFloat(val);
 
     const noVal = getVal(meas.no);
@@ -190,10 +199,8 @@ export default function MeasurementPage() {
     const bVal = getVal(meas.b);
     const hVal = getVal(meas.h);
 
-    // Filter out the nulls (blanks)
     const factors = [noVal, lVal, bVal, hVal].filter(v => v !== null);
 
-    // If everything is blank, total is 0. Otherwise, multiply all the entered numbers together.
     if (factors.length === 0) {
       meas.total = 0;
     } else {
@@ -225,16 +232,16 @@ export default function MeasurementPage() {
       <Tabs />
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Measurement Sheet</h1>
-        <button onClick={syncFromRA} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        <button onClick={syncFromRA} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow-md transition-all active:scale-95">
           Sync from RA
         </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border text-sm bg-white shadow-sm">
-          <thead className="bg-gray-200">
-            <tr className="text-center">
-              <th className="border p-2">Sr. No.</th>
+      <div className="overflow-x-auto rounded border shadow-sm">
+        <table className="w-full border text-sm bg-white">
+          <thead className="bg-gray-200 border-b-2 border-gray-300">
+            <tr className="text-center font-bold text-gray-700">
+              <th className="border p-2 w-[50px]">Sr. No.</th>
               <th className="border p-2 w-[400px]">DESCRIPTION OF ITEM</th>
               <th className="border p-2 w-[80px]">No.</th>
               <th className="border p-2 w-[100px]">L.</th>
@@ -247,12 +254,21 @@ export default function MeasurementPage() {
           </thead>
           <tbody>
             {items.map((item, itemIdx) => {
+              const measCount = item.measurements.length;
+              // rowSpan = 1 for each measurement + 1 for the Total row. Minimum 2.
+              const rowSpan = measCount > 0 ? measCount + 1 : 2;
+
               return (
                 <React.Fragment key={item.id}>
-                  {/* Main Item Row */}
-                  <tr className="bg-gray-50 border-t-4 border-gray-300">
-                    <td className="border p-2 text-center font-bold text-gray-700">{item.srNo}</td>
-                    <td className="border p-2">
+                  {/* === FIRST ROW OF THE ITEM === */}
+                  <tr className="bg-white border-t-4 border-gray-400 group">
+                    {/* SR NO (Spans all measurements + total row) */}
+                    <td className="border p-2 text-center font-bold text-gray-700 align-top bg-gray-50/50" rowSpan={rowSpan}>
+                      <div className="mt-2">{item.srNo}</div>
+                    </td>
+
+                    {/* DESCRIPTION (Spans all measurements + total row) */}
+                    <td className="border p-2 align-top bg-gray-50/20" rowSpan={rowSpan}>
                       <AutoTextarea
                         value={item.description}
                         onChange={(e) => {
@@ -262,55 +278,75 @@ export default function MeasurementPage() {
                           localStorage.setItem("measurement_items", JSON.stringify(updated));
                         }}
                       />
+                      <div className="mt-4 mb-2 flex justify-start">
+                        <button 
+                          onClick={() => addMeasurement(itemIdx)} 
+                          className="text-green-700 bg-green-100 hover:bg-green-200 border border-green-300 rounded px-3 py-1 text-xs font-bold transition-colors shadow-sm"
+                        >
+                          + Add Meas
+                        </button>
+                      </div>
                     </td>
-                    <td colSpan={5} className="border p-2 text-center font-semibold text-blue-800">
-                      Total Qty: {item.totalQty.toFixed(3)} {item.unit}
-                    </td>
-                    <td className="border p-2 text-center font-semibold">{item.unit}</td>
-                    <td className="border p-2 text-center">
-                      <button 
-                        onClick={() => addMeasurement(itemIdx)} 
-                        className="text-white bg-green-500 hover:bg-green-600 rounded px-2 py-1 text-xs font-bold transition-colors shadow-sm"
-                      >
-                        + Add
-                      </button>
-                    </td>
+
+                    {/* FIRST MEASUREMENT (Or placeholder if empty) */}
+                    {measCount > 0 ? (
+                      <>
+                        <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={item.measurements[0].no} onChange={(val) => updateMeasurement(itemIdx, 0, "no", val)} /></td>
+                        <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={item.measurements[0].l} onChange={(val) => updateMeasurement(itemIdx, 0, "l", val)} /></td>
+                        <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={item.measurements[0].b} onChange={(val) => updateMeasurement(itemIdx, 0, "b", val)} /></td>
+                        <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={item.measurements[0].h} onChange={(val) => updateMeasurement(itemIdx, 0, "h", val)} /></td>
+                        <td className="border p-2 text-center font-bold text-blue-900 bg-gray-50/50">
+                          {item.measurements[0].total === 0 ? "-" : item.measurements[0].total.toFixed(3)}
+                        </td>
+                        <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-top bg-gray-50/50" rowSpan={rowSpan}>
+                          <div className="mt-2">{item.unit}</div>
+                        </td>
+                        <td className="border p-2 text-center bg-white">
+                          <button onClick={() => removeMeasurement(itemIdx, 0)} className="text-red-400 hover:text-red-600 hover:scale-125 transition-all" title="Delete">❌</button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="border p-4 text-center text-gray-400 italic bg-gray-50" colSpan={5}>
+                          Click "+ Add Meas" to enter measurements
+                        </td>
+                        <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-top bg-gray-50/50" rowSpan={rowSpan}>
+                          <div className="mt-2">{item.unit}</div>
+                        </td>
+                        <td className="border p-2 bg-gray-50"></td>
+                      </>
+                    )}
                   </tr>
 
-                  {/* Measurement Sub-Rows */}
-                  {item.measurements.map((meas, measIdx) => (
-                    <tr key={meas.id} className="hover:bg-yellow-100 transition-colors">
-                      <td className="border p-2 text-center bg-gray-50"></td>
-                      <td className="border p-2 text-left text-xs text-gray-400 bg-gray-50">
-                        <span className="ml-4 italic">Measurement {measIdx + 1}</span>
-                      </td>
-                      <td className="border p-1 bg-white">
-                        <NumericInput value={meas.no} onChange={(val) => updateMeasurement(itemIdx, measIdx, "no", val)} />
-                      </td>
-                      <td className="border p-1 bg-white">
-                        <NumericInput value={meas.l} onChange={(val) => updateMeasurement(itemIdx, measIdx, "l", val)} />
-                      </td>
-                      <td className="border p-1 bg-white">
-                        <NumericInput value={meas.b} onChange={(val) => updateMeasurement(itemIdx, measIdx, "b", val)} />
-                      </td>
-                      <td className="border p-1 bg-white">
-                        <NumericInput value={meas.h} onChange={(val) => updateMeasurement(itemIdx, measIdx, "h", val)} />
-                      </td>
-                      <td className="border p-2 text-center font-bold text-blue-900 bg-gray-50">
-                        {meas.total === 0 ? "-" : meas.total.toFixed(3)}
-                      </td>
-                      <td className="border p-2 text-center text-gray-500 bg-gray-50">{item.unit}</td>
-                      <td className="border p-2 text-center bg-gray-50">
-                        <button 
-                          onClick={() => removeMeasurement(itemIdx, measIdx)} 
-                          className="text-red-500 hover:text-red-700 hover:bg-red-100 rounded p-1 transition-colors"
-                          title="Delete Measurement"
-                        >
-                          ❌
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {/* === SUBSEQUENT MEASUREMENTS === */}
+                  {measCount > 1 && item.measurements.slice(1).map((meas, mIdx) => {
+                    const measIdx = mIdx + 1;
+                    return (
+                      <tr key={meas.id} className="bg-white hover:bg-yellow-50 transition-colors">
+                        <td className="border p-1 bg-white"><NumericInput value={meas.no} onChange={(val) => updateMeasurement(itemIdx, measIdx, "no", val)} /></td>
+                        <td className="border p-1 bg-white"><NumericInput value={meas.l} onChange={(val) => updateMeasurement(itemIdx, measIdx, "l", val)} /></td>
+                        <td className="border p-1 bg-white"><NumericInput value={meas.b} onChange={(val) => updateMeasurement(itemIdx, measIdx, "b", val)} /></td>
+                        <td className="border p-1 bg-white"><NumericInput value={meas.h} onChange={(val) => updateMeasurement(itemIdx, measIdx, "h", val)} /></td>
+                        <td className="border p-2 text-center font-bold text-blue-900 bg-gray-50/50">
+                          {meas.total === 0 ? "-" : meas.total.toFixed(3)}
+                        </td>
+                        <td className="border p-2 text-center bg-white">
+                          <button onClick={() => removeMeasurement(itemIdx, measIdx)} className="text-red-400 hover:text-red-600 hover:scale-125 transition-all" title="Delete">❌</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {/* === TOTAL ROW === */}
+                  <tr className="bg-blue-50/60">
+                    <td colSpan={4} className="border p-2 text-right font-bold text-gray-700 uppercase pr-4 text-xs tracking-wider">
+                      Total Qty:
+                    </td>
+                    <td className="border p-2 text-center font-extrabold text-blue-900 text-[15px]">
+                      {item.totalQty === 0 ? "-" : item.totalQty.toFixed(3)}
+                    </td>
+                    <td className="border p-2"></td>
+                  </tr>
                 </React.Fragment>
               );
             })}
@@ -319,7 +355,7 @@ export default function MeasurementPage() {
       </div>
 
       {items.length === 0 && (
-        <div className="mt-8 text-center text-gray-500 p-8 border-2 border-dashed border-gray-300 rounded-lg">
+        <div className="mt-8 text-center text-gray-500 p-8 border-2 border-dashed border-gray-300 rounded-lg bg-white">
           No items found. Please add items in Rate Analysis first, then click "Sync from RA".
         </div>
       )}

@@ -11,9 +11,11 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import Tabs from "../components/Tabs";
+import DownloadPdfButton from "../components/DownloadPdfButton"; 
 
 // ========== Helper: map material name to category ==========
 function getCategoryFromMaterial(materialName) {
+  if (!materialName) return null;
   const normalized = materialName.toLowerCase().trim();
   const mapping = {
     "Concrete Blocks  (Form)": ["concrete block", "form", "hollow block"],
@@ -48,7 +50,6 @@ function getDefaultMaterialsForDescription(description, leadSettings) {
 
   if (!description) return defaultMaterials;
 
-  // Quantities from your table (image)
   const gradeMappings = {
     5:   { cement: 0.140, sand: 0.460, metal: 0.920 },
     7.5: { cement: 0.180, sand: 0.480, metal: 0.960 },
@@ -63,7 +64,6 @@ function getDefaultMaterialsForDescription(description, leadSettings) {
     50:  { cement: 0.600, sand: 0.280, metal: 0.560 },
   };
 
-  // Regex to capture any of these grades (with optional dash or space)
   const gradePattern = /M\s*[-]?\s*(\d+(?:\.\d+)?)/i;
   const match = description.match(gradePattern);
   if (match) {
@@ -73,7 +73,7 @@ function getDefaultMaterialsForDescription(description, leadSettings) {
       const materials = [
         { name: "Cement", qty: data.cement },
         { name: "Sand", qty: data.sand },
-        { name: "Stone Below 40 Mm (Cr. Metal)", qty: data.metal }   // ✅ corrected material name
+        { name: "Stone Below 40 Mm (Cr. Metal)", qty: data.metal }
       ];
       return materials.map((mat, index) => {
         const category = getCategoryFromMaterial(mat.name);
@@ -148,13 +148,13 @@ function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
       onKeyDown={handleKeyDown}
       disabled={disabled}
       placeholder={placeholder}
-      className="text-center w-full border rounded px-1 py-0.5 h-[26px] disabled:bg-gray-100"
+      className={`text-center w-full border rounded px-1 py-0.5 h-[26px] ${disabled ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-white"}`}
     />
   );
 }
 
 // ========== Auto-expand textarea with break-keep ==========
-function AutoTextarea({ value, onChange }) {
+function AutoTextarea({ value, onChange, className = "text-left" }) {
   const ref = useRef(null);
   const adjustHeight = () => {
     if (ref.current) {
@@ -174,10 +174,16 @@ function AutoTextarea({ value, onChange }) {
       ref={ref}
       value={value}
       onChange={handleChange}
-      className="w-full resize-none overflow-hidden bg-transparent p-1 text-left break-keep"
+      className={`w-full resize-none overflow-hidden bg-transparent p-1 break-keep ${className}`}
     />
   );
 }
+
+// Default states for Royalty bottom rows
+const defaultBottomRows = [
+  { id: "royalty-sand", isRoyalty: true, ssr: "", description: "Royalty Charges ( sand)", unit: "", basicRate: 0, deduct: 0, materials: [{ id: "mat-r1", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" },
+  { id: "royalty-others", isRoyalty: true, ssr: "", description: "Royalty Charges ( others)", unit: "", basicRate: 0, deduct: 0, materials: [{ id: "mat-r2", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" }
+];
 
 export default function RateAnalysisPage() {
   const { data: session } = useSession();
@@ -185,18 +191,20 @@ export default function RateAnalysisPage() {
 
   const loadId = searchParams.get("load");
   const nameFromURL = searchParams.get("name");
+  const tribalFromURL = searchParams.get("tribal") === "true"; 
 
   const [rows, setRows] = useState([]);
+  const [bottomRows, setBottomRows] = useState(defaultBottomRows);
   const [itemCode, setItemCode] = useState("");
   const [insertIndex, setInsertIndex] = useState(null);
   const [nameOfWork, setNameOfWork] = useState(nameFromURL || "");
+  const [isTribal, setIsTribal] = useState(tribalFromURL); 
   const [isLoaded, setIsLoaded] = useState(false);
   const [materialList, setMaterialList] = useState([]);
   const [saving, setSaving] = useState(false);
   const [currentEstimateId, setCurrentEstimateId] = useState(null);
   const [leadSettings, setLeadSettings] = useState({});
 
-  // Load lead settings from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("leadSettings");
     if (saved) {
@@ -204,7 +212,6 @@ export default function RateAnalysisPage() {
     }
   }, []);
 
-  // Load material list
   useEffect(() => {
     fetch("/api/material-list")
       .then(res => res.json())
@@ -212,24 +219,25 @@ export default function RateAnalysisPage() {
       .catch(err => console.error("Failed to load material list", err));
   }, []);
 
-  // Load RA data from localStorage (skip if loading from DB)
   useEffect(() => {
     if (loadId) {
       setIsLoaded(true);
       return;
     }
-
     const saved = localStorage.getItem("ra_rows");
+    const savedBottom = localStorage.getItem("ra_bottom_rows");
     if (saved) setRows(JSON.parse(saved));
+    if (savedBottom) setBottomRows(JSON.parse(savedBottom));
     setIsLoaded(true);
   }, [loadId]);
 
-  // Save to localStorage when rows change
   useEffect(() => {
-    if (isLoaded) localStorage.setItem("ra_rows", JSON.stringify(rows));
-  }, [rows, isLoaded]);
+    if (isLoaded) {
+      localStorage.setItem("ra_rows", JSON.stringify(rows));
+      localStorage.setItem("ra_bottom_rows", JSON.stringify(bottomRows));
+    }
+  }, [rows, bottomRows, isLoaded]);
 
-  // Load estimate from database if loadId is present
   useEffect(() => {
     if (!loadId) return;
 
@@ -237,30 +245,37 @@ export default function RateAnalysisPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          const loadedRows = data.data.rows.map((r, i) => ({
-            ...r,
-            srNo: i + 1,
-          }));
-          setRows(loadedRows);
+          const loadedRows = data.data.rows || [];
+          const bRows = loadedRows.filter(r => r.isRoyalty);
+          const standardRows = loadedRows.filter(r => !r.isRoyalty).map((r, i) => ({ ...r, srNo: i + 1 }));
+          
+          setRows(standardRows);
+          setBottomRows(bRows.length > 0 ? bRows : defaultBottomRows);
+          
           setNameOfWork(data.data.nameOfWork);
+          if (data.data.isTribal !== undefined) setIsTribal(data.data.isTribal);
           setCurrentEstimateId(data.data._id);
-          localStorage.setItem("ra_rows", JSON.stringify(loadedRows));
+          
+          localStorage.setItem("ra_rows", JSON.stringify(standardRows));
+          localStorage.setItem("ra_bottom_rows", JSON.stringify(bRows.length > 0 ? bRows : defaultBottomRows));
         }
       })
       .catch((err) => console.error("Load error:", err));
   }, [loadId]);
 
-  // Update name if URL parameter changes
   useEffect(() => {
     if (nameFromURL) setNameOfWork(nameFromURL);
   }, [nameFromURL]);
 
-  const calculateRow = (row) => {
+  const calculateRow = (row, currentIsTribal = isTribal) => {
     const netAfterDeduct = row.basicRate - row.deduct;
-    const totalLead = row.materials.reduce((sum, m) => sum + (m.qty * m.lead), 0);
+    const totalLead = row.materials.reduce((sum, m) => sum + ((m.qty || 0) * (m.lead || 0)), 0);
     const total = netAfterDeduct + totalLead;
-    const netTotal = total + row.tribal;
-    return { ...row, netAfterDeduct, totalLead, total, netTotal };
+    
+    const tribalAmount = currentIsTribal ? (row.basicRate * 0.10) : 0;
+    
+    const netTotal = total + tribalAmount;
+    return { ...row, netAfterDeduct, totalLead, total, tribal: tribalAmount, netTotal };
   };
 
   const addItem = async () => {
@@ -268,7 +283,6 @@ export default function RateAnalysisPage() {
 
     try {
       const code = itemCode.trim();
-
       const res = await fetch(`/api/get-item?code=${code}`);
       const data = await res.json();
 
@@ -279,8 +293,9 @@ export default function RateAnalysisPage() {
 
       const completedRate = parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
       const description = data["Description of the item"] || "";
-
-      // Auto-populate materials based on description and keywords (e.g., M-20)
+      
+      // Formatting unit to display each word on a new line
+      const unitFormatted = (data["Unit"] || "").trim().split(/\s+/).join("\n");
       const autoMaterials = getDefaultMaterialsForDescription(description, leadSettings);
 
       const newRow = calculateRow({
@@ -288,21 +303,19 @@ export default function RateAnalysisPage() {
         srNo: 0,
         ssr: code,
         description: description,
-        unit: data["Unit"] || "",
+        unit: unitFormatted,
         basicRate: completedRate,
         specs: data["Additional Specification"] || "",
         deduct: 0,
         materials: autoMaterials,
         tribal: 0,
-      });
+      }, isTribal);
 
       let updated = [...rows];
-
       if (insertIndex !== null) updated.splice(insertIndex, 0, newRow);
       else updated.push(newRow);
 
       setRows(updated.map((r, i) => ({ ...r, srNo: i + 1 })));
-
       setInsertIndex(null);
       setItemCode("");
     } catch (err) {
@@ -313,35 +326,28 @@ export default function RateAnalysisPage() {
   const updateRow = (i, field, value) => {
     const updated = [...rows];
     updated[i][field] = value;
-    updated[i] = calculateRow(updated[i]);
+    updated[i] = calculateRow(updated[i], isTribal);
     setRows(updated);
   };
 
   const updateMaterial = (rowIndex, matIndex, field, value) => {
     const updated = [...rows];
     const mat = updated[rowIndex].materials[matIndex];
-
     mat[field] = value;
 
-    // When material name changes, update lead using the category's stored leadCharge
     if (field === "name") {
       const category = getCategoryFromMaterial(mat.name);
-      const leadCharge = leadSettings[category]?.leadCharge || 0;
-      mat.lead = leadCharge;
+      if (category) {
+        mat.lead = leadSettings[category]?.leadCharge || 0;
+      }
     }
-
-    updated[rowIndex] = calculateRow(updated[rowIndex]);
+    updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
     setRows(updated);
   };
 
   const addMaterial = (rowIndex) => {
     const updated = [...rows];
-    updated[rowIndex].materials.push({
-      id: Date.now().toString() + "-mat" + Math.random(),
-      name: "",
-      qty: 0,
-      lead: 0,
-    });
+    updated[rowIndex].materials.push({ id: Date.now().toString() + "-mat" + Math.random(), name: "", qty: 0, lead: 0 });
     setRows(updated);
   };
 
@@ -349,14 +355,9 @@ export default function RateAnalysisPage() {
     const updated = [...rows];
     updated[rowIndex].materials.splice(matIndex, 1);
     if (updated[rowIndex].materials.length === 0) {
-      updated[rowIndex].materials.push({
-        id: Date.now().toString() + "-mat-empty",
-        name: "",
-        qty: 0,
-        lead: 0,
-      });
+      updated[rowIndex].materials.push({ id: Date.now().toString() + "-empty", name: "", qty: 0, lead: 0 });
     }
-    updated[rowIndex] = calculateRow(updated[rowIndex]);
+    updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
     setRows(updated);
   };
 
@@ -366,33 +367,74 @@ export default function RateAnalysisPage() {
 
   const refreshRow = async (i) => {
     if (!confirm("Revert to default SSR values? Your edits will be lost.")) return;
-
     const code = rows[i].ssr.trim();
     const res = await fetch(`/api/get-item?code=${code}`);
     const data = await res.json();
-
     if (!data || data.error) return;
 
     const completedRate = parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
     const description = data["Description of the item"] || "";
-
+    const unitFormatted = (data["Unit"] || "").trim().split(/\s+/).join("\n");
     const autoMaterials = getDefaultMaterialsForDescription(description, leadSettings);
 
     const updated = [...rows];
-
     updated[i] = calculateRow({
       ...updated[i],
       description: description,
-      unit: data["Unit"] || "",
+      unit: unitFormatted,
       basicRate: completedRate,
       specs: data["Additional Specification"] || "",
       deduct: 0,
       materials: autoMaterials,
       tribal: 0,
-    });
+    }, isTribal);
 
     setRows(updated);
   };
+
+  // ----- BOTTOM ROWS LOGIC -----
+  const updateBottomRow = (i, field, value) => {
+    const updated = [...bottomRows];
+    updated[i][field] = value;
+    updated[i] = calculateRow(updated[i], isTribal);
+    setBottomRows(updated);
+  };
+
+  const updateBottomMaterial = (rowIndex, matIndex, field, value) => {
+    const updated = [...bottomRows];
+    const mat = updated[rowIndex].materials[matIndex];
+    mat[field] = value;
+    if (field === "name") {
+      const category = getCategoryFromMaterial(mat.name);
+      if (category) mat.lead = leadSettings[category]?.leadCharge || 0;
+    }
+    updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
+    setBottomRows(updated);
+  };
+
+  const addBottomMaterial = (rowIndex) => {
+    const updated = [...bottomRows];
+    updated[rowIndex].materials.push({ id: Date.now().toString() + "-mat", name: "", qty: 0, lead: 0 });
+    setBottomRows(updated);
+  };
+
+  const removeBottomMaterial = (rowIndex, matIndex) => {
+    const updated = [...bottomRows];
+    updated[rowIndex].materials.splice(matIndex, 1);
+    if (updated[rowIndex].materials.length === 0) {
+      updated[rowIndex].materials.push({ id: Date.now().toString() + "-empty", name: "", qty: 0, lead: 0 });
+    }
+    updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
+    setBottomRows(updated);
+  };
+
+  const clearBottomRow = (i) => {
+    if (!confirm("Clear this royalty row?")) return;
+    const updated = [...bottomRows];
+    updated[i] = { ...defaultBottomRows[i], id: updated[i].id };
+    setBottomRows(updated);
+  };
+  // -----------------------------
 
   const handleDragEnd = (e) => {
     const { active, over } = e;
@@ -403,14 +445,13 @@ export default function RateAnalysisPage() {
     setRows(newRows.map((r, i) => ({ ...r, srNo: i + 1 })));
   };
 
-  const formatNumber = (num) => (num !== undefined && num !== null ? num.toFixed(3) : "0.000");
+  const formatNumber = (num) => (num !== undefined && num !== null && !isNaN(num) ? Number(num).toFixed(3) : "0.000");
 
   const saveEstimate = async () => {
     if (!session) {
       alert("You must be logged in to save an estimate.");
       return;
     }
-
     if (!nameOfWork.trim()) {
       alert("Please enter a Name of Work.");
       return;
@@ -423,16 +464,16 @@ export default function RateAnalysisPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nameOfWork,
-          rows,
+          isTribal, 
+          rows: [...rows, ...bottomRows], // Combine standard and royalty rows
           estimateId: currentEstimateId,
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
-        if (data.updated) {
-          alert("Estimate updated!");
-        } else {
+        if (data.updated) alert("Estimate updated!");
+        else {
           alert("Estimate saved!");
           if (data.id) setCurrentEstimateId(data.id);
         }
@@ -447,7 +488,6 @@ export default function RateAnalysisPage() {
     }
   };
 
-  // ========== Refresh lead charges from localStorage ==========
   const refreshLeadCharges = () => {
     const saved = localStorage.getItem("leadSettings");
     if (!saved) {
@@ -455,23 +495,36 @@ export default function RateAnalysisPage() {
       return;
     }
     const freshSettings = JSON.parse(saved);
-    setLeadSettings(freshSettings); // update the state for future selections
+    setLeadSettings(freshSettings);
 
-    // Update all existing materials with the new lead charges
     const updatedRows = rows.map(row => {
       const updatedMaterials = row.materials.map(mat => {
         if (mat.name) {
           const category = getCategoryFromMaterial(mat.name);
-          const newLeadCharge = freshSettings[category]?.leadCharge || 0;
-          return { ...mat, lead: newLeadCharge };
+          if (category && freshSettings[category]) {
+             return { ...mat, lead: freshSettings[category].leadCharge || 0 };
+          }
+        }
+        return mat; 
+      });
+      return calculateRow({ ...row, materials: updatedMaterials }, isTribal);
+    });
+    setRows(updatedRows);
+
+    const updatedBottom = bottomRows.map(row => {
+      const updatedMaterials = row.materials.map(mat => {
+        if (mat.name) {
+          const category = getCategoryFromMaterial(mat.name);
+          if (category && freshSettings[category]) {
+             return { ...mat, lead: freshSettings[category].leadCharge || 0 };
+          }
         }
         return mat;
       });
-      const updatedRow = { ...row, materials: updatedMaterials };
-      return calculateRow(updatedRow);
+      return calculateRow({ ...row, materials: updatedMaterials }, isTribal);
     });
+    setBottomRows(updatedBottom);
 
-    setRows(updatedRows);
     alert("Lead charges refreshed from Leads page.");
   };
 
@@ -488,18 +541,32 @@ export default function RateAnalysisPage() {
             className="border p-2 w-[400px] rounded"
             placeholder="Enter Name of Work"
           />
+          {isTribal && (
+            <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+              Tribal Estimate
+            </span>
+          )}
         </div>
+        
         <div className="flex gap-2">
+          <DownloadPdfButton 
+            estimateId={currentEstimateId} 
+            nameOfWork={nameOfWork} 
+            isTribal={isTribal}
+            rows={[...rows, ...bottomRows]} // Export all rows
+            leadSettings={leadSettings}
+          />
+
           <button
             onClick={refreshLeadCharges}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow-md"
           >
             Refresh Lead Charges
           </button>
           <button
             onClick={saveEstimate}
             disabled={saving}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 shadow-md"
           >
             {saving ? "Saving..." : "Save Estimate"}
           </button>
@@ -521,10 +588,10 @@ export default function RateAnalysisPage() {
 
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-          <div className="overflow-x-auto relative">
+          <div className="overflow-x-auto relative shadow-sm border rounded">
             <table className="w-full border text-xs bg-white relative" style={{ minWidth: "1400px" }}>
-              <thead className="bg-gray-200">
-                <tr className="text-center">
+              <thead className="bg-gray-200 border-b-2 border-gray-300">
+                <tr className="text-center font-bold text-gray-700">
                   <th className="border p-2">☰</th>
                   <th className="border p-2">Sr</th>
                   <th className="border p-2">SSR</th>
@@ -542,17 +609,37 @@ export default function RateAnalysisPage() {
                   <th className="border p-2">Net Total</th>
                   <th className="border p-2 w-[200px]">Specs</th>
                   <th className="border p-2 sticky right-0 bg-gray-200 z-10 shadow-[-3px_0_5px_rgba(0,0,0,0.1)] w-[80px]">Actions</th>
-                 </tr>
+                </tr>
+                {/* Column Numbering Row */}
+                <tr className="bg-gray-100 text-[11px] font-bold text-gray-500 text-center">
+                  <td className="border p-1"></td>
+                  <td className="border p-1">1</td>
+                  <td className="border p-1">2</td>
+                  <td className="border p-1">3</td>
+                  <td className="border p-1">4</td>
+                  <td className="border p-1">5</td>
+                  <td className="border p-1">6</td>
+                  <td className="border p-1">7</td>
+                  <td className="border p-1">8</td>
+                  <td className="border p-1">9</td>
+                  <td className="border p-1">10</td>
+                  <td className="border p-1">11</td>
+                  <td className="border p-1">12</td>
+                  <td className="border p-1">13</td>
+                  <td className="border p-1">14</td>
+                  <td className="border p-1">15</td>
+                  <td className="border p-1 sticky right-0 bg-gray-100 z-10"></td>
+                </tr>
               </thead>
               <tbody>
                 {rows.map((row, i) => (
                   <React.Fragment key={row.id}>
                     <tr>
-                      <td colSpan="17" className="border text-center">
+                      <td colSpan="17" className="border text-center bg-gray-50/50">
                         <button
                           onClick={() => setInsertIndex(insertIndex === i ? null : i)}
-                          className={`px-4 transition-all ${
-                            insertIndex === i ? "bg-blue-500 text-white font-bold scale-110" : "text-blue-600"
+                          className={`px-4 py-0.5 text-[10px] rounded transition-all ${
+                            insertIndex === i ? "bg-blue-500 text-white font-bold scale-110" : "text-blue-500 hover:bg-blue-100"
                           }`}
                         >
                           ➕ Insert Here
@@ -563,6 +650,7 @@ export default function RateAnalysisPage() {
                     <SortableRow
                       row={row}
                       index={i}
+                      isTribal={isTribal}
                       updateRow={updateRow}
                       updateMaterial={updateMaterial}
                       addMaterial={addMaterial}
@@ -574,6 +662,24 @@ export default function RateAnalysisPage() {
                     />
                   </React.Fragment>
                 ))}
+
+                {/* BOTTOM FIXED ROYALTY ROWS */}
+                {bottomRows.map((row, i) => (
+                  <StaticRow
+                    key={row.id}
+                    row={row}
+                    index={i}
+                    globalIndex={rows.length + i + 1}
+                    isTribal={isTribal}
+                    updateRow={updateBottomRow}
+                    updateMaterial={updateBottomMaterial}
+                    addMaterial={addBottomMaterial}
+                    removeMaterial={removeBottomMaterial}
+                    clearRow={() => clearBottomRow(i)}
+                    formatNumber={formatNumber}
+                    materialList={materialList}
+                  />
+                ))}
               </tbody>
             </table>
           </div>
@@ -583,36 +689,23 @@ export default function RateAnalysisPage() {
   );
 }
 
+// Draggable Standard Row
 function SortableRow({
-  row,
-  index,
-  updateRow,
-  updateMaterial,
-  addMaterial,
-  removeMaterial,
-  deleteRow,
-  refreshRow,
-  formatNumber,
-  materialList,
+  row, index, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, deleteRow, refreshRow, formatNumber, materialList,
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: row.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   return (
-    <tr ref={setNodeRef} style={style} className="hover:bg-yellow-50 group">
-      <td {...attributes} {...listeners} className="border p-2 text-center cursor-grab">☰</td>
-      <td className="border p-2 text-center">{row.srNo}</td>
-      <td className="border p-2 text-center">{row.ssr}</td>
+    <tr ref={setNodeRef} style={style} className="hover:bg-yellow-50 group transition-colors">
+      <td {...attributes} {...listeners} className="border p-2 text-center cursor-grab text-gray-400 hover:text-black">☰</td>
+      <td className="border p-2 text-center font-semibold">{row.srNo}</td>
+      <td className="border p-2 text-center font-medium">{row.ssr}</td>
       <td className="border p-2">
         <AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} />
       </td>
       <td className="border p-2">
-        <input
-          type="text"
-          value={row.unit}
-          onChange={(e) => updateRow(index, "unit", e.target.value)}
-          className="w-full border-none focus:outline-none bg-transparent"
-        />
+        <AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center" />
       </td>
       <td className="border p-2">
         <NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} />
@@ -620,89 +713,153 @@ function SortableRow({
       <td className="border p-2">
         <NumericInput value={row.deduct} onChange={(val) => updateRow(index, "deduct", val)} />
       </td>
-      <td className="border p-2 text-center">{formatNumber(row.netAfterDeduct)}</td>
+      <td className="border p-2 text-center text-gray-700">{formatNumber(row.netAfterDeduct)}</td>
 
-      {/* Material selection */}
+      {/* Material Input with Datalist */}
       <td className="border py-1 px-1 align-top">
         {row.materials.map((mat, matIdx) => (
           <div key={mat.id} className="flex items-center gap-1 leading-none mb-1">
-            <select
+            <input
+              list={`material-options-${row.id}-${matIdx}`}
               value={mat.name}
               onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)}
-              className="w-full h-[26px] border text-xs px-1"
-            >
-              <option value="">Select material</option>
+              className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none"
+              placeholder="Select/type"
+            />
+            <datalist id={`material-options-${row.id}-${matIdx}`}>
               {materialList.map(matName => (
-                <option key={matName} value={matName}>{matName}</option>
+                <option key={matName} value={matName} />
               ))}
-            </select>
+            </datalist>
+
             {matIdx === row.materials.length - 1 ? (
-              <button
-                onClick={() => addMaterial(index)}
-                className="text-green-600 text-xs px-1 hover:scale-110 transition"
-                title="Add material"
-              >
-                + Add
-              </button>
+              <button onClick={() => addMaterial(index)} className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold" title="Add material">+</button>
             ) : (
-              <button
-                onClick={() => removeMaterial(index, matIdx)}
-                className="text-red-600 text-xs px-1 hover:scale-110 transition"
-                title="Remove material"
-              >
-                −
-              </button>
+              <button onClick={() => removeMaterial(index, matIdx)} className="text-red-600 text-xs px-1 hover:scale-110 transition font-bold" title="Remove material">−</button>
             )}
           </div>
         ))}
       </td>
 
-      {/* Quantity column */}
       <td className="border py-1 px-1 align-top">
         {row.materials.map((mat, matIdx) => (
           <div key={mat.id} className="mb-1">
-            <NumericInput
-              value={mat.qty}
-              onChange={(val) => updateMaterial(index, matIdx, "qty", val)}
-              placeholder="Qty"
-            />
+            <NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" />
           </div>
         ))}
       </td>
 
-      {/* Lead column */}
+      {/* Editable Lead Input (Disabled for standard materials) */}
       <td className="border py-1 px-1 align-top">
-        {row.materials.map((mat) => (
-          <div key={mat.id} className="text-center h-[26px] flex items-center justify-center mb-1">
-            {mat.lead.toFixed(2)}
-          </div>
-        ))}
+        {row.materials.map((mat, matIdx) => {
+          const isStandard = !!getCategoryFromMaterial(mat.name);
+          return (
+            <div key={mat.id} className="mb-1">
+              <NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" disabled={isStandard} />
+            </div>
+          );
+        })}
       </td>
 
-      <td className="border p-2 text-center">{formatNumber(row.totalLead)}</td>
-      <td className="border p-2 text-center">{formatNumber(row.total)}</td>
-      <td className="border p-2">
-        <NumericInput value={row.tribal} onChange={(val) => updateRow(index, "tribal", val)} />
-      </td>
-      <td className="border p-2 text-center">{formatNumber(row.netTotal)}</td>
+      <td className="border p-2 text-center text-gray-700">{formatNumber(row.totalLead)}</td>
+      <td className="border p-2 text-center font-medium">{formatNumber(row.total)}</td>
+      <td className="border p-2 text-center font-semibold text-gray-700">{isTribal ? formatNumber(row.tribal) : "-"}</td>
+      <td className="border p-2 text-center font-bold text-blue-800 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
       <td className="border p-2">
         <AutoTextarea value={row.specs} onChange={(e) => updateRow(index, "specs", e.target.value)} />
       </td>
       <td className="border p-2 text-center sticky right-0 bg-white group-hover:bg-yellow-50 z-10 shadow-[-3px_0_5px_rgba(0,0,0,0.1)]">
         <div className="flex justify-center gap-3">
-          <button
-            onClick={() => refreshRow(index)}
-            title="Refresh"
-            className="transition-all duration-200 hover:scale-125 hover:rotate-180 active:scale-90"
-          >
-            🔄
-          </button>
-          <button
-            onClick={() => deleteRow(row.id)}
-            title="Delete"
-            className="transition-all duration-200 hover:scale-125 hover:text-red-600 active:scale-90"
-          >
-            ❌
+          <button onClick={() => refreshRow(index)} title="Refresh" className="transition-all duration-200 hover:scale-125 hover:rotate-180 active:scale-90 opacity-60 hover:opacity-100">🔄</button>
+          <button onClick={() => deleteRow(row.id)} title="Delete" className="transition-all duration-200 hover:scale-125 hover:text-red-600 active:scale-90 opacity-60 hover:opacity-100">❌</button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+// Static Royalty Row (Bottom Rows)
+function StaticRow({
+  row, index, globalIndex, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, clearRow, formatNumber, materialList,
+}) {
+  return (
+    <tr className="bg-gray-50 hover:bg-yellow-50 group transition-colors border-t-2 border-gray-200">
+      <td className="border p-2 text-center text-gray-300">📌</td>
+      <td className="border p-2 text-center font-semibold">{globalIndex}</td>
+      <td className="border p-2">
+        <AutoTextarea value={row.ssr} onChange={(e) => updateRow(index, "ssr", e.target.value)} className="text-center font-medium" />
+      </td>
+      <td className="border p-2">
+        <AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} />
+      </td>
+      <td className="border p-2">
+        <AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center" />
+      </td>
+      <td className="border p-2">
+        <NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} />
+      </td>
+      <td className="border p-2">
+        <NumericInput value={row.deduct} onChange={(val) => updateRow(index, "deduct", val)} />
+      </td>
+      <td className="border p-2 text-center text-gray-700">{formatNumber(row.netAfterDeduct)}</td>
+
+      {/* Material Input with Datalist */}
+      <td className="border py-1 px-1 align-top">
+        {row.materials.map((mat, matIdx) => (
+          <div key={mat.id} className="flex items-center gap-1 leading-none mb-1">
+            <input
+              list={`material-options-${row.id}-${matIdx}`}
+              value={mat.name}
+              onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)}
+              className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none"
+              placeholder="Select/type"
+            />
+            <datalist id={`material-options-${row.id}-${matIdx}`}>
+              {materialList.map(matName => (
+                <option key={matName} value={matName} />
+              ))}
+            </datalist>
+
+            {matIdx === row.materials.length - 1 ? (
+              <button onClick={() => addMaterial(index)} className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold" title="Add material">+</button>
+            ) : (
+              <button onClick={() => removeMaterial(index, matIdx)} className="text-red-600 text-xs px-1 hover:scale-110 transition font-bold" title="Remove material">−</button>
+            )}
+          </div>
+        ))}
+      </td>
+
+      <td className="border py-1 px-1 align-top">
+        {row.materials.map((mat, matIdx) => (
+          <div key={mat.id} className="mb-1">
+            <NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" />
+          </div>
+        ))}
+      </td>
+
+      {/* Editable Lead Input */}
+      <td className="border py-1 px-1 align-top">
+        {row.materials.map((mat, matIdx) => {
+          const isStandard = !!getCategoryFromMaterial(mat.name);
+          return (
+            <div key={mat.id} className="mb-1">
+              <NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" disabled={isStandard} />
+            </div>
+          );
+        })}
+      </td>
+
+      <td className="border p-2 text-center text-gray-700">{formatNumber(row.totalLead)}</td>
+      <td className="border p-2 text-center font-medium">{formatNumber(row.total)}</td>
+      <td className="border p-2 text-center font-semibold text-gray-700">{isTribal ? formatNumber(row.tribal) : "-"}</td>
+      <td className="border p-2 text-center font-bold text-blue-800 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
+      <td className="border p-2">
+        <AutoTextarea value={row.specs} onChange={(e) => updateRow(index, "specs", e.target.value)} />
+      </td>
+      <td className="border p-2 text-center sticky right-0 bg-gray-50 group-hover:bg-yellow-50 z-10 shadow-[-3px_0_5px_rgba(0,0,0,0.1)]">
+        <div className="flex justify-center gap-3">
+          <button onClick={clearRow} title="Clear values" className="transition-all duration-200 hover:scale-125 hover:text-red-600 active:scale-90 opacity-60 hover:opacity-100">
+            🧹
           </button>
         </div>
       </td>

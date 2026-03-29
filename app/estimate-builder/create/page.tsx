@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function CreateEstimate() {
   const [name, setName] = useState("");
+  const [isTribal, setIsTribal] = useState(false);
   const router = useRouter();
 
   const handleCreate = () => {
@@ -12,7 +13,8 @@ export default function CreateEstimate() {
       alert("Please enter Name of Work");
       return;
     }
-    router.push(`/estimate-builder/rate-analysis?name=${encodeURIComponent(name)}`);
+    // Pass both name and tribal status in the URL
+    router.push(`/estimate-builder/rate-analysis?name=${encodeURIComponent(name)}&tribal=${isTribal}`);
   };
 
   return (
@@ -24,9 +26,9 @@ export default function CreateEstimate() {
         </div>
 
         <h1 className="text-3xl font-extrabold text-gray-900 mb-2">New Estimate</h1>
-        <p className="text-gray-500 mb-8 text-sm">Give your new project a descriptive name.</p>
+        <p className="text-gray-500 mb-8 text-sm">Give your new project a descriptive name and type.</p>
 
-        <div className="text-left mb-6">
+        <div className="text-left mb-4">
           <label className="block text-sm font-semibold text-gray-700 mb-2">Name of Work</label>
           <input
             type="text"
@@ -36,6 +38,32 @@ export default function CreateEstimate() {
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900"
           />
+        </div>
+
+        <div className="text-left mb-8">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Estimate Area Type</label>
+          <div className="flex gap-6 mt-2">
+            <label className="flex items-center gap-2 cursor-pointer text-gray-800">
+              <input
+                type="radio"
+                name="areaType"
+                checked={!isTribal}
+                onChange={() => setIsTribal(false)}
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+              />
+              <span className="text-sm font-medium">Non-Tribal</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-gray-800">
+              <input
+                type="radio"
+                name="areaType"
+                checked={isTribal}
+                onChange={() => setIsTribal(true)}
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+              />
+              <span className="text-sm font-medium">Tribal</span>
+            </label>
+          </div>
         </div>
 
         <button
