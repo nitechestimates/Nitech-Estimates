@@ -40,6 +40,57 @@ function getCategoryFromMaterial(materialName) {
   return null;
 }
 
+// ========== Helper: Get default materials based on description ==========
+function getDefaultMaterialsForDescription(description, leadSettings) {
+  const defaultMaterials = [
+    { id: Date.now().toString() + "-mat1", name: "", qty: 0, lead: 0 }
+  ];
+
+  if (!description) return defaultMaterials;
+
+  // Quantities from your table (image)
+  const gradeMappings = {
+    5:   { cement: 0.140, sand: 0.460, metal: 0.920 },
+    7.5: { cement: 0.180, sand: 0.480, metal: 0.960 },
+    10:  { cement: 0.220, sand: 0.450, metal: 0.910 },
+    15:  { cement: 0.280, sand: 0.440, metal: 0.880 },
+    20:  { cement: 0.310, sand: 0.420, metal: 0.840 },
+    25:  { cement: 0.390, sand: 0.380, metal: 0.760 },
+    30:  { cement: 0.420, sand: 0.360, metal: 0.720 },
+    35:  { cement: 0.480, sand: 0.340, metal: 0.680 },
+    40:  { cement: 0.500, sand: 0.320, metal: 0.640 },
+    45:  { cement: 0.550, sand: 0.300, metal: 0.600 },
+    50:  { cement: 0.600, sand: 0.280, metal: 0.560 },
+  };
+
+  // Regex to capture any of these grades (with optional dash or space)
+  const gradePattern = /M\s*[-]?\s*(\d+(?:\.\d+)?)/i;
+  const match = description.match(gradePattern);
+  if (match) {
+    const gradeNum = parseFloat(match[1]);
+    const data = gradeMappings[gradeNum];
+    if (data) {
+      const materials = [
+        { name: "Cement", qty: data.cement },
+        { name: "Sand", qty: data.sand },
+        { name: "Stone Below 40 Mm (Cr. Metal)", qty: data.metal }   // ✅ corrected material name
+      ];
+      return materials.map((mat, index) => {
+        const category = getCategoryFromMaterial(mat.name);
+        const leadCharge = leadSettings[category]?.leadCharge || 0;
+        return {
+          id: Date.now().toString() + `-mat-${index}-${Math.random().toString(36).slice(2, 7)}`,
+          name: mat.name,
+          qty: mat.qty,
+          lead: leadCharge
+        };
+      });
+    }
+  }
+
+  return defaultMaterials;
+}
+
 // ========== Numeric Input ==========
 function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
   const [displayValue, setDisplayValue] = useState(
@@ -226,26 +277,22 @@ export default function RateAnalysisPage() {
         return;
       }
 
-      const completedRate =
-        parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
+      const completedRate = parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
+      const description = data["Description of the item"] || "";
+
+      // Auto-populate materials based on description and keywords (e.g., M-20)
+      const autoMaterials = getDefaultMaterialsForDescription(description, leadSettings);
 
       const newRow = calculateRow({
         id: Date.now().toString(),
         srNo: 0,
         ssr: code,
-        description: data["Description of the item"] || "",
+        description: description,
         unit: data["Unit"] || "",
         basicRate: completedRate,
         specs: data["Additional Specification"] || "",
         deduct: 0,
-        materials: [
-          {
-            id: Date.now().toString() + "-mat1",
-            name: "",
-            qty: 0,
-            lead: 0,
-          },
-        ],
+        materials: autoMaterials,
         tribal: 0,
       });
 
@@ -326,26 +373,21 @@ export default function RateAnalysisPage() {
 
     if (!data || data.error) return;
 
-    const completedRate =
-      parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
+    const completedRate = parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
+    const description = data["Description of the item"] || "";
+
+    const autoMaterials = getDefaultMaterialsForDescription(description, leadSettings);
 
     const updated = [...rows];
 
     updated[i] = calculateRow({
       ...updated[i],
-      description: data["Description of the item"] || "",
+      description: description,
       unit: data["Unit"] || "",
       basicRate: completedRate,
       specs: data["Additional Specification"] || "",
       deduct: 0,
-      materials: [
-        {
-          id: Date.now().toString() + "-mat1",
-          name: "",
-          qty: 0,
-          lead: 0,
-        },
-      ],
+      materials: autoMaterials,
       tribal: 0,
     });
 
@@ -500,7 +542,7 @@ export default function RateAnalysisPage() {
                   <th className="border p-2">Net Total</th>
                   <th className="border p-2 w-[200px]">Specs</th>
                   <th className="border p-2 sticky right-0 bg-gray-200 z-10 shadow-[-3px_0_5px_rgba(0,0,0,0.1)] w-[80px]">Actions</th>
-                </tr>
+                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, i) => (
@@ -580,10 +622,10 @@ function SortableRow({
       </td>
       <td className="border p-2 text-center">{formatNumber(row.netAfterDeduct)}</td>
 
-      {/* Material selection - no extra margins */}
+      {/* Material selection */}
       <td className="border py-1 px-1 align-top">
         {row.materials.map((mat, matIdx) => (
-          <div key={mat.id} className="flex items-center gap-1 leading-none">
+          <div key={mat.id} className="flex items-center gap-1 leading-none mb-1">
             <select
               value={mat.name}
               onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)}
@@ -615,22 +657,23 @@ function SortableRow({
         ))}
       </td>
 
-      {/* Quantity column - no extra margin */}
+      {/* Quantity column */}
       <td className="border py-1 px-1 align-top">
         {row.materials.map((mat, matIdx) => (
-          <NumericInput
-            key={mat.id}
-            value={mat.qty}
-            onChange={(val) => updateMaterial(index, matIdx, "qty", val)}
-            placeholder="Qty"
-          />
+          <div key={mat.id} className="mb-1">
+            <NumericInput
+              value={mat.qty}
+              onChange={(val) => updateMaterial(index, matIdx, "qty", val)}
+              placeholder="Qty"
+            />
+          </div>
         ))}
       </td>
 
-      {/* Lead column - centered, no extra margin */}
+      {/* Lead column */}
       <td className="border py-1 px-1 align-top">
         {row.materials.map((mat) => (
-          <div key={mat.id} className="text-center h-[26px] flex items-center justify-center">
+          <div key={mat.id} className="text-center h-[26px] flex items-center justify-center mb-1">
             {mat.lead.toFixed(2)}
           </div>
         ))}
