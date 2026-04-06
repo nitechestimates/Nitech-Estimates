@@ -11,8 +11,11 @@ export default function HistoryPage() {
     fetch("/api/estimate/get")
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) {
-          setEstimates(data.data);
+        // ✅ FIX 1: API now returns the array directly (or an error object)
+        if (Array.isArray(data)) {
+          setEstimates(data);
+        } else {
+          console.error("Failed to load estimates:", data.error);
         }
         setLoading(false);
       })
@@ -86,7 +89,8 @@ export default function HistoryPage() {
                 </span>
                 <span className="flex items-center gap-1">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                  {est.rows.length} Items
+                  {/* ✅ FIX 2: Replaced est.rows.length to prevent crashes */}
+                  Saved Project
                 </span>
               </div>
 

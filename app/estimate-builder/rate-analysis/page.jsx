@@ -202,6 +202,10 @@ export default function RateAnalysisPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [materialList, setMaterialList] = useState([]);
   const [saving, setSaving] = useState(false);
+  
+  // ✅ STEP 8: ADD LOADING STATE
+  const [loadingEstimate, setLoadingEstimate] = useState(false);
+  
   const [currentEstimateId, setCurrentEstimateId] = useState(null);
   const [leadSettings, setLeadSettings] = useState({});
 
@@ -238,8 +242,11 @@ export default function RateAnalysisPage() {
     }
   }, [rows, bottomRows, isLoaded]);
 
+  // ✅ STEP 8: UPDATE FETCH LOGIC TO USE LOADER
   useEffect(() => {
     if (!loadId) return;
+
+    setLoadingEstimate(true); // START LOADER
 
     fetch(`/api/estimate/${loadId}`)
       .then((res) => res.json())
@@ -260,7 +267,10 @@ export default function RateAnalysisPage() {
           localStorage.setItem("ra_bottom_rows", JSON.stringify(bRows.length > 0 ? bRows : defaultBottomRows));
         }
       })
-      .catch((err) => console.error("Load error:", err));
+      .catch((err) => console.error("Load error:", err))
+      .finally(() => {
+        setLoadingEstimate(false); // STOP LOADER
+      });
   }, [loadId]);
 
   useEffect(() => {
@@ -294,7 +304,6 @@ export default function RateAnalysisPage() {
       const completedRate = parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
       const description = data["Description of the item"] || "";
       
-      // Formatting unit to display each word on a new line
       const unitFormatted = (data["Unit"] || "").trim().split(/\s+/).join("\n");
       const autoMaterials = getDefaultMaterialsForDescription(description, leadSettings);
 
@@ -528,8 +537,23 @@ export default function RateAnalysisPage() {
     alert("Lead charges refreshed from Leads page.");
   };
 
+  // ✅ STEP 8: DISPLAY LOADING STATE (Tabs remain visible so layout doesn't jump)
+  if (loadingEstimate) {
+    return (
+      <div className="p-4 bg-yellow-50 min-h-screen text-black">
+        <Tabs />
+        <div className="flex justify-center items-center h-[70vh]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <p className="text-gray-500 font-medium animate-pulse">Loading Project Data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 bg-yellow-50 min-h-screen text-black">
+    <div className="p-4 bg-yellow-50 min-h-screen text-black animate-fade-in-up">
       <Tabs />
 
       <div className="flex justify-between items-center mb-4">
@@ -566,7 +590,7 @@ export default function RateAnalysisPage() {
           <button
             onClick={saveEstimate}
             disabled={saving}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 shadow-md"
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 shadow-md transition-all"
           >
             {saving ? "Saving..." : "Save Estimate"}
           </button>
@@ -581,7 +605,7 @@ export default function RateAnalysisPage() {
           className="border p-2"
           placeholder="SSR Item No"
         />
-        <button onClick={addItem} className="bg-black text-white px-4">
+        <button onClick={addItem} className="bg-black text-white px-4 hover:bg-gray-800 transition-colors">
           Add Item
         </button>
       </div>
