@@ -4,7 +4,9 @@ const fs = require("fs");
 const workbook = xlsx.readFile("data.xlsx");
 const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-const rows = xlsx.utils.sheet_to_json(sheet, { defval: "" });
+// 🔥 ADDED `raw: false` HERE
+// This prevents xlsx from turning "51.130" into the number 51.13
+const rows = xlsx.utils.sheet_to_json(sheet, { defval: "", raw: false });
 
 // 🔥 VERY IMPORTANT FIX
 rows.forEach(row => {
