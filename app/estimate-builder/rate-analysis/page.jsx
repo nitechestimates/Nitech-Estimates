@@ -11,7 +11,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import Tabs from "../components/Tabs";
-import DownloadPdfButton from "../components/DownloadPdfButton"; 
+import DownloadPdfButton from "../components/DownloadPdfButton";
 
 // ========== Helper: map material name to category ==========
 function getCategoryFromMaterial(materialName) {
@@ -35,7 +35,7 @@ function getCategoryFromMaterial(materialName) {
   };
 
   for (const [category, keywords] of Object.entries(mapping)) {
-    if (keywords.some(kw => normalized.includes(kw))) {
+    if (keywords.some((kw) => normalized.includes(kw))) {
       return category;
     }
   }
@@ -153,7 +153,7 @@ function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
   );
 }
 
-// ========== Auto-expand textarea with break-keep ==========
+// ========== Auto-expand textarea ==========
 function AutoTextarea({ value, onChange, className = "text-left" }) {
   const ref = useRef(null);
   const adjustHeight = () => {
@@ -179,7 +179,6 @@ function AutoTextarea({ value, onChange, className = "text-left" }) {
   );
 }
 
-// Default states for Royalty bottom rows
 const defaultBottomRows = [
   { id: "royalty-sand", isRoyalty: true, ssr: "", description: "Royalty Charges ( sand)", unit: "", basicRate: 0, deduct: 0, materials: [{ id: "mat-r1", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" },
   { id: "royalty-others", isRoyalty: true, ssr: "", description: "Royalty Charges ( others)", unit: "", basicRate: 0, deduct: 0, materials: [{ id: "mat-r2", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" }
@@ -191,23 +190,26 @@ export default function RateAnalysisPage() {
 
   const loadId = searchParams.get("load");
   const nameFromURL = searchParams.get("name");
-  const tribalFromURL = searchParams.get("tribal") === "true"; 
+  const tribalFromURL = searchParams.get("tribal") === "true";
 
   const [rows, setRows] = useState([]);
   const [bottomRows, setBottomRows] = useState(defaultBottomRows);
   const [itemCode, setItemCode] = useState("");
   const [insertIndex, setInsertIndex] = useState(null);
   const [nameOfWork, setNameOfWork] = useState(nameFromURL || "");
-  const [isTribal, setIsTribal] = useState(tribalFromURL); 
+  const [isTribal, setIsTribal] = useState(tribalFromURL);
   const [isLoaded, setIsLoaded] = useState(false);
   const [materialList, setMaterialList] = useState([]);
   const [saving, setSaving] = useState(false);
-  
-  // ✅ STEP 8: ADD LOADING STATE
   const [loadingEstimate, setLoadingEstimate] = useState(false);
-  
   const [currentEstimateId, setCurrentEstimateId] = useState(null);
   const [leadSettings, setLeadSettings] = useState({});
+
+  // ====== SEARCH FEATURE STATES ======
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const searchRef = useRef(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("leadSettings");
@@ -218,10 +220,55 @@ export default function RateAnalysisPage() {
 
   useEffect(() => {
     fetch("/api/material-list")
-      .then(res => res.json())
-      .then(data => setMaterialList(data))
-      .catch(err => console.error("Failed to load material list", err));
+      .then((res) => res.json())
+      .then((data) => setMaterialList(data))
+      .catch((err) => console.error("Failed to load material list", err));
   }, []);
+
+  // ====== SEARCH EFFECTS ======
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.trim().length > 2) {
+        fetch(`/api/search-items?q=${encodeURIComponent(searchQuery)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            setSearchResults(data.data || []);
+            setIsDropdownOpen(true);
+          })
+          .catch((err) => console.error("Search error:", err));
+      } else {
+        setSearchResults([]);
+        setIsDropdownOpen(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const highlightText = (text, highlight) => {
+    if (!highlight.trim() || !text) return text;
+    const terms = highlight.trim().split(/\s+/).filter((t) => t.length > 0);
+    const regex = new RegExp(`(${terms.join("|")})`, "gi");
+    const parts = text.split(regex);
+
+    return parts.map((part, i) =>
+      regex.test(part) ? (
+        <span key={i} className="bg-yellow-300 font-bold">{part}</span>
+      ) : (
+        part
+      )
+    );
+  };
 
   useEffect(() => {
     if (loadId) {
@@ -242,34 +289,32 @@ export default function RateAnalysisPage() {
     }
   }, [rows, bottomRows, isLoaded]);
 
-  // ✅ STEP 8: UPDATE FETCH LOGIC TO USE LOADER
   useEffect(() => {
     if (!loadId) return;
-
-    setLoadingEstimate(true); // START LOADER
+    setLoadingEstimate(true);
 
     fetch(`/api/estimate/${loadId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
           const loadedRows = data.data.rows || [];
-          const bRows = loadedRows.filter(r => r.isRoyalty);
-          const standardRows = loadedRows.filter(r => !r.isRoyalty).map((r, i) => ({ ...r, srNo: i + 1 }));
-          
+          const bRows = loadedRows.filter((r) => r.isRoyalty);
+          const standardRows = loadedRows.filter((r) => !r.isRoyalty).map((r, i) => ({ ...r, srNo: i + 1 }));
+
           setRows(standardRows);
           setBottomRows(bRows.length > 0 ? bRows : defaultBottomRows);
-          
+
           setNameOfWork(data.data.nameOfWork);
           if (data.data.isTribal !== undefined) setIsTribal(data.data.isTribal);
           setCurrentEstimateId(data.data._id);
-          
+
           localStorage.setItem("ra_rows", JSON.stringify(standardRows));
           localStorage.setItem("ra_bottom_rows", JSON.stringify(bRows.length > 0 ? bRows : defaultBottomRows));
         }
       })
       .catch((err) => console.error("Load error:", err))
       .finally(() => {
-        setLoadingEstimate(false); // STOP LOADER
+        setLoadingEstimate(false);
       });
   }, [loadId]);
 
@@ -281,18 +326,32 @@ export default function RateAnalysisPage() {
     const netAfterDeduct = row.basicRate - row.deduct;
     const totalLead = row.materials.reduce((sum, m) => sum + ((m.qty || 0) * (m.lead || 0)), 0);
     const total = netAfterDeduct + totalLead;
-    
+
     const tribalAmount = currentIsTribal ? (row.basicRate * 0.10) : 0;
-    
+
     const netTotal = total + tribalAmount;
     return { ...row, netAfterDeduct, totalLead, total, tribal: tribalAmount, netTotal };
   };
 
-  const addItem = async () => {
-    if (!itemCode) return;
+  // ✅ Updated addItem with duplicate SSR check
+  const addItem = async (specificCode) => {
+    const codeToUse = typeof specificCode === "string" ? specificCode : itemCode;
+    if (!codeToUse) return;
+
+    // Check if SSR already exists in current rows
+    const existingRow = rows.find((r) => r.ssr === codeToUse.trim());
+    if (existingRow) {
+      const userConfirmed = window.confirm(
+        `Item with SSR No. ${codeToUse} is already present in this estimate.\n\nDo you want to add another copy?`
+      );
+      if (!userConfirmed) {
+        if (typeof specificCode !== "string") setItemCode("");
+        return;
+      }
+    }
 
     try {
-      const code = itemCode.trim();
+      const code = codeToUse.trim();
       const res = await fetch(`/api/get-item?code=${code}`);
       const data = await res.json();
 
@@ -303,7 +362,7 @@ export default function RateAnalysisPage() {
 
       const completedRate = parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
       const description = data["Description of the item"] || "";
-      
+
       const unitFormatted = (data["Unit"] || "").trim().split(/\s+/).join("\n");
       const autoMaterials = getDefaultMaterialsForDescription(description, leadSettings);
 
@@ -326,7 +385,10 @@ export default function RateAnalysisPage() {
 
       setRows(updated.map((r, i) => ({ ...r, srNo: i + 1 })));
       setInsertIndex(null);
-      setItemCode("");
+
+      if (typeof specificCode !== "string") {
+        setItemCode("");
+      }
     } catch (err) {
       console.error("Fetch error:", err);
     }
@@ -443,7 +505,6 @@ export default function RateAnalysisPage() {
     updated[i] = { ...defaultBottomRows[i], id: updated[i].id };
     setBottomRows(updated);
   };
-  // -----------------------------
 
   const handleDragEnd = (e) => {
     const { active, over } = e;
@@ -473,8 +534,8 @@ export default function RateAnalysisPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nameOfWork,
-          isTribal, 
-          rows: [...rows, ...bottomRows], // Combine standard and royalty rows
+          isTribal,
+          rows: [...rows, ...bottomRows],
           estimateId: currentEstimateId,
         }),
       });
@@ -506,26 +567,26 @@ export default function RateAnalysisPage() {
     const freshSettings = JSON.parse(saved);
     setLeadSettings(freshSettings);
 
-    const updatedRows = rows.map(row => {
-      const updatedMaterials = row.materials.map(mat => {
+    const updatedRows = rows.map((row) => {
+      const updatedMaterials = row.materials.map((mat) => {
         if (mat.name) {
           const category = getCategoryFromMaterial(mat.name);
           if (category && freshSettings[category]) {
-             return { ...mat, lead: freshSettings[category].leadCharge || 0 };
+            return { ...mat, lead: freshSettings[category].leadCharge || 0 };
           }
         }
-        return mat; 
+        return mat;
       });
       return calculateRow({ ...row, materials: updatedMaterials }, isTribal);
     });
     setRows(updatedRows);
 
-    const updatedBottom = bottomRows.map(row => {
-      const updatedMaterials = row.materials.map(mat => {
+    const updatedBottom = bottomRows.map((row) => {
+      const updatedMaterials = row.materials.map((mat) => {
         if (mat.name) {
           const category = getCategoryFromMaterial(mat.name);
           if (category && freshSettings[category]) {
-             return { ...mat, lead: freshSettings[category].leadCharge || 0 };
+            return { ...mat, lead: freshSettings[category].leadCharge || 0 };
           }
         }
         return mat;
@@ -537,7 +598,6 @@ export default function RateAnalysisPage() {
     alert("Lead charges refreshed from Leads page.");
   };
 
-  // ✅ STEP 8: DISPLAY LOADING STATE (Tabs remain visible so layout doesn't jump)
   if (loadingEstimate) {
     return (
       <div className="p-4 bg-yellow-50 min-h-screen text-black">
@@ -571,13 +631,13 @@ export default function RateAnalysisPage() {
             </span>
           )}
         </div>
-        
+
         <div className="flex gap-2">
-          <DownloadPdfButton 
-            estimateId={currentEstimateId} 
-            nameOfWork={nameOfWork} 
+          <DownloadPdfButton
+            estimateId={currentEstimateId}
+            nameOfWork={nameOfWork}
             isTribal={isTribal}
-            rows={[...rows, ...bottomRows]} // Export all rows
+            rows={[...rows, ...bottomRows]}
             leadSettings={leadSettings}
           />
 
@@ -597,17 +657,64 @@ export default function RateAnalysisPage() {
         </div>
       </div>
 
-      <div className="flex gap-2 mb-4">
-        <input
-          value={itemCode}
-          onChange={(e) => setItemCode(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addItem()}
-          className="border p-2"
-          placeholder="SSR Item No"
-        />
-        <button onClick={addItem} className="bg-black text-white px-4 hover:bg-gray-800 transition-colors">
-          Add Item
-        </button>
+      {/* ====== SEARCH BAR ====== */}
+      <div className="flex gap-4 mb-4 items-center">
+        <div className="flex gap-2">
+          <input
+            value={itemCode}
+            onChange={(e) => setItemCode(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addItem()}
+            className="border p-2 w-[150px] shadow-sm rounded-md"
+            placeholder="SSR Item No"
+          />
+          <button
+            onClick={() => addItem()}
+            className="bg-black text-white px-4 py-2 hover:bg-gray-800 transition-colors rounded-md shadow-md"
+          >
+            Add Item
+          </button>
+        </div>
+
+        <div className="text-gray-400 font-bold">OR</div>
+
+        <div className="relative flex-1 max-w-3xl" ref={searchRef}>
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => {
+              if (searchResults.length > 0) setIsDropdownOpen(true);
+            }}
+            className="border p-2 w-full shadow-sm rounded-md"
+            placeholder="Search words in description..."
+          />
+
+          {isDropdownOpen && searchResults.length > 0 && (
+            <ul className="absolute z-50 w-full bg-white border border-gray-300 mt-1 max-h-[400px] overflow-y-auto shadow-xl rounded-md">
+              {searchResults.map((res, idx) => (
+                <li
+                  key={`${res.code}-${idx}`}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setIsDropdownOpen(false);
+                    addItem(res.code);
+                  }}
+                  className="p-3 border-b hover:bg-yellow-50 cursor-pointer text-sm transition-colors"
+                >
+                  <div className="font-bold text-blue-700 mb-1">SSR: {res.code}</div>
+                  <div className="text-gray-800">
+                    {highlightText(res.description, searchQuery)}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {isDropdownOpen && searchQuery.length > 2 && searchResults.length === 0 && (
+            <div className="absolute z-50 w-full bg-white border border-gray-300 mt-1 p-3 shadow-lg rounded-md text-gray-500">
+              No items found matching "{searchQuery}"
+            </div>
+          )}
+        </div>
       </div>
 
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -617,24 +724,23 @@ export default function RateAnalysisPage() {
               <thead className="bg-gray-200 border-b-2 border-gray-300">
                 <tr className="text-center font-bold text-gray-700">
                   <th className="border p-2">☰</th>
-                  <th className="border p-2">Sr</th>
-                  <th className="border p-2">SSR</th>
-                  <th className="border p-2 w-[350px]">Description</th>
-                  <th className="border p-2">Unit</th>
-                  <th className="border p-2">Basic Rate</th>
-                  <th className="border p-2">Deduct</th>
-                  <th className="border p-2">Net (5-6)</th>
-                  <th className="border p-2 w-[120px]">Material</th>
-                  <th className="border p-2 w-[80px]">Qty</th>
-                  <th className="border p-2 w-[100px]">Lead (Rs.)</th>
-                  <th className="border p-2">Total Lead</th>
-                  <th className="border p-2">Total (7+11)</th>
-                  <th className="border p-2">Tribal</th>
-                  <th className="border p-2">Net Total</th>
-                  <th className="border p-2 w-[200px]">Specs</th>
+                  <th className="border p-2 w-[40px]">Sr</th>
+                  <th className="border p-2 w-[80px]">SSR</th>
+                  <th className="border p-2 min-w-[350px]">Description</th>
+                  <th className="border p-2 w-[120px]">Unit</th>
+                  <th className="border p-2 w-[90px]">Basic Rate</th>
+                  <th className="border p-2 w-[100px]">Deduct (SCADA)</th>
+                  <th className="border p-2 w-[90px]">Net (5-6)</th>
+                  <th className="border p-2 w-[140px]">Material</th>
+                  <th className="border p-2 w-[70px]">Qty</th>
+                  <th className="border p-2 w-[90px]">Lead (Rs.)</th>
+                  <th className="border p-2 w-[90px]">Total Lead</th>
+                  <th className="border p-2 w-[100px]">Total (7+11)</th>
+                  <th className="border p-2 w-[70px]">Tribal</th>
+                  <th className="border p-2 w-[100px]">Net Total</th>
+                  <th className="border p-2 w-[150px]">Specs</th>
                   <th className="border p-2 sticky right-0 bg-gray-200 z-10 shadow-[-3px_0_5px_rgba(0,0,0,0.1)] w-[80px]">Actions</th>
                 </tr>
-                {/* Column Numbering Row */}
                 <tr className="bg-gray-100 text-[11px] font-bold text-gray-500 text-center">
                   <td className="border p-1"></td>
                   <td className="border p-1">1</td>
@@ -687,7 +793,6 @@ export default function RateAnalysisPage() {
                   </React.Fragment>
                 ))}
 
-                {/* BOTTOM FIXED ROYALTY ROWS */}
                 {bottomRows.map((row, i) => (
                   <StaticRow
                     key={row.id}
@@ -715,7 +820,17 @@ export default function RateAnalysisPage() {
 
 // Draggable Standard Row
 function SortableRow({
-  row, index, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, deleteRow, refreshRow, formatNumber, materialList,
+  row,
+  index,
+  isTribal,
+  updateRow,
+  updateMaterial,
+  addMaterial,
+  removeMaterial,
+  deleteRow,
+  refreshRow,
+  formatNumber,
+  materialList,
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: row.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -729,7 +844,7 @@ function SortableRow({
         <AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} />
       </td>
       <td className="border p-2">
-        <AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center" />
+        <AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center text-xs whitespace-pre-wrap" />
       </td>
       <td className="border p-2">
         <NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} />
@@ -739,7 +854,6 @@ function SortableRow({
       </td>
       <td className="border p-2 text-center text-gray-700">{formatNumber(row.netAfterDeduct)}</td>
 
-      {/* Material Input with Datalist */}
       <td className="border py-1 px-1 align-top">
         {row.materials.map((mat, matIdx) => (
           <div key={mat.id} className="flex items-center gap-1 leading-none mb-1">
@@ -751,7 +865,7 @@ function SortableRow({
               placeholder="Select/type"
             />
             <datalist id={`material-options-${row.id}-${matIdx}`}>
-              {materialList.map(matName => (
+              {materialList.map((matName) => (
                 <option key={matName} value={matName} />
               ))}
             </datalist>
@@ -773,7 +887,6 @@ function SortableRow({
         ))}
       </td>
 
-      {/* Editable Lead Input (Disabled for standard materials) */}
       <td className="border py-1 px-1 align-top">
         {row.materials.map((mat, matIdx) => {
           const isStandard = !!getCategoryFromMaterial(mat.name);
@@ -804,7 +917,17 @@ function SortableRow({
 
 // Static Royalty Row (Bottom Rows)
 function StaticRow({
-  row, index, globalIndex, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, clearRow, formatNumber, materialList,
+  row,
+  index,
+  globalIndex,
+  isTribal,
+  updateRow,
+  updateMaterial,
+  addMaterial,
+  removeMaterial,
+  clearRow,
+  formatNumber,
+  materialList,
 }) {
   return (
     <tr className="bg-gray-50 hover:bg-yellow-50 group transition-colors border-t-2 border-gray-200">
@@ -817,7 +940,7 @@ function StaticRow({
         <AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} />
       </td>
       <td className="border p-2">
-        <AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center" />
+        <AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center text-xs whitespace-pre-wrap" />
       </td>
       <td className="border p-2">
         <NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} />
@@ -827,7 +950,6 @@ function StaticRow({
       </td>
       <td className="border p-2 text-center text-gray-700">{formatNumber(row.netAfterDeduct)}</td>
 
-      {/* Material Input with Datalist */}
       <td className="border py-1 px-1 align-top">
         {row.materials.map((mat, matIdx) => (
           <div key={mat.id} className="flex items-center gap-1 leading-none mb-1">
@@ -839,7 +961,7 @@ function StaticRow({
               placeholder="Select/type"
             />
             <datalist id={`material-options-${row.id}-${matIdx}`}>
-              {materialList.map(matName => (
+              {materialList.map((matName) => (
                 <option key={matName} value={matName} />
               ))}
             </datalist>
@@ -861,7 +983,6 @@ function StaticRow({
         ))}
       </td>
 
-      {/* Editable Lead Input */}
       <td className="border py-1 px-1 align-top">
         {row.materials.map((mat, matIdx) => {
           const isStandard = !!getCategoryFromMaterial(mat.name);
