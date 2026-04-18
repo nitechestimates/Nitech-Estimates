@@ -4,16 +4,16 @@ import clientPromise from "@/lib/mongodb";
 import { z } from "zod";
 import { authOptions } from "../../auth/[...nextauth]/route";
 
-// ✅ Define schema (validation rules)
+// ✅ Validation schema – ensures required fields exist
 const estimateSchema = z.object({
   nameOfWork: z.string().min(1, "Name is required"),
   rows: z.array(z.any()).min(1, "At least one row required"),
-  createdAt: z.string().optional(),
+  createdAt: z.string().optional(),   // optional on input, we'll generate a fresh date anyway
 });
 
 export async function POST(request) {
   try {
-    // ✅ Auth check (fast version)
+    // 🔐 Auth check
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
@@ -23,26 +23,24 @@ export async function POST(request) {
       );
     }
 
-    // ✅ Parse request
+    // ✅ Parse and validate the request body
     const body = await request.json();
-
-    // ✅ Validate (this is the big upgrade)
     const data = estimateSchema.parse(body);
 
-    // ✅ DB connection
+    // ✅ Connect to DB
     const client = await clientPromise;
     const db = client.db("nitech_estimates");
 
-    // ✅ Create document
+    // ✅ Build the document to insert
     const estimate = {
       userId: session.user.email,
       nameOfWork: data.nameOfWork.trim(),
       rows: data.rows,
-      createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+      createdAt: new Date(),          // always use current server time
       updatedAt: new Date(),
     };
 
-    // ✅ Insert
+    // ✅ Insert into MongoDB
     const result = await db.collection("estimates").insertOne(estimate);
 
     return NextResponse.json({
@@ -51,7 +49,7 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    // ✅ Handle validation errors properly
+    // ✅ Handle Zod validation errors gracefully
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid data", details: error.errors },
@@ -59,9 +57,7 @@ export async function POST(request) {
       );
     }
 
-    // ✅ Prevent crash + hide internal errors
     console.error("SAVE ERROR:", error);
-
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

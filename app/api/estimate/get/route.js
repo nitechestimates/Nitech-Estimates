@@ -7,6 +7,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
+    // 🔐 Auth check – user must be logged in
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -17,27 +18,18 @@ export async function GET() {
     const client = await clientPromise;
     const db = client.db("nitech_estimates");
 
-    // ✅ Only fetch this user's data + projection (IMPORTANT)
+    // ✅ Fetch only estimates belonging to the logged-in user
+    //    Sort by creation date (newest first) – safe now that createdAt exists
     const estimates = await db
       .collection("estimates")
-      .find(
-        { userId: session.user.email },
-        {
-          projection: {
-            nameOfWork: 1,
-            createdAt: 1,
-            updatedAt: 1,
-          },
-        }
-      )
-      .sort({ createdAt: -1 }) // latest first
+      .find({ userId: session.user.email })
+      .sort({ createdAt: -1 })
       .toArray();
 
     return NextResponse.json(estimates);
 
   } catch (error) {
-    console.error("FETCH ERROR:", error);
-
+    console.error("🔥 FETCH ERROR:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
