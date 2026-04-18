@@ -44,9 +44,7 @@ function getCategoryFromMaterial(materialName) {
 
 // ========== Helper: Get default materials based on description ==========
 function getDefaultMaterialsForDescription(description, leadSettings) {
-  const defaultMaterials = [
-    { id: Date.now().toString() + "-mat1", name: "", qty: 0, lead: 0 }
-  ];
+  const defaultMaterials = [];
 
   if (!description) return defaultMaterials;
 
@@ -425,9 +423,6 @@ export default function RateAnalysisPage() {
   const removeMaterial = (rowIndex, matIndex) => {
     const updated = [...rows];
     updated[rowIndex].materials.splice(matIndex, 1);
-    if (updated[rowIndex].materials.length === 0) {
-      updated[rowIndex].materials.push({ id: Date.now().toString() + "-empty", name: "", qty: 0, lead: 0 });
-    }
     updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
     setRows(updated);
   };
@@ -492,9 +487,6 @@ export default function RateAnalysisPage() {
   const removeBottomMaterial = (rowIndex, matIndex) => {
     const updated = [...bottomRows];
     updated[rowIndex].materials.splice(matIndex, 1);
-    if (updated[rowIndex].materials.length === 0) {
-      updated[rowIndex].materials.push({ id: Date.now().toString() + "-empty", name: "", qty: 0, lead: 0 });
-    }
     updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
     setBottomRows(updated);
   };
@@ -854,29 +846,52 @@ function SortableRow({
       </td>
       <td className="border p-2 text-center text-gray-700">{formatNumber(row.netAfterDeduct)}</td>
 
+      {/* ✅ Material column with delete button for every material + add on last */}
       <td className="border py-1 px-1 align-top">
-        {row.materials.map((mat, matIdx) => (
-          <div key={mat.id} className="flex items-center gap-1 leading-none mb-1">
-            <input
-              list={`material-options-${row.id}-${matIdx}`}
-              value={mat.name}
-              onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)}
-              className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none"
-              placeholder="Select/type"
-            />
-            <datalist id={`material-options-${row.id}-${matIdx}`}>
-              {materialList.map((matName) => (
-                <option key={matName} value={matName} />
-              ))}
-            </datalist>
+        {row.materials.length === 0 ? (
+          <button
+            onClick={() => addMaterial(index)}
+            className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold"
+            title="Add material"
+          >
+            + Add Material
+          </button>
+        ) : (
+          row.materials.map((mat, matIdx) => (
+            <div key={mat.id} className="flex items-center gap-1 leading-none mb-1">
+              <input
+                list={`material-options-${row.id}-${matIdx}`}
+                value={mat.name}
+                onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)}
+                className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none"
+                placeholder="Select/type"
+              />
+              <datalist id={`material-options-${row.id}-${matIdx}`}>
+                {materialList.map((matName) => (
+                  <option key={matName} value={matName} />
+                ))}
+              </datalist>
 
-            {matIdx === row.materials.length - 1 ? (
-              <button onClick={() => addMaterial(index)} className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold" title="Add material">+</button>
-            ) : (
-              <button onClick={() => removeMaterial(index, matIdx)} className="text-red-600 text-xs px-1 hover:scale-110 transition font-bold" title="Remove material">−</button>
-            )}
-          </div>
-        ))}
+              <button
+                onClick={() => removeMaterial(index, matIdx)}
+                className="text-red-600 text-xs px-1 hover:scale-110 transition font-bold"
+                title="Remove material"
+              >
+                −
+              </button>
+
+              {matIdx === row.materials.length - 1 && (
+                <button
+                  onClick={() => addMaterial(index)}
+                  className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold"
+                  title="Add another material"
+                >
+                  +
+                </button>
+              )}
+            </div>
+          ))
+        )}
       </td>
 
       <td className="border py-1 px-1 align-top">
@@ -950,29 +965,52 @@ function StaticRow({
       </td>
       <td className="border p-2 text-center text-gray-700">{formatNumber(row.netAfterDeduct)}</td>
 
+      {/* ✅ Material column for royalty rows with delete and add buttons */}
       <td className="border py-1 px-1 align-top">
-        {row.materials.map((mat, matIdx) => (
-          <div key={mat.id} className="flex items-center gap-1 leading-none mb-1">
-            <input
-              list={`material-options-${row.id}-${matIdx}`}
-              value={mat.name}
-              onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)}
-              className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none"
-              placeholder="Select/type"
-            />
-            <datalist id={`material-options-${row.id}-${matIdx}`}>
-              {materialList.map((matName) => (
-                <option key={matName} value={matName} />
-              ))}
-            </datalist>
+        {row.materials.length === 0 ? (
+          <button
+            onClick={() => addMaterial(index)}
+            className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold"
+            title="Add material"
+          >
+            + Add Material
+          </button>
+        ) : (
+          row.materials.map((mat, matIdx) => (
+            <div key={mat.id} className="flex items-center gap-1 leading-none mb-1">
+              <input
+                list={`material-options-${row.id}-${matIdx}`}
+                value={mat.name}
+                onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)}
+                className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none"
+                placeholder="Select/type"
+              />
+              <datalist id={`material-options-${row.id}-${matIdx}`}>
+                {materialList.map((matName) => (
+                  <option key={matName} value={matName} />
+                ))}
+              </datalist>
 
-            {matIdx === row.materials.length - 1 ? (
-              <button onClick={() => addMaterial(index)} className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold" title="Add material">+</button>
-            ) : (
-              <button onClick={() => removeMaterial(index, matIdx)} className="text-red-600 text-xs px-1 hover:scale-110 transition font-bold" title="Remove material">−</button>
-            )}
-          </div>
-        ))}
+              <button
+                onClick={() => removeMaterial(index, matIdx)}
+                className="text-red-600 text-xs px-1 hover:scale-110 transition font-bold"
+                title="Remove material"
+              >
+                −
+              </button>
+
+              {matIdx === row.materials.length - 1 && (
+                <button
+                  onClick={() => addMaterial(index)}
+                  className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold"
+                  title="Add another material"
+                >
+                  +
+                </button>
+              )}
+            </div>
+          ))
+        )}
       </td>
 
       <td className="border py-1 px-1 align-top">
