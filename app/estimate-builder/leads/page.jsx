@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Tabs from "../components/Tabs";
+import { useStore } from "@/lib/store";
 
 const categories = [
   "Concrete Blocks  (Form)", "Murum, Building Rubish, Earth", "Excavated Rock    soling stone",
@@ -37,43 +38,36 @@ function getLeadChargeFromTable(leadData, category, distance) {
 
 export default function LeadsPage() {
   const [leadData, setLeadData] = useState(null);
-  const [settings, setSettings] = useState(defaultSettings);
   const [loaded, setLoaded] = useState(false);
+  
+  const leadSettings = useStore((state) => state.leadSettings);
+  const setLeadSettings = useStore((state) => state.setLeadSettings);
+  const updateLeadSetting = useStore((state) => state.updateLeadSetting);
+  const recalculateRARows = useStore((state) => state.recalculateRARowsWithLeadSettings);
 
   useEffect(() => {
     fetch("/api/leads-data").then(res => res.json()).then(data => setLeadData(data)).catch(err => console.error(err));
   }, []);
 
+  // Initialize settings if empty
   useEffect(() => {
-    const saved = localStorage.getItem("leadSettings");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        const merged = { ...defaultSettings };
-        for (const cat of categories) {
-          if (parsed[cat]) {
-            merged[cat] = { ...merged[cat], ...parsed[cat], leadCharge: parsed[cat].leadCharge ?? 0, distance: parsed[cat].distance ?? 0, source: parsed[cat].source ?? "Local" };
-          }
-        }
-        setSettings(merged);
-      } catch (e) {}
+    if (Object.keys(leadSettings).length === 0) {
+      setLeadSettings(defaultSettings);
     }
     setLoaded(true);
   }, []);
-
-  useEffect(() => {
-    if (loaded) localStorage.setItem("leadSettings", JSON.stringify(settings));
-  }, [settings, loaded]);
 
   const handleDistanceChange = (category, distance) => {
     const dist = parseFloat(distance) || 0;
     let leadCharge = 0;
     if (leadData && dist > 0) leadCharge = getLeadChargeFromTable(leadData, category, dist);
-    setSettings(prev => ({ ...prev, [category]: { ...prev[category], distance: dist, leadCharge: leadCharge } }));
+    updateLeadSetting(category, { distance: dist, leadCharge });
+    // Trigger recalculation in RA
+    setTimeout(() => recalculateRARows(), 0);
   };
 
   const handleSourceChange = (category, source) => {
-    setSettings(prev => ({ ...prev, [category]: { ...prev[category], source } }));
+    updateLeadSetting(category, { source });
   };
 
   if (!leadData || !loaded) return (
@@ -83,7 +77,6 @@ export default function LeadsPage() {
     </div>
   );
 
-  /* COMPLETELY FULL WIDTH WRAPPER applied here */
   return (
     <div className="min-h-screen bg-gray-50 w-full text-gray-900 animate-fade-in font-sans">
       <div className="w-full px-2 md:px-6 py-6 mx-auto">
@@ -112,7 +105,7 @@ export default function LeadsPage() {
                     <td className="px-6 py-4">
                       <div className="relative max-w-[150px] mx-auto">
                         <input
-                          type="number" step="0.1" min="0" value={settings[category]?.distance || 0}
+                          type="number" step="0.1" min="0" value={leadSettings[category]?.distance || 0}
                           onChange={e => handleDistanceChange(category, e.target.value)}
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-center font-semibold text-gray-900 pr-8"
                         />
@@ -121,12 +114,12 @@ export default function LeadsPage() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className="inline-block bg-emerald-50 text-emerald-700 border border-emerald-100 font-bold px-4 py-1.5 rounded-lg w-28 shadow-sm">
-                        ₹{(settings[category]?.leadCharge ?? 0).toFixed(2)}
+                        ₹{(leadSettings[category]?.leadCharge ?? 0).toFixed(2)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <input
-                        type="text" placeholder="e.g. Local Quarry" value={settings[category]?.source || ""}
+                        type="text" placeholder="e.g. Local Quarry" value={leadSettings[category]?.source || ""}
                         onChange={e => handleSourceChange(category, e.target.value)}
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-700"
                       />
