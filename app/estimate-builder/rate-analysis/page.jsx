@@ -190,6 +190,14 @@ export default function RateAnalysisPage() {
   const loadId = searchParams.get("load");
   const nameFromURL = searchParams.get("name");
   const tribalFromURL = searchParams.get("tribal") === "true";
+  const tribalPercentFromURL = searchParams.get("tribalPercent") || "";
+  const yojanaFromURL = searchParams.get("yojana") || "";
+  const estAmountFromURL = searchParams.get("estAmount") || "";
+  const labourInsuranceFromURL = searchParams.get("labourInsurance") || "";
+  const yearFromURL = searchParams.get("year") || "";
+  const distFromURL = searchParams.get("dist") || "";
+  const talukaFromURL = searchParams.get("taluka") || "";
+  const villageFromURL = searchParams.get("village") || "";
 
   // Zustand store
   const leadSettings = useStore((state) => state.leadSettings);
@@ -199,10 +207,20 @@ export default function RateAnalysisPage() {
   const setRABottomRows = useStore((state) => state.setRABottomRows);
   const nameOfWork = useStore((state) => state.nameOfWork);
   const isTribal = useStore((state) => state.isTribal);
+  const tribalPercent = useStore((state) => state.tribalPercent);
+  const yojana = useStore((state) => state.yojana);
+  const estAmount = useStore((state) => state.estAmount);
+  const labourInsurance = useStore((state) => state.labourInsurance);
+  const year = useStore((state) => state.year);
+  const dist = useStore((state) => state.dist);
+  const taluka = useStore((state) => state.taluka);
+  const village = useStore((state) => state.village);
   const currentEstimateId = useStore((state) => state.currentEstimateId);
   const setEstimateMeta = useStore((state) => state.setEstimateMeta);
   const recalculateRARows = useStore((state) => state.recalculateRARowsWithLeadSettings);
   const syncMeasurementFromRA = useStore((state) => state.syncMeasurementFromRA);
+  const yojanaList = useStore((state) => state.yojanaList);
+  const addYojana = useStore((state) => state.addYojana);
 
   // Local UI state
   const [itemCode, setItemCode] = useState("");
@@ -213,7 +231,10 @@ export default function RateAnalysisPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const searchRef = useRef(null);
+  const [editYojanaDropdown, setEditYojanaDropdown] = useState(false);
+  const editYojanaRef = useRef(null);
 
   // Local copies for UI (kept in sync with store)
   const [localRows, setLocalRows] = useState(raRows);
@@ -255,8 +276,23 @@ export default function RateAnalysisPage() {
 
   useEffect(() => { if (nameFromURL) setEstimateMeta({ nameOfWork: nameFromURL }); }, [nameFromURL]);
   useEffect(() => { if (tribalFromURL !== undefined) setEstimateMeta({ isTribal: tribalFromURL }); }, [tribalFromURL]);
+  useEffect(() => { if (tribalPercentFromURL) setEstimateMeta({ tribalPercent: tribalPercentFromURL }); }, [tribalPercentFromURL]);
+  useEffect(() => { if (yojanaFromURL) setEstimateMeta({ yojana: yojanaFromURL }); }, [yojanaFromURL]);
+  useEffect(() => { if (estAmountFromURL) setEstimateMeta({ estAmount: estAmountFromURL }); }, [estAmountFromURL]);
+  useEffect(() => { if (labourInsuranceFromURL) setEstimateMeta({ labourInsurance: labourInsuranceFromURL }); }, [labourInsuranceFromURL]);
+  useEffect(() => { if (yearFromURL) setEstimateMeta({ year: yearFromURL }); }, [yearFromURL]);
+  useEffect(() => { if (distFromURL) setEstimateMeta({ dist: distFromURL }); }, [distFromURL]);
+  useEffect(() => { if (talukaFromURL) setEstimateMeta({ taluka: talukaFromURL }); }, [talukaFromURL]);
+  useEffect(() => { if (villageFromURL) setEstimateMeta({ village: villageFromURL }); }, [villageFromURL]);
 
-  // Search effects
+  // Close edit yojana dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (editYojanaRef.current && !editYojanaRef.current.contains(e.target)) setEditYojanaDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
   useEffect(() => {
     function handleClickOutside(event) {
       if (searchRef.current && !searchRef.current.contains(event.target)) setIsDropdownOpen(false);
@@ -265,6 +301,7 @@ export default function RateAnalysisPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Search effects
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (searchQuery.trim().length > 2) {
@@ -439,7 +476,12 @@ export default function RateAnalysisPage() {
       const response = await fetch("/api/estimate/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nameOfWork, isTribal, rows: [...localRows, ...localBottomRows], estimateId: currentEstimateId }),
+        body: JSON.stringify({
+          nameOfWork, isTribal, tribalPercent, yojana,
+          estAmount, labourInsurance, year, dist, taluka, village,
+          rows: [...localRows, ...localBottomRows],
+          estimateId: currentEstimateId
+        }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -451,7 +493,24 @@ export default function RateAnalysisPage() {
     finally { setSaving(false); }
   };
 
+  // Save yojana to list when editing in modal
+  const handleModalYojanaChange = (val) => {
+    setEstimateMeta({ yojana: val });
+    setEditYojanaDropdown(true);
+  };
+  const handleModalYojanaSelect = (val) => {
+    setEstimateMeta({ yojana: val });
+    setEditYojanaDropdown(false);
+  };
+  const handleModalSave = () => {
+    const y = yojana?.trim();
+    if (y && !yojanaList.includes(y)) addYojana(y);
+    setShowEditModal(false);
+  };
+
   if (loadingEstimate) return <div className="p-4 bg-yellow-50 min-h-screen"><Tabs /><div className="flex justify-center items-center h-[70vh]"><div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div></div></div>;
+
+  const filteredYojanaList = (yojanaList || []).filter(y => y.toLowerCase().includes((yojana || "").toLowerCase()));
 
   return (
     <div className="p-4 bg-yellow-50 min-h-screen text-black animate-fade-in-up">
@@ -460,13 +519,200 @@ export default function RateAnalysisPage() {
         <div className="flex items-center gap-2">
           <span className="font-bold">Name of Work: </span>
           <input value={nameOfWork} onChange={e => setEstimateMeta({ nameOfWork: e.target.value })} className="border p-2 w-[400px] rounded" placeholder="Enter Name of Work" />
-          {isTribal && <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Tribal Estimate</span>}
+          {isTribal && <span className="ml-2 bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded">Tribal {tribalPercent ? `(${tribalPercent}%)` : ""}</span>}
         </div>
         <div className="flex gap-2">
+          {/* Edit Details Button */}
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="flex items-center gap-1.5 bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded hover:bg-gray-50 hover:border-gray-400 shadow-sm transition-all text-sm font-medium"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            Edit Details
+          </button>
           <DownloadPdfButton estimateId={currentEstimateId} nameOfWork={nameOfWork} isTribal={isTribal} rows={[...localRows, ...localBottomRows]} leadSettings={leadSettings} />
           <button onClick={saveEstimate} disabled={saving} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 shadow-md transition-all">{saving ? "Saving..." : "Save Estimate"}</button>
         </div>
       </div>
+
+      {/* ===== EDIT DETAILS MODAL ===== */}
+      {showEditModal && (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setShowEditModal(false)} />
+          {/* Drawer */}
+          <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white z-50 shadow-2xl flex flex-col animate-slide-in-right overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
+              <div>
+                <h2 className="text-lg font-extrabold text-gray-900">Edit Estimate Details</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Update any project info and click Save.</p>
+              </div>
+              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-700 transition p-1 rounded hover:bg-gray-200">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+              {/* Name of Work */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Work</label>
+                <input
+                  type="text"
+                  value={nameOfWork}
+                  onChange={e => setEstimateMeta({ nameOfWork: e.target.value })}
+                  className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
+                  placeholder="Name of Work"
+                />
+              </div>
+
+              {/* Yojana */}
+              <div className="relative" ref={editYojanaRef}>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Yojana / Fund</label>
+                <input
+                  type="text"
+                  value={yojana || ""}
+                  onChange={e => handleModalYojanaChange(e.target.value)}
+                  onFocus={() => setEditYojanaDropdown(true)}
+                  className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
+                  placeholder="Select or type new"
+                />
+                {editYojanaDropdown && filteredYojanaList.length > 0 && (
+                  <ul className="absolute z-10 bg-white border border-gray-200 w-full mt-1 rounded-lg shadow-lg max-h-32 overflow-y-auto">
+                    {filteredYojanaList.map(y => (
+                      <li key={y} onClick={() => handleModalYojanaSelect(y)} className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-800">{y}</li>
+                    ))}
+                  </ul>
+                )}
+                {(yojana || "").trim() && !yojanaList.includes((yojana || "").trim()) && (
+                  <p className="text-xs text-gray-400 mt-1">New entry – will be saved on submit.</p>
+                )}
+              </div>
+
+              {/* Tribal / Non-Tribal */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-2">Area Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEstimateMeta({ isTribal: false, tribalPercent: "" })}
+                    className={`relative flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all text-sm ${
+                      !isTribal ? "border-blue-500 bg-blue-50 text-blue-700 font-bold" : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
+                    }`}
+                  >
+                    {!isTribal && <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-blue-500 rounded-full flex items-center justify-center"><svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg></span>}
+                    Non-Tribal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEstimateMeta({ isTribal: true })}
+                    className={`relative flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all text-sm ${
+                      isTribal ? "border-orange-500 bg-orange-50 text-orange-700 font-bold" : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
+                    }`}
+                  >
+                    {isTribal && <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-orange-500 rounded-full flex items-center justify-center"><svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg></span>}
+                    Tribal
+                  </button>
+                </div>
+                {/* Tribal % */}
+                <div className={`mt-2 transition-all duration-300 overflow-hidden ${isTribal ? "max-h-20 opacity-100" : "max-h-0 opacity-0"}`}>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Tribal Percentage</label>
+                  <div className="relative">
+                    <input
+                      type="number" min="0" max="100"
+                      value={tribalPercent || ""}
+                      disabled={!isTribal}
+                      onChange={e => {
+                        const v = e.target.value;
+                        setEstimateMeta({ tribalPercent: v });
+                        if (v === "0" || v === "") setEstimateMeta({ isTribal: false, tribalPercent: "" });
+                      }}
+                      className="w-full border border-orange-300 bg-orange-50 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm text-gray-900 pr-8"
+                      placeholder="Enter %"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 font-bold text-sm">%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Est. Amount */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Est. Amount (₹)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">₹</span>
+                  <input
+                    type="number" min="0"
+                    value={estAmount || ""}
+                    onChange={e => setEstimateMeta({ estAmount: e.target.value })}
+                    className="w-full border border-gray-300 pl-7 pr-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
+                    placeholder="Estimated amount in rupees"
+                  />
+                </div>
+              </div>
+
+              {/* Labour Insurance */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Labour Insurance (%)</label>
+                <div className="relative">
+                  <input
+                    type="number" min="0" max="100" step="0.01"
+                    value={labourInsurance || ""}
+                    onChange={e => setEstimateMeta({ labourInsurance: e.target.value })}
+                    className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 pr-8"
+                    placeholder="Labour insurance %"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">%</span>
+                </div>
+              </div>
+
+              {/* Year */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Year</label>
+                <input
+                  type="text"
+                  value={year || ""}
+                  onChange={e => setEstimateMeta({ year: e.target.value })}
+                  className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
+                  placeholder="e.g. 2024-25"
+                />
+              </div>
+
+              {/* Dist / Taluka / Village */}
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Dist.</label>
+                  <input type="text" value={dist || ""} onChange={e => setEstimateMeta({ dist: e.target.value })} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="District" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Taluka</label>
+                  <input type="text" value={taluka || ""} onChange={e => setEstimateMeta({ taluka: e.target.value })} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Taluka" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Village</label>
+                  <input type="text" value={village || ""} onChange={e => setEstimateMeta({ village: e.target.value })} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Village" />
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t bg-gray-50 flex gap-3">
+              <button
+                onClick={handleModalSave}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-sm"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 bg-white border border-gray-300 text-gray-600 font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Search Bar */}
       <div className="flex gap-4 mb-4 items-center">
