@@ -17,7 +17,7 @@ export default function EstimateBuilderHome() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl mt-4">
         
         {/* Create New Estimate Card */}
         <button
@@ -49,6 +49,22 @@ export default function EstimateBuilderHome() {
           </div>
           <span className="text-2xl font-extrabold text-gray-900 z-10 group-hover:text-indigo-700 transition-colors">View History</span>
           <span className="text-gray-500 mt-2 text-sm z-10">Access your previously saved estimates</span>
+        </button>
+
+        {/* Data Sheet Card */}
+        <button
+          onClick={() => router.push("/estimate-builder/datasheet")}
+          className="group flex flex-col items-center justify-center p-12 bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-300 transition-all duration-500 transform hover:-translate-y-2 relative overflow-hidden w-full"
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+          <div className="w-24 h-24 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110 transition-all duration-500 shadow-inner group-hover:shadow-[0_10px_30px_-10px_rgba(16,185,129,0.7)] z-10">
+            <svg className="w-12 h-12 group-hover:scale-110 transition-transform duration-300 delay-75" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7M4 7c0-2 1-3 3-3h10c2 0 3 1 3 3M4 7h16M8 3v4M16 3v4M9 11h6M9 15h6" />
+            </svg>
+          </div>
+          <span className="text-2xl font-extrabold text-gray-900 z-10 group-hover:text-emerald-700 transition-colors">Data Sheet</span>
+          <span className="text-gray-500 mt-2 text-sm z-10">Manage Yojana / Fund names</span>
         </button>
 
       </div>
