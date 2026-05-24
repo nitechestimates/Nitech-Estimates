@@ -275,9 +275,23 @@ export default function RateAnalysisPage() {
           setRARows(standardRows);
           setRABottomRows(bRows.length ? bRows : defaultBottomRows);
           setEstimateMeta({
-            nameOfWork: data.data.nameOfWork,
-            isTribal: data.data.isTribal || false,
-            currentEstimateId: data.data._id
+            estimateName:     data.data.estimateName     || "",
+            nameOfWork:       data.data.nameOfWork       || "",
+            isTribal:         data.data.isTribal         || false,
+            tribalPercent:    data.data.tribalPercent    || "",
+            yojana:           data.data.yojana           || "",
+            estAmount:        data.data.estAmount        || "",
+            labourInsurance:  data.data.labourInsurance  || "",
+            year:             data.data.year             || "",
+            dist:             data.data.dist             || "",
+            taluka:           data.data.taluka           || "",
+            village:          data.data.village          || "",
+            headDivision:     data.data.headDivision     || "",
+            subDivision:      data.data.subDivision      || "",
+            deputyEngineer:   data.data.deputyEngineer   || "",
+            jrEngineer:       data.data.jrEngineer       || "",
+            adminApprovalNo:  data.data.adminApprovalNo  || "",
+            currentEstimateId: data.data._id,
           });
           syncMeasurementFromRA();
         }
