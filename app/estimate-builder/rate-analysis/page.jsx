@@ -191,6 +191,7 @@ export default function RateAnalysisPage() {
   const nameFromURL = searchParams.get("name");
   const tribalFromURL = searchParams.get("tribal") === "true";
   const tribalPercentFromURL = searchParams.get("tribalPercent") || "";
+  const estimateNameFromURL = searchParams.get("estimateName") || "";
   const yojanaFromURL = searchParams.get("yojana") || "";
   const estAmountFromURL = searchParams.get("estAmount") || "";
   const labourInsuranceFromURL = searchParams.get("labourInsurance") || "";
@@ -198,6 +199,11 @@ export default function RateAnalysisPage() {
   const distFromURL = searchParams.get("dist") || "";
   const talukaFromURL = searchParams.get("taluka") || "";
   const villageFromURL = searchParams.get("village") || "";
+  const headDivisionFromURL = searchParams.get("headDivision") || "";
+  const subDivisionFromURL = searchParams.get("subDivision") || "";
+  const deputyEngineerFromURL = searchParams.get("deputyEngineer") || "";
+  const jrEngineerFromURL = searchParams.get("jrEngineer") || "";
+  const adminApprovalNoFromURL = searchParams.get("adminApprovalNo") || "";
 
   // Zustand store
   const leadSettings = useStore((state) => state.leadSettings);
@@ -205,6 +211,7 @@ export default function RateAnalysisPage() {
   const setRARows = useStore((state) => state.setRARows);
   const raBottomRows = useStore((state) => state.raBottomRows);
   const setRABottomRows = useStore((state) => state.setRABottomRows);
+  const estimateName = useStore((state) => state.estimateName);
   const nameOfWork = useStore((state) => state.nameOfWork);
   const isTribal = useStore((state) => state.isTribal);
   const tribalPercent = useStore((state) => state.tribalPercent);
@@ -215,6 +222,11 @@ export default function RateAnalysisPage() {
   const dist = useStore((state) => state.dist);
   const taluka = useStore((state) => state.taluka);
   const village = useStore((state) => state.village);
+  const headDivision = useStore((state) => state.headDivision);
+  const subDivision = useStore((state) => state.subDivision);
+  const deputyEngineer = useStore((state) => state.deputyEngineer);
+  const jrEngineer = useStore((state) => state.jrEngineer);
+  const adminApprovalNo = useStore((state) => state.adminApprovalNo);
   const currentEstimateId = useStore((state) => state.currentEstimateId);
   const setEstimateMeta = useStore((state) => state.setEstimateMeta);
   const recalculateRARows = useStore((state) => state.recalculateRARowsWithLeadSettings);
@@ -277,6 +289,7 @@ export default function RateAnalysisPage() {
   useEffect(() => { if (nameFromURL) setEstimateMeta({ nameOfWork: nameFromURL }); }, [nameFromURL]);
   useEffect(() => { if (tribalFromURL !== undefined) setEstimateMeta({ isTribal: tribalFromURL }); }, [tribalFromURL]);
   useEffect(() => { if (tribalPercentFromURL) setEstimateMeta({ tribalPercent: tribalPercentFromURL }); }, [tribalPercentFromURL]);
+  useEffect(() => { if (estimateNameFromURL) setEstimateMeta({ estimateName: estimateNameFromURL }); }, [estimateNameFromURL]);
   useEffect(() => { if (yojanaFromURL) setEstimateMeta({ yojana: yojanaFromURL }); }, [yojanaFromURL]);
   useEffect(() => { if (estAmountFromURL) setEstimateMeta({ estAmount: estAmountFromURL }); }, [estAmountFromURL]);
   useEffect(() => { if (labourInsuranceFromURL) setEstimateMeta({ labourInsurance: labourInsuranceFromURL }); }, [labourInsuranceFromURL]);
@@ -284,6 +297,11 @@ export default function RateAnalysisPage() {
   useEffect(() => { if (distFromURL) setEstimateMeta({ dist: distFromURL }); }, [distFromURL]);
   useEffect(() => { if (talukaFromURL) setEstimateMeta({ taluka: talukaFromURL }); }, [talukaFromURL]);
   useEffect(() => { if (villageFromURL) setEstimateMeta({ village: villageFromURL }); }, [villageFromURL]);
+  useEffect(() => { if (headDivisionFromURL) setEstimateMeta({ headDivision: headDivisionFromURL }); }, [headDivisionFromURL]);
+  useEffect(() => { if (subDivisionFromURL) setEstimateMeta({ subDivision: subDivisionFromURL }); }, [subDivisionFromURL]);
+  useEffect(() => { if (deputyEngineerFromURL) setEstimateMeta({ deputyEngineer: deputyEngineerFromURL }); }, [deputyEngineerFromURL]);
+  useEffect(() => { if (jrEngineerFromURL) setEstimateMeta({ jrEngineer: jrEngineerFromURL }); }, [jrEngineerFromURL]);
+  useEffect(() => { if (adminApprovalNoFromURL) setEstimateMeta({ adminApprovalNo: adminApprovalNoFromURL }); }, [adminApprovalNoFromURL]);
 
   // Close edit yojana dropdown when clicking outside
   useEffect(() => {
@@ -324,11 +342,12 @@ export default function RateAnalysisPage() {
     return parts.map((part, i) => regex.test(part) ? <span key={i} className="bg-yellow-300 font-bold">{part}</span> : part);
   };
 
-  const calculateRow = (row, currentIsTribal = isTribal) => {
-    const netAfterDeduct = row.basicRate - row.deduct;
-    const totalLead = row.materials.reduce((sum, m) => sum + ((m.qty || 0) * (m.lead || 0)), 0);
+  const calculateRow = (row, currentIsTribal = isTribal, currentTribalPct = tribalPercent) => {
+    const netAfterDeduct = (row.basicRate || 0) - (row.deduct || 0);
+    const totalLead = (row.materials || []).reduce((sum, m) => sum + ((m.qty || 0) * (m.lead || 0)), 0);
     const total = netAfterDeduct + totalLead;
-    const tribalAmount = currentIsTribal ? (row.basicRate * 0.10) : 0;
+    const pct = currentIsTribal ? (parseFloat(currentTribalPct) || 0) : 0;
+    const tribalAmount = (total * pct) / 100;
     const netTotal = total + tribalAmount;
     return { ...row, netAfterDeduct, totalLead, total, tribal: tribalAmount, netTotal };
   };
@@ -477,8 +496,9 @@ export default function RateAnalysisPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nameOfWork, isTribal, tribalPercent, yojana,
+          estimateName, nameOfWork, isTribal, tribalPercent, yojana,
           estAmount, labourInsurance, year, dist, taluka, village,
+          headDivision, subDivision, deputyEngineer, jrEngineer, adminApprovalNo,
           rows: [...localRows, ...localBottomRows],
           estimateId: currentEstimateId
         }),
@@ -553,6 +573,18 @@ export default function RateAnalysisPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+              {/* Estimate Name */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Estimate Name <span className="text-gray-400 font-normal">(shown in history)</span></label>
+                <input
+                  type="text"
+                  value={estimateName || ""}
+                  onChange={e => setEstimateMeta({ estimateName: e.target.value })}
+                  className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
+                  placeholder="Short name for history"
+                />
+              </div>
 
               {/* Name of Work */}
               <div>
@@ -691,6 +723,41 @@ export default function RateAnalysisPage() {
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Village</label>
                   <input type="text" value={village || ""} onChange={e => setEstimateMeta({ village: e.target.value })} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Village" />
                 </div>
+              </div>
+
+              {/* Head Division */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Head Division</label>
+                <input type="text" value={headDivision || ""} onChange={e => setEstimateMeta({ headDivision: e.target.value })}
+                  className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Head Division" />
+              </div>
+
+              {/* Sub-Division */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Sub-Division</label>
+                <input type="text" value={subDivision || ""} onChange={e => setEstimateMeta({ subDivision: e.target.value })}
+                  className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Sub-Division" />
+              </div>
+
+              {/* Deputy Engineer */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Deputy Engineer</label>
+                <input type="text" value={deputyEngineer || ""} onChange={e => setEstimateMeta({ deputyEngineer: e.target.value })}
+                  className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Deputy Engineer" />
+              </div>
+
+              {/* Jr. / Sectional Engineer */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Jr. / Sectional Engineer</label>
+                <input type="text" value={jrEngineer || ""} onChange={e => setEstimateMeta({ jrEngineer: e.target.value })}
+                  className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Jr. / Sectional Engineer" />
+              </div>
+
+              {/* Administrative Approval No. */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Administrative Approval No.</label>
+                <input type="text" value={adminApprovalNo || ""} onChange={e => setEstimateMeta({ adminApprovalNo: e.target.value })}
+                  className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="e.g. AA/2024/XYZ/123" />
               </div>
 
             </div>

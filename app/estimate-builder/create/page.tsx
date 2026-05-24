@@ -4,8 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 
+const inputCls = "w-full border border-gray-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 text-sm";
+const labelCls = "block text-sm font-semibold text-gray-700 mb-2";
+
 export default function CreateEstimate() {
   const router = useRouter();
+  const [estimateName, setEstimateName] = useState("");
   const [name, setName] = useState("");
   const [isTribal, setIsTribal] = useState(false);
   const [tribalPercent, setTribalPercent] = useState<string>("");
@@ -17,6 +21,11 @@ export default function CreateEstimate() {
   const [dist, setDist] = useState("");
   const [taluka, setTaluka] = useState("");
   const [village, setVillage] = useState("");
+  const [headDivision, setHeadDivision] = useState("");
+  const [subDivision, setSubDivision] = useState("");
+  const [deputyEngineer, setDeputyEngineer] = useState("");
+  const [jrEngineer, setJrEngineer] = useState("");
+  const [adminApprovalNo, setAdminApprovalNo] = useState("");
 
   const yojanaList = useStore((state) => state.yojanaList);
   const addYojana = useStore((state) => state.addYojana);
@@ -38,24 +47,9 @@ export default function CreateEstimate() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Auto switch to non-tribal if percentage is 0
   const handleTribalPercentChange = (val: string) => {
     setTribalPercent(val);
-    if (val === "0" || val === "") {
-      setIsTribal(false);
-    }
-  };
-
-  const handleSelectTribal = () => {
-    setIsTribal(true);
-    if (tribalPercent === "" || tribalPercent === "0") {
-      setTribalPercent("");
-    }
-  };
-
-  const handleSelectNonTribal = () => {
-    setIsTribal(false);
-    setTribalPercent("");
+    if (val === "0" || val === "") setIsTribal(false);
   };
 
   const handleCreate = () => {
@@ -64,15 +58,14 @@ export default function CreateEstimate() {
       return;
     }
 
-    // Save new yojana if not already in list
     if (yojana.trim() && !yojanaList.includes(yojana.trim())) {
       addYojana(yojana.trim());
     }
 
-    // Reset all previous estimate data so new estimate is clean
     resetEstimate();
 
     const params = new URLSearchParams();
+    if (estimateName.trim()) params.set("estimateName", estimateName.trim());
     params.set("name", name);
     params.set("tribal", String(isTribal));
     if (isTribal && tribalPercent) params.set("tribalPercent", tribalPercent);
@@ -83,6 +76,11 @@ export default function CreateEstimate() {
     if (dist.trim()) params.set("dist", dist.trim());
     if (taluka.trim()) params.set("taluka", taluka.trim());
     if (village.trim()) params.set("village", village.trim());
+    if (headDivision.trim()) params.set("headDivision", headDivision.trim());
+    if (subDivision.trim()) params.set("subDivision", subDivision.trim());
+    if (deputyEngineer.trim()) params.set("deputyEngineer", deputyEngineer.trim());
+    if (jrEngineer.trim()) params.set("jrEngineer", jrEngineer.trim());
+    if (adminApprovalNo.trim()) params.set("adminApprovalNo", adminApprovalNo.trim());
 
     router.push(`/estimate-builder/rate-analysis?${params.toString()}`);
   };
@@ -102,29 +100,43 @@ export default function CreateEstimate() {
           <p className="text-gray-500 text-sm text-center">Fill in the project details to get started.</p>
         </div>
 
-        {/* Name of Work */}
+        {/* Estimate Name (display name for history) */}
         <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Name of Work</label>
+          <label className={labelCls}>
+            Estimate Name <span className="text-gray-400 font-normal text-xs">(shown in history)</span>
+          </label>
           <input
             type="text"
-            placeholder="e.g., Road Construction Phase 1"
+            placeholder="e.g., Phase 1 – Bridge Estimate"
+            value={estimateName}
+            onChange={(e) => setEstimateName(e.target.value)}
+            className={inputCls}
+          />
+        </div>
+
+        {/* Name of Work */}
+        <div className="mb-4">
+          <label className={labelCls}>Name of Work</label>
+          <input
+            type="text"
+            placeholder="e.g., Construction of Road Phase 1"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-            className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900"
+            className={inputCls}
           />
         </div>
 
         {/* Yojana / Fund */}
         <div className="mb-5 relative" ref={dropdownRef}>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Yojana / Fund</label>
+          <label className={labelCls}>Yojana / Fund</label>
           <input
             type="text"
             placeholder="Select or type new"
             value={yojana}
             onChange={(e) => { setYojana(e.target.value); setShowDropdown(true); }}
             onFocus={() => setShowDropdown(true)}
-            className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900"
+            className={inputCls}
           />
           {showDropdown && filteredSuggestions.length > 0 && (
             <ul className="absolute z-10 bg-white border border-gray-200 w-full mt-1 rounded-lg shadow-lg max-h-40 overflow-y-auto">
@@ -132,7 +144,7 @@ export default function CreateEstimate() {
                 <li
                   key={suggestion}
                   onClick={() => { setYojana(suggestion); setShowDropdown(false); }}
-                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-left text-gray-800"
+                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-left text-gray-800 text-sm"
                 >
                   {suggestion}
                 </li>
@@ -144,26 +156,20 @@ export default function CreateEstimate() {
           )}
         </div>
 
-        {/* Tribal / Non-Tribal Boxes */}
+        {/* Tribal / Non-Tribal */}
         <div className="mb-5">
-          <label className="block text-sm font-semibold text-gray-700 mb-3">Estimate Area Type</label>
+          <label className={labelCls}>Estimate Area Type</label>
           <div className="grid grid-cols-2 gap-3">
-
-            {/* Non-Tribal Box */}
             <button
               type="button"
-              onClick={handleSelectNonTribal}
+              onClick={() => { setIsTribal(false); setTribalPercent(""); }}
               className={`relative flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
-                !isTribal
-                  ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm"
-                  : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
+                !isTribal ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm" : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
               }`}
             >
               {!isTribal && (
                 <span className="absolute top-2 right-2 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                 </span>
               )}
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,21 +178,16 @@ export default function CreateEstimate() {
               <span className="text-sm font-semibold">Non-Tribal</span>
             </button>
 
-            {/* Tribal Box */}
             <button
               type="button"
-              onClick={handleSelectTribal}
+              onClick={() => setIsTribal(true)}
               className={`relative flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
-                isTribal
-                  ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm"
-                  : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
+                isTribal ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm" : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
               }`}
             >
               {isTribal && (
                 <span className="absolute top-2 right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
-                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                 </span>
               )}
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,21 +197,18 @@ export default function CreateEstimate() {
             </button>
           </div>
 
-          {/* Tribal Percentage Input */}
           <div className={`mt-3 overflow-hidden transition-all duration-300 ${isTribal ? "max-h-24 opacity-100" : "max-h-0 opacity-0"}`}>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Tribal Percentage <span className="text-orange-500">*</span>
             </label>
             <div className="relative">
               <input
-                type="number"
-                min="0"
-                max="100"
+                type="number" min="0" max="100"
                 placeholder="Enter tribal %"
                 value={tribalPercent}
                 disabled={!isTribal}
                 onChange={(e) => handleTribalPercentChange(e.target.value)}
-                className="w-full border border-orange-300 bg-orange-50 px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all text-gray-900 pr-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full border border-orange-300 bg-orange-50 px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all text-gray-900 pr-10 disabled:opacity-50"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 font-bold text-sm">%</span>
             </div>
@@ -220,82 +218,85 @@ export default function CreateEstimate() {
 
         {/* Est. Amount */}
         <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Est. Amount (₹)</label>
+          <label className={labelCls}>Est. Amount (₹)</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">₹</span>
-            <input
-              type="number"
-              min="0"
-              placeholder="Enter estimated amount"
-              value={estAmount}
+            <input type="number" min="0" placeholder="Estimated amount" value={estAmount}
               onChange={(e) => setEstAmount(e.target.value)}
-              className="w-full border border-gray-300 pl-8 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900"
-            />
+              className="w-full border border-gray-300 pl-8 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-900 text-sm" />
           </div>
         </div>
 
         {/* Labour Insurance */}
         <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Labour Insurance (%)</label>
+          <label className={labelCls}>Labour Insurance (%)</label>
           <div className="relative">
-            <input
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              placeholder="Enter labour insurance %"
-              value={labourInsurance}
+            <input type="number" min="0" max="100" step="0.01" placeholder="Labour insurance %" value={labourInsurance}
               onChange={(e) => setLabourInsurance(e.target.value)}
-              className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 pr-10"
-            />
+              className={`${inputCls} pr-10`} />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">%</span>
           </div>
         </div>
 
         {/* Year */}
         <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Year</label>
-          <input
-            type="text"
-            placeholder="e.g., 2024-25"
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900"
-          />
+          <label className={labelCls}>Year</label>
+          <input type="text" placeholder="e.g., 2024-25" value={year}
+            onChange={(e) => setYear(e.target.value)} className={inputCls} />
         </div>
 
         {/* Dist / Taluka / Village */}
-        <div className="mb-8 grid grid-cols-3 gap-3">
+        <div className="mb-4 grid grid-cols-3 gap-3">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Dist.</label>
-            <input
-              type="text"
-              placeholder="District"
-              value={dist}
-              onChange={(e) => setDist(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 text-sm"
-            />
+            <label className={labelCls}>Dist.</label>
+            <input type="text" placeholder="District" value={dist} onChange={(e) => setDist(e.target.value)}
+              className="w-full border border-gray-300 px-3 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-900 text-sm" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Taluka</label>
-            <input
-              type="text"
-              placeholder="Taluka"
-              value={taluka}
-              onChange={(e) => setTaluka(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 text-sm"
-            />
+            <label className={labelCls}>Taluka</label>
+            <input type="text" placeholder="Taluka" value={taluka} onChange={(e) => setTaluka(e.target.value)}
+              className="w-full border border-gray-300 px-3 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-900 text-sm" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Village</label>
-            <input
-              type="text"
-              placeholder="Village"
-              value={village}
-              onChange={(e) => setVillage(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 text-sm"
-            />
+            <label className={labelCls}>Village</label>
+            <input type="text" placeholder="Village" value={village} onChange={(e) => setVillage(e.target.value)}
+              className="w-full border border-gray-300 px-3 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-900 text-sm" />
           </div>
+        </div>
+
+        {/* Head Division */}
+        <div className="mb-4">
+          <label className={labelCls}>Name of Head Division</label>
+          <input type="text" placeholder="e.g., Nashik Division" value={headDivision}
+            onChange={(e) => setHeadDivision(e.target.value)} className={inputCls} />
+        </div>
+
+        {/* Sub-Division */}
+        <div className="mb-4">
+          <label className={labelCls}>Name of Sub-Division</label>
+          <input type="text" placeholder="e.g., Igatpuri Sub-Division" value={subDivision}
+            onChange={(e) => setSubDivision(e.target.value)} className={inputCls} />
+        </div>
+
+        {/* Deputy Engineer */}
+        <div className="mb-4">
+          <label className={labelCls}>Name of Deputy Engineer</label>
+          <input type="text" placeholder="Name of Deputy Engineer" value={deputyEngineer}
+            onChange={(e) => setDeputyEngineer(e.target.value)} className={inputCls} />
+        </div>
+
+        {/* Jr. / Sectional Engineer */}
+        <div className="mb-4">
+          <label className={labelCls}>Name of Jr. / Sectional Engineer</label>
+          <input type="text" placeholder="Name of Jr. / Sectional Engineer" value={jrEngineer}
+            onChange={(e) => setJrEngineer(e.target.value)} className={inputCls} />
+        </div>
+
+        {/* Administrative Approval No. */}
+        <div className="mb-8">
+          <label className={labelCls}>Administrative Approval No.</label>
+          <input type="text" placeholder="e.g., AA/2024/XYZ/123" value={adminApprovalNo}
+            onChange={(e) => setAdminApprovalNo(e.target.value)} className={inputCls} />
         </div>
 
         {/* Submit */}

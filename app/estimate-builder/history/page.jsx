@@ -111,73 +111,55 @@ export default function HistoryPage() {
               key={est._id}
               className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative group"
             >
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center font-bold text-xl">
-                  {est.nameOfWork?.charAt(0).toUpperCase() || "E"}
+              <div className="flex justify-between items-start mb-3">
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center font-bold text-xl flex-shrink-0">
+                  {(est.estimateName || est.nameOfWork)?.charAt(0).toUpperCase() || "E"}
                 </div>
                 <button
                   onClick={() => deleteEstimate(est._id)}
                   className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-md transition-colors opacity-0 group-hover:opacity-100"
                   title="Delete Estimate"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
               </div>
 
-              <h2 className="font-bold text-xl text-gray-900 mb-1 line-clamp-1" title={est.nameOfWork}>
-                {est.nameOfWork || "Untitled Project"}
+              {/* Estimate Name (primary) */}
+              <h2 className="font-bold text-xl text-gray-900 mb-0.5 line-clamp-1" title={est.estimateName || est.nameOfWork}>
+                {est.estimateName || est.nameOfWork || "Untitled Estimate"}
               </h2>
 
-              <div className="flex gap-4 text-sm text-gray-500 mb-6">
+              {/* Name of Work (subtitle, only if estimateName exists and is different) */}
+              {est.estimateName && est.nameOfWork && (
+                <p className="text-xs text-gray-500 mb-3 line-clamp-2" title={est.nameOfWork}>
+                  {est.nameOfWork}
+                </p>
+              )}
+              {!est.estimateName && (
+                <p className="text-xs text-gray-400 mb-3">No estimate name set</p>
+              )}
+
+              {/* Meta info */}
+              <div className="flex flex-wrap gap-3 text-xs text-gray-500 mb-5">
                 <span className="flex items-center gap-1">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  {est.createdAt
-                    ? new Date(est.createdAt).toLocaleDateString()
-                    : "—"}
+                  {(() => {
+                    const d = est.updatedAt || est.createdAt;
+                    if (!d) return "—";
+                    const date = new Date(d);
+                    return `Last saved: ${date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}, ${date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`;
+                  })()}
                 </span>
-                <span className="flex items-center gap-1">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 10h16M4 14h16M4 18h16"
-                    />
-                  </svg>
-                  Saved Project
-                </span>
+                {est.isTribal && (
+                  <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">Tribal</span>
+                )}
+                {est.yojana && (
+                  <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{est.yojana}</span>
+                )}
               </div>
 
               <Link
