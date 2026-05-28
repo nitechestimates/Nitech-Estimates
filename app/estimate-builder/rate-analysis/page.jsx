@@ -14,35 +14,6 @@ import Tabs from "../components/Tabs";
 import DownloadPdfButton from "../components/DownloadPdfButton";
 import { useStore } from "@/lib/store";
 
-// ========== Helper: map material name to category ==========
-function getCategoryFromMaterial(materialName) {
-  if (!materialName) return null;
-  const normalized = materialName.toLowerCase().trim();
-  const mapping = {
-    "Concrete Blocks  (Form)": ["concrete block", "form", "hollow block"],
-    "Murum, Building Rubish, Earth": ["murrum", "building rubbish", "earth"],
-    "Excavated Rock    soling stone": ["excavated rock", "soling stone"],
-    "Sand, (crush metal)  Stone below 40 mm, Normal Brick sider aggre. Timber": [
-      "sand", "stone below 40", "brick", "aggregate", "timber", "cr. metal", "brick sider"
-    ],
-    "Stone aggregate 40mm Normal size and above": ["stone aggregate 40mm", "stone aggregate above"],
-    "Cement, Lime, Stone Block, GI, CI, CC & AC Pipes /  Sheet& Plate,  Glass in packs, Distemper, AC Sheet, Fitting Iron Sheet": [
-      "cement", "lime", "stone block", "pipe", "sheet", "plate", "glass", "distemper", "ac sheet", "fitting iron"
-    ],
-    "Bricks           1000 nos      1cum=500 Bricks": ["brick"],
-    "Tiles Half Round Tiles / Roofing Tiles / Manglore Tiles": ["tile", "roofing", "half round", "manlore"],
-    "Steel        (MS, TMT, H.Y.S.D.) Structural Steel": ["steel", "ms", "tmt", "hysd", "structural"],
-    "Flooring Tiles Ceramic/ Marbonate": ["ceramic", "marble", "granite", "flooring tile"],
-  };
-
-  for (const [category, keywords] of Object.entries(mapping)) {
-    if (keywords.some((kw) => normalized.includes(kw))) {
-      return category;
-    }
-  }
-  return null;
-}
-
 // ========== Helper: Get default materials based on description ==========
 function getDefaultMaterialsForDescription(description, leadSettings) {
   const defaultMaterials = [];
@@ -72,18 +43,14 @@ function getDefaultMaterialsForDescription(description, leadSettings) {
       const materials = [
         { name: "Cement", qty: data.cement },
         { name: "Sand", qty: data.sand },
-        { name: "Stone Below 40 Mm (Cr. Metal)", qty: data.metal }
+        { name: "Stone ≤40mm (Crushed Metal)", qty: data.metal }
       ];
-      return materials.map((mat, index) => {
-        const category = getCategoryFromMaterial(mat.name);
-        const leadCharge = leadSettings[category]?.leadCharge || 0;
-        return {
-          id: Date.now().toString() + `-mat-${index}-${Math.random().toString(36).slice(2, 7)}`,
-          name: mat.name,
-          qty: mat.qty,
-          lead: leadCharge
-        };
-      });
+      return materials.map((mat, index) => ({
+        id: Date.now().toString() + `-mat-${index}-${Math.random().toString(36).slice(2, 7)}`,
+        name: mat.name,
+        qty: mat.qty,
+        lead: leadSettings[mat.name]?.leadCharge || 0
+      }));
     }
   }
 
@@ -412,8 +379,7 @@ export default function RateAnalysisPage() {
     const mat = updated[rowIndex].materials[matIndex];
     mat[field] = value;
     if (field === "name") {
-      const category = getCategoryFromMaterial(mat.name);
-      if (category) mat.lead = leadSettings[category]?.leadCharge || 0;
+      mat.lead = leadSettings[mat.name]?.leadCharge || 0;
     }
     updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
     setLocalRows(updated); setRARows(updated);
@@ -465,8 +431,7 @@ export default function RateAnalysisPage() {
     const mat = updated[rowIndex].materials[matIndex];
     mat[field] = value;
     if (field === "name") {
-      const category = getCategoryFromMaterial(mat.name);
-      if (category) mat.lead = leadSettings[category]?.leadCharge || 0;
+      mat.lead = leadSettings[mat.name]?.leadCharge || 0;
     }
     updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
     setLocalBottomRows(updated); setRABottomRows(updated);
@@ -880,8 +845,13 @@ function SortableRow({ row, index, isTribal, updateRow, updateMaterial, addMater
         )}
       </td>
       <td className="border py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" /></div>)}</td>
-      <td className="border py-1 px-1 align-top">{row.materials.map((mat, matIdx) => { const isStandard = !!getCategoryFromMaterial(mat.name); return <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" disabled={isStandard} /></div>; })}</td>
-      <td className="border p-2 text-center text-gray-700">{formatNumber(row.totalLead)}</td>
+      <td className="border py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" /></div>)}</td>
+      <td className="border p-2 text-center text-gray-700">
+        {row.materials.length > 0 && row.totalLead === 0
+          ? <span className="text-xs text-amber-500 font-medium italic">Add leads first</span>
+          : formatNumber(row.totalLead)
+        }
+      </td>
       <td className="border p-2 text-center font-medium">{formatNumber(row.total)}</td>
       <td className="border p-2 text-center font-semibold text-gray-700">{isTribal ? formatNumber(row.tribal) : "-"}</td>
       <td className="border p-2 text-center font-bold text-blue-800 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
@@ -922,8 +892,13 @@ function StaticRow({ row, index, globalIndex, isTribal, updateRow, updateMateria
         )}
       </td>
       <td className="border py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" /></div>)}</td>
-      <td className="border py-1 px-1 align-top">{row.materials.map((mat, matIdx) => { const isStandard = !!getCategoryFromMaterial(mat.name); return <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" disabled={isStandard} /></div>; })}</td>
-      <td className="border p-2 text-center text-gray-700">{formatNumber(row.totalLead)}</td>
+      <td className="border py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" /></div>)}</td>
+      <td className="border p-2 text-center text-gray-700">
+        {row.materials.length > 0 && row.totalLead === 0
+          ? <span className="text-xs text-amber-500 font-medium italic">Add leads first</span>
+          : formatNumber(row.totalLead)
+        }
+      </td>
       <td className="border p-2 text-center font-medium">{formatNumber(row.total)}</td>
       <td className="border p-2 text-center font-semibold text-gray-700">{isTribal ? formatNumber(row.tribal) : "-"}</td>
       <td className="border p-2 text-center font-bold text-blue-800 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
