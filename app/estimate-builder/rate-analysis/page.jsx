@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { DndContext, closestCenter } from "@dnd-kit/core";
@@ -13,6 +13,46 @@ import { CSS } from "@dnd-kit/utilities";
 import Tabs from "../components/Tabs";
 import DownloadPdfButton from "../components/DownloadPdfButton";
 import { useStore } from "@/lib/store";
+
+// ── 36 standard material names (must match leads.json keys exactly) ──────────
+const STANDARD_MATERIALS = [
+  "Sand",
+  "Stone ≤40mm (Crushed Metal)",
+  "Normal Brick Sider Aggregate",
+  "Timber",
+  "Stone Aggregate 40mm Normal Size & Above",
+  "Murrum",
+  "Building Rubbish",
+  "Earth",
+  "Manure",
+  "Sludge",
+  "Excavated Rock",
+  "Soling Stone",
+  "Concrete Block (FORM)",
+  "Cement",
+  "Lime",
+  "Stone Block",
+  "Sheet & Plate",
+  "Glass in Packs",
+  "Distemper",
+  "AC Sheet",
+  "Fitting Iron Sheet",
+  "GI Pipes",
+  "CI Pipes",
+  "CC Pipes",
+  "AC Pipes",
+  "Bricks — Per 1000 Nos",
+  "Tiles",
+  "Half Round Tiles",
+  "Roofing Tiles",
+  "Manglore Tiles",
+  "Steel MS",
+  "Steel TMT",
+  "Steel HYSD",
+  "Structural Steel",
+  "Flooring Tiles Ceramic",
+  "Flooring Tiles Marbonate",
+];
 
 // ========== Helper: Get default materials based on description ==========
 function getDefaultMaterialsForDescription(description, leadSettings) {
@@ -204,7 +244,6 @@ export default function RateAnalysisPage() {
   // Local UI state
   const [itemCode, setItemCode] = useState("");
   const [insertIndex, setInsertIndex] = useState(null);
-  const [materialList, setMaterialList] = useState([]);
   const [saving, setSaving] = useState(false);
   const [loadingEstimate, setLoadingEstimate] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -222,12 +261,13 @@ export default function RateAnalysisPage() {
   useEffect(() => { setLocalRows(raRows); }, [raRows]);
   useEffect(() => { setLocalBottomRows(raBottomRows); }, [raBottomRows]);
 
-  useEffect(() => {
-    fetch("/api/material-list")
-      .then((res) => res.json())
-      .then((data) => setMaterialList(data))
-      .catch((err) => console.error("Failed to load material list", err));
-  }, []);
+  // Build material list: standard 36 + any custom/regular leads from leadSettings
+  const materialList = useMemo(() => {
+    const fromLeads = Object.keys(leadSettings).filter(
+      (k) => !STANDARD_MATERIALS.includes(k)
+    );
+    return [...STANDARD_MATERIALS, ...fromLeads];
+  }, [leadSettings]);
 
   useEffect(() => {
     if (!loadId) return;
