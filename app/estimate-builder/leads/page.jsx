@@ -46,13 +46,21 @@ const STANDARD_MATERIALS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function interpolateRate(rates, km) {
-  const keys = Object.keys(rates).map(Number).sort((a, b) => a - b);
-  if (km <= keys[0]) return rates[keys[0]];
-  if (km >= keys[keys.length - 1]) return rates[keys[keys.length - 1]];
-  for (let i = 0; i < keys.length - 1; i++) {
-    if (km >= keys[i] && km <= keys[i + 1]) {
-      const t = (km - keys[i]) / (keys[i + 1] - keys[i]);
-      return +(rates[keys[i]] + t * (rates[keys[i + 1]] - rates[keys[i]])).toFixed(2);
+  // Build sorted [numericKey, value] pairs — avoids the "1.0" → 1 → "1" mismatch
+  const entries = Object.entries(rates)
+    .map(([k, v]) => [parseFloat(k), v])
+    .sort((a, b) => a[0] - b[0]);
+
+  if (entries.length === 0) return 0;
+  if (km <= entries[0][0]) return entries[0][1];
+  if (km >= entries[entries.length - 1][0]) return entries[entries.length - 1][1];
+
+  for (let i = 0; i < entries.length - 1; i++) {
+    const [k0, v0] = entries[i];
+    const [k1, v1] = entries[i + 1];
+    if (km >= k0 && km <= k1) {
+      const t = (km - k0) / (k1 - k0);
+      return +(v0 + t * (v1 - v0)).toFixed(2);
     }
   }
   return 0;
