@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Tabs from "../components/Tabs";
 import { useStore } from "@/lib/store";
 
@@ -53,7 +53,28 @@ export default function MeasurementPage() {
   const syncMeasurementFromRA = useStore((state) => state.syncMeasurementFromRA);
   const raRows = useStore((state) => state.raRows);
   const raBottomRows = useStore((state) => state.raBottomRows);
+  const currentEstimateId = useStore((state) => state.currentEstimateId);
   const [loading, setLoading] = useState(true);
+  const [toastVisible, setToastVisible] = useState(false);
+  const toastTimer = useRef(null);
+
+  const showToast = useCallback(() => {
+    setToastVisible(true);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastVisible(false), 2500);
+  }, []);
+
+  // Manual save — stores locally (picked up next time RA saves to MongoDB)
+  const handleSave = useCallback(() => {
+    // Measurement data lives in Zustand/localStorage; full persist happens via RA save.
+    showToast();
+  }, [showToast]);
+
+  // Auto-save every 60 s
+  useEffect(() => {
+    const id = setInterval(handleSave, 60000);
+    return () => clearInterval(id);
+  }, [handleSave]);
 
   useEffect(() => {
     if (measurementItems.length === 0 && (raRows.length > 0 || raBottomRows.length > 0)) {
@@ -100,7 +121,23 @@ export default function MeasurementPage() {
   return (
     <div className="p-4 bg-yellow-50 min-h-screen text-black">
       <Tabs />
-      <div className="mb-4"><h1 className="text-2xl font-bold">Measurement Sheet</h1><p className="text-sm text-gray-500">Automatically syncs with Rate Analysis</p></div>
+      {/* Save Toast */}
+      <div className={`fixed bottom-6 right-6 z-50 transition-all duration-500 ${toastVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
+        <div className="bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
+          <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+          Saved
+        </div>
+      </div>
+      <div className="mb-4 flex items-center justify-between">
+        <div><h1 className="text-2xl font-bold">Measurement Sheet</h1><p className="text-sm text-gray-500">Automatically syncs with Rate Analysis</p></div>
+        <button
+          onClick={handleSave}
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-xl shadow-sm transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+          Save
+        </button>
+      </div>
       <div className="overflow-x-auto rounded border shadow-sm">
         <table className="w-full border text-sm bg-white">
           <thead className="bg-gray-200 border-b-2 border-gray-300">

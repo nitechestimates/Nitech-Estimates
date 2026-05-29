@@ -246,6 +246,14 @@ export default function RateAnalysisPage() {
   const [insertIndex, setInsertIndex] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loadingEstimate, setLoadingEstimate] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const toastTimerRef = useRef(null);
+
+  const showToast = () => {
+    setToastVisible(true);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToastVisible(false), 2500);
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -506,9 +514,9 @@ export default function RateAnalysisPage() {
 
   const formatNumber = (num) => (num !== undefined && num !== null && !isNaN(num) ? Number(num).toFixed(3) : "0.000");
 
-  const saveEstimate = async () => {
-    if (!session) { alert("You must be logged in."); return; }
-    if (!nameOfWork.trim()) { alert("Please enter a Name of Work."); return; }
+  const saveEstimate = async (silent = false) => {
+    if (!session) { if (!silent) alert("You must be logged in."); return; }
+    if (!nameOfWork.trim()) { if (!silent) alert("Please enter a Name of Work."); return; }
     setSaving(true);
     try {
       const response = await fetch("/api/estimate/save", {
@@ -524,13 +532,21 @@ export default function RateAnalysisPage() {
       });
       const data = await response.json();
       if (response.ok) {
-        if (data.updated) alert("Estimate updated!");
-        else { alert("Estimate saved!"); if (data.id) setEstimateMeta({ currentEstimateId: data.id }); }
+        if (data.id) setEstimateMeta({ currentEstimateId: data.id });
+        if (!silent && !data.updated) alert("Estimate saved!");
+        showToast();
         syncMeasurementFromRA();
-      } else alert(data.error || "Failed to save.");
-    } catch (error) { console.error(error); alert("An error occurred."); }
+      } else if (!silent) alert(data.error || "Failed to save.");
+    } catch (error) { console.error(error); if (!silent) alert("An error occurred."); }
     finally { setSaving(false); }
   };
+
+  // Auto-save every 60 s (silent)
+  useEffect(() => {
+    const id = setInterval(() => saveEstimate(true), 60000);
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nameOfWork, localRows, localBottomRows, currentEstimateId, session]);
 
   // Save yojana to list when editing in modal
   const handleModalYojanaChange = (val) => {
@@ -554,6 +570,13 @@ export default function RateAnalysisPage() {
   return (
     <div className="p-4 bg-yellow-50 min-h-screen text-black animate-fade-in-up">
       <Tabs />
+      {/* ── Save Toast ── */}
+      <div className={`fixed bottom-6 right-6 z-50 transition-all duration-500 ${toastVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
+        <div className="bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
+          <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+          Saved
+        </div>
+      </div>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <span className="font-bold">Name of Work: </span>
