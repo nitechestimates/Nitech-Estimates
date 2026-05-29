@@ -385,7 +385,8 @@ export default function RateAnalysisPage() {
     return parts.map((part, i) => regex.test(part) ? <span key={i} className="bg-yellow-300 font-bold">{part}</span> : part);
   };
 
-  const calculateRow = (row, currentIsTribal = isTribal, currentTribalPct = tribalPercent) => {
+  // calculateRow can be defined outside or left here, but let's make it pure
+  const calculateRow = (row, currentIsTribal, currentTribalPct) => {
     const netAfterDeduct = (row.basicRate || 0) - (row.deduct || 0);
     const totalLead = (row.materials || []).reduce((sum, m) => sum + ((m.qty || 0) * (m.lead || 0)), 0);
     const total = netAfterDeduct + totalLead;
@@ -429,92 +430,148 @@ export default function RateAnalysisPage() {
     } catch (err) { console.error(err); }
   };
 
-  const updateRow = (i, field, value) => {
-    const updated = [...localRows];
-    updated[i][field] = value;
-    updated[i] = calculateRow(updated[i], isTribal);
-    setLocalRows(updated); setRARows(updated);
-  };
+  const updateRow = useCallback((i, field, value) => {
+    setLocalRows(prev => {
+      const updated = [...prev];
+      updated[i] = { ...updated[i], [field]: value };
+      const s = useStore.getState();
+      updated[i] = calculateRow(updated[i], s.isTribal, s.tribalPercent);
+      setRARows(updated);
+      return updated;
+    });
+  }, [setRARows]);
 
-  const updateMaterial = (rowIndex, matIndex, field, value) => {
-    const updated = [...localRows];
-    const mat = updated[rowIndex].materials[matIndex];
-    mat[field] = value;
-    if (field === "name") {
-      mat.lead = leadSettings[mat.name]?.leadCharge || 0;
-    }
-    updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
-    setLocalRows(updated); setRARows(updated);
-  };
+  const updateMaterial = useCallback((rowIndex, matIndex, field, value) => {
+    setLocalRows(prev => {
+      const updated = [...prev];
+      const row = { ...updated[rowIndex] };
+      row.materials = [...row.materials];
+      row.materials[matIndex] = { ...row.materials[matIndex], [field]: value };
+      const s = useStore.getState();
+      if (field === "name") {
+        row.materials[matIndex].lead = s.leadSettings[value]?.leadCharge || 0;
+      }
+      updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
+      setRARows(updated);
+      return updated;
+    });
+  }, [setRARows]);
 
-  const addMaterial = (rowIndex) => {
-    const updated = [...localRows];
-    updated[rowIndex].materials.push({ id: Date.now().toString() + "-mat" + Math.random(), name: "", qty: 0, lead: 0 });
-    setLocalRows(updated); setRARows(updated);
-  };
+  const addMaterial = useCallback((rowIndex) => {
+    setLocalRows(prev => {
+      const updated = [...prev];
+      const row = { ...updated[rowIndex] };
+      row.materials = [...row.materials, { id: Date.now().toString() + "-mat" + Math.random(), name: "", qty: 0, lead: 0 }];
+      updated[rowIndex] = row;
+      setRARows(updated);
+      return updated;
+    });
+  }, [setRARows]);
 
-  const removeMaterial = (rowIndex, matIndex) => {
-    const updated = [...localRows];
-    updated[rowIndex].materials.splice(matIndex, 1);
-    updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
-    setLocalRows(updated); setRARows(updated);
-  };
+  const removeMaterial = useCallback((rowIndex, matIndex) => {
+    setLocalRows(prev => {
+      const updated = [...prev];
+      const row = { ...updated[rowIndex] };
+      row.materials = [...row.materials];
+      row.materials.splice(matIndex, 1);
+      const s = useStore.getState();
+      updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
+      setRARows(updated);
+      return updated;
+    });
+  }, [setRARows]);
 
-  const deleteRow = (id) => {
-    const updated = localRows.filter(r => r.id !== id).map((r, i) => ({ ...r, srNo: i + 1 }));
-    setLocalRows(updated); setRARows(updated);
-    syncMeasurementFromRA();
-  };
+  const deleteRow = useCallback((id) => {
+    setLocalRows(prev => {
+      const updated = prev.filter(r => r.id !== id).map((r, i) => ({ ...r, srNo: i + 1 }));
+      setRARows(updated);
+      setTimeout(() => useStore.getState().syncMeasurementFromRA(), 0);
+      return updated;
+    });
+  }, [setRARows]);
 
-  const refreshRow = async (i) => {
+  const refreshRow = useCallback(async (i) => {
     if (!confirm("Revert to default SSR values? Your edits will be lost.")) return;
-    const code = localRows[i].ssr.trim();
+    const code = useStore.getState().raRows[i]?.ssr?.trim();
+    if (!code) return;
     const res = await fetch(`/api/get-item?code=${code}`);
     const data = await res.json();
     if (!data || data.error) return;
     const completedRate = parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
     const description = data["Description of the item"] || "";
     const unitFormatted = (data["Unit"] || "").trim().split(/\s+/).join("\n");
-    const autoMaterials = getDefaultMaterialsForDescription(description, leadSettings);
-    const updated = [...localRows];
-    updated[i] = calculateRow({ ...updated[i], description, unit: unitFormatted, basicRate: completedRate, specs: data["Additional Specification"] || "", deduct: 0, materials: autoMaterials, tribal: 0 }, isTribal);
-    setLocalRows(updated); setRARows(updated);
-  };
+    
+    setLocalRows(prev => {
+      const updated = [...prev];
+      const s = useStore.getState();
+      const autoMaterials = getDefaultMaterialsForDescription(description, s.leadSettings);
+      updated[i] = calculateRow({ ...updated[i], description, unit: unitFormatted, basicRate: completedRate, specs: data["Additional Specification"] || "", deduct: 0, materials: autoMaterials, tribal: 0 }, s.isTribal, s.tribalPercent);
+      setRARows(updated);
+      return updated;
+    });
+  }, [setRARows]);
 
   // Bottom rows handlers
-  const updateBottomRow = (i, field, value) => {
-    const updated = [...localBottomRows];
-    updated[i][field] = value;
-    updated[i] = calculateRow(updated[i], isTribal);
-    setLocalBottomRows(updated); setRABottomRows(updated);
-  };
-  const updateBottomMaterial = (rowIndex, matIndex, field, value) => {
-    const updated = [...localBottomRows];
-    const mat = updated[rowIndex].materials[matIndex];
-    mat[field] = value;
-    if (field === "name") {
-      mat.lead = leadSettings[mat.name]?.leadCharge || 0;
-    }
-    updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
-    setLocalBottomRows(updated); setRABottomRows(updated);
-  };
-  const addBottomMaterial = (rowIndex) => {
-    const updated = [...localBottomRows];
-    updated[rowIndex].materials.push({ id: Date.now().toString() + "-mat", name: "", qty: 0, lead: 0 });
-    setLocalBottomRows(updated); setRABottomRows(updated);
-  };
-  const removeBottomMaterial = (rowIndex, matIndex) => {
-    const updated = [...localBottomRows];
-    updated[rowIndex].materials.splice(matIndex, 1);
-    updated[rowIndex] = calculateRow(updated[rowIndex], isTribal);
-    setLocalBottomRows(updated); setRABottomRows(updated);
-  };
-  const clearBottomRow = (i) => {
+  const updateBottomRow = useCallback((i, field, value) => {
+    setLocalBottomRows(prev => {
+      const updated = [...prev];
+      updated[i] = { ...updated[i], [field]: value };
+      const s = useStore.getState();
+      updated[i] = calculateRow(updated[i], s.isTribal, s.tribalPercent);
+      setRABottomRows(updated);
+      return updated;
+    });
+  }, [setRABottomRows]);
+
+  const updateBottomMaterial = useCallback((rowIndex, matIndex, field, value) => {
+    setLocalBottomRows(prev => {
+      const updated = [...prev];
+      const row = { ...updated[rowIndex] };
+      row.materials = [...row.materials];
+      row.materials[matIndex] = { ...row.materials[matIndex], [field]: value };
+      const s = useStore.getState();
+      if (field === "name") {
+        row.materials[matIndex].lead = s.leadSettings[value]?.leadCharge || 0;
+      }
+      updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
+      setRABottomRows(updated);
+      return updated;
+    });
+  }, [setRABottomRows]);
+
+  const addBottomMaterial = useCallback((rowIndex) => {
+    setLocalBottomRows(prev => {
+      const updated = [...prev];
+      const row = { ...updated[rowIndex] };
+      row.materials = [...row.materials, { id: Date.now().toString() + "-mat", name: "", qty: 0, lead: 0 }];
+      updated[rowIndex] = row;
+      setRABottomRows(updated);
+      return updated;
+    });
+  }, [setRABottomRows]);
+
+  const removeBottomMaterial = useCallback((rowIndex, matIndex) => {
+    setLocalBottomRows(prev => {
+      const updated = [...prev];
+      const row = { ...updated[rowIndex] };
+      row.materials = [...row.materials];
+      row.materials.splice(matIndex, 1);
+      const s = useStore.getState();
+      updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
+      setRABottomRows(updated);
+      return updated;
+    });
+  }, [setRABottomRows]);
+
+  const clearBottomRow = useCallback((i) => {
     if (!confirm("Clear this royalty row?")) return;
-    const updated = [...localBottomRows];
-    updated[i] = { ...defaultBottomRows[i], id: updated[i].id };
-    setLocalBottomRows(updated); setRABottomRows(updated);
-  };
+    setLocalBottomRows(prev => {
+      const updated = [...prev];
+      updated[i] = { ...defaultBottomRows[i], id: updated[i].id };
+      setRABottomRows(updated);
+      return updated;
+    });
+  }, [setRABottomRows]);
 
   const handleDragEnd = (e) => {
     const { active, over } = e;
@@ -905,7 +962,7 @@ export default function RateAnalysisPage() {
 // SortableRow and StaticRow components remain exactly the same as in the original file.
 // I'll include them here for completeness.
 
-function SortableRow({ row, index, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, deleteRow, refreshRow, formatNumber, materialList }) {
+const SortableRow = React.memo(function SortableRow({ row, index, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, deleteRow, refreshRow, formatNumber, materialList }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: row.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
   return (
@@ -952,9 +1009,9 @@ function SortableRow({ row, index, isTribal, updateRow, updateMaterial, addMater
       </td>
     </tr>
   );
-}
+});
 
-function StaticRow({ row, index, globalIndex, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, clearRow, formatNumber, materialList }) {
+const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, clearRow, formatNumber, materialList }) {
   return (
     <tr className="bg-gray-50 hover:bg-yellow-50 group transition-colors border-t-2 border-gray-200">
       <td className="border p-2 text-center text-gray-300">📌</td>
@@ -996,4 +1053,4 @@ function StaticRow({ row, index, globalIndex, isTribal, updateRow, updateMateria
       </td>
     </tr>
   );
-}
+});
