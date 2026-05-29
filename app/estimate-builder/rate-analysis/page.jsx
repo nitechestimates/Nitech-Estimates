@@ -265,12 +265,10 @@ export default function RateAnalysisPage() {
   const [editYojanaDropdown, setEditYojanaDropdown] = useState(false);
   const editYojanaRef = useRef(null);
 
-  // Local copies for UI (kept in sync with store)
-  const [localRows, setLocalRows] = useState(raRows);
-  const [localBottomRows, setLocalBottomRows] = useState(raBottomRows);
-
-  useEffect(() => { setLocalRows(raRows); }, [raRows]);
-  useEffect(() => { setLocalBottomRows(raBottomRows); }, [raBottomRows]);
+  // Local copies — source of truth for UI; store is written for persistence only
+  // We do NOT sync store→local via useEffect (that caused triple renders per keystroke)
+  const [localRows, setLocalRows] = useState(() => raRows);
+  const [localBottomRows, setLocalBottomRows] = useState(() => raBottomRows);
 
   // Build material list: standard 36 + any custom/regular leads from leadSettings
   const materialList = useMemo(() => {
@@ -290,8 +288,12 @@ export default function RateAnalysisPage() {
           const loadedRows = data.data.rows || [];
           const bRows = loadedRows.filter((r) => r.isRoyalty);
           const standardRows = loadedRows.filter((r) => !r.isRoyalty).map((r, i) => ({ ...r, srNo: i + 1 }));
+          const bottomRows = bRows.length ? bRows : defaultBottomRows;
+          // Set BOTH store AND local state — avoids needing the sync useEffect
           setRARows(standardRows);
-          setRABottomRows(bRows.length ? bRows : defaultBottomRows);
+          setLocalRows(standardRows);
+          setRABottomRows(bottomRows);
+          setLocalBottomRows(bottomRows);
           setEstimateMeta({
             estimateName:     data.data.estimateName     || "",
             nameOfWork:       data.data.nameOfWork       || "",
@@ -316,30 +318,30 @@ export default function RateAnalysisPage() {
         setLoadingEstimate(false);
       })
       .catch((err) => { console.error(err); setLoadingEstimate(false); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadId]);
 
-  // ── Apply ALL URL params once on mount (not on every re-render) ──
-  const urlParamsApplied = useRef(false);
+  // Apply URL params on mount — only overwrites empty store fields (idempotent)
   useEffect(() => {
-    if (urlParamsApplied.current || loadId) return; // Skip if loading from DB
-    urlParamsApplied.current = true;
+    if (loadId) return; // DB load will set these
+    const s = useStore.getState();
     const updates = {};
-    if (nameFromURL)             updates.nameOfWork        = nameFromURL;
-    if (tribalFromURL !== undefined) updates.isTribal      = tribalFromURL;
-    if (tribalPercentFromURL)    updates.tribalPercent     = tribalPercentFromURL;
-    if (estimateNameFromURL)     updates.estimateName      = estimateNameFromURL;
-    if (yojanaFromURL)           updates.yojana            = yojanaFromURL;
-    if (estAmountFromURL)        updates.estAmount         = estAmountFromURL;
-    if (labourInsuranceFromURL)  updates.labourInsurance   = labourInsuranceFromURL;
-    if (yearFromURL)             updates.year              = yearFromURL;
-    if (distFromURL)             updates.dist              = distFromURL;
-    if (talukaFromURL)           updates.taluka            = talukaFromURL;
-    if (villageFromURL)          updates.village           = villageFromURL;
-    if (headDivisionFromURL)     updates.headDivision      = headDivisionFromURL;
-    if (subDivisionFromURL)      updates.subDivision       = subDivisionFromURL;
-    if (deputyEngineerFromURL)   updates.deputyEngineer    = deputyEngineerFromURL;
-    if (jrEngineerFromURL)       updates.jrEngineer        = jrEngineerFromURL;
-    if (adminApprovalNoFromURL)  updates.adminApprovalNo   = adminApprovalNoFromURL;
+    if (nameFromURL && !s.nameOfWork)            updates.nameOfWork        = nameFromURL;
+    if (tribalFromURL && !s.isTribal)             updates.isTribal          = tribalFromURL;
+    if (tribalPercentFromURL && !s.tribalPercent) updates.tribalPercent     = tribalPercentFromURL;
+    if (estimateNameFromURL && !s.estimateName)   updates.estimateName      = estimateNameFromURL;
+    if (yojanaFromURL && !s.yojana)               updates.yojana            = yojanaFromURL;
+    if (estAmountFromURL && !s.estAmount)         updates.estAmount         = estAmountFromURL;
+    if (labourInsuranceFromURL && !s.labourInsurance) updates.labourInsurance = labourInsuranceFromURL;
+    if (yearFromURL && !s.year)                   updates.year              = yearFromURL;
+    if (distFromURL && !s.dist)                   updates.dist              = distFromURL;
+    if (talukaFromURL && !s.taluka)               updates.taluka            = talukaFromURL;
+    if (villageFromURL && !s.village)             updates.village           = villageFromURL;
+    if (headDivisionFromURL && !s.headDivision)   updates.headDivision      = headDivisionFromURL;
+    if (subDivisionFromURL && !s.subDivision)     updates.subDivision       = subDivisionFromURL;
+    if (deputyEngineerFromURL && !s.deputyEngineer) updates.deputyEngineer  = deputyEngineerFromURL;
+    if (jrEngineerFromURL && !s.jrEngineer)       updates.jrEngineer        = jrEngineerFromURL;
+    if (adminApprovalNoFromURL && !s.adminApprovalNo) updates.adminApprovalNo = adminApprovalNoFromURL;
     if (Object.keys(updates).length > 0) setEstimateMeta(updates);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -523,34 +525,44 @@ export default function RateAnalysisPage() {
     const updated = newRows.map((r, i) => ({ ...r, srNo: i + 1 }));
     setLocalRows(updated); setRARows(updated);
   };
-
   const formatNumber = (num) => (num !== undefined && num !== null && !isNaN(num) ? Number(num).toFixed(3) : "0.000");
 
   const saveEstimate = async (silent = false) => {
     if (!session) { if (!silent) alert("You must be logged in."); return; }
-    if (!nameOfWork.trim()) { if (!silent) alert("Please enter a Name of Work."); return; }
+    const currentName = useStore.getState().nameOfWork || nameOfWork;
+    if (!currentName.trim()) { if (!silent) alert("Please enter a Name of Work first."); return; }
     setSaving(true);
     try {
+      const s = useStore.getState();
       const response = await fetch("/api/estimate/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          estimateName, nameOfWork, isTribal, tribalPercent, yojana,
-          estAmount, labourInsurance, year, dist, taluka, village,
-          headDivision, subDivision, deputyEngineer, jrEngineer, adminApprovalNo,
+          estimateName: s.estimateName, nameOfWork: s.nameOfWork,
+          isTribal: s.isTribal, tribalPercent: s.tribalPercent, yojana: s.yojana,
+          estAmount: s.estAmount, labourInsurance: s.labourInsurance, year: s.year,
+          dist: s.dist, taluka: s.taluka, village: s.village,
+          headDivision: s.headDivision, subDivision: s.subDivision,
+          deputyEngineer: s.deputyEngineer, jrEngineer: s.jrEngineer,
+          adminApprovalNo: s.adminApprovalNo,
           rows: [...localRows, ...localBottomRows],
-          estimateId: currentEstimateId
+          estimateId: s.currentEstimateId,
+          leadSettings: s.leadSettings, leadOrder: s.leadOrder,
         }),
       });
       const data = await response.json();
       if (response.ok) {
         if (data.id) setEstimateMeta({ currentEstimateId: data.id });
-        if (!silent && !data.updated) alert("Estimate saved!");
         showToast();
         syncMeasurementFromRA();
-      } else if (!silent) alert(data.error || "Failed to save.");
-    } catch (error) { console.error(error); if (!silent) alert("An error occurred."); }
-    finally { setSaving(false); }
+      } else {
+        console.error("Save failed:", data);
+        if (!silent) alert(data.error || "Failed to save estimate.");
+      }
+    } catch (error) {
+      console.error("Save error:", error);
+      if (!silent) alert("Network error — could not save.");
+    } finally { setSaving(false); }
   };
 
   // Auto-save every 60 s — use a ref so interval is created once and never restarts

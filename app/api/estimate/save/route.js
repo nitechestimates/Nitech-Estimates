@@ -8,7 +8,7 @@ import { ObjectId } from "mongodb"; // ← Add this import
 // Validation schema
 const estimateSchema = z.object({
   nameOfWork: z.string().min(1, "Name is required"),
-  rows: z.array(z.any()).min(1, "At least one row required"),
+  rows: z.array(z.any()).optional().default([]),  // Allow empty rows
   isTribal: z.boolean().optional(),
   estimateName: z.string().optional(),
   tribalPercent: z.string().optional(),
