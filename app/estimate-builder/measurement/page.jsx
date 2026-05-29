@@ -83,9 +83,18 @@ export default function MeasurementPage() {
     setLoading(false);
   }, []);
 
+  // Sync measurement items when RA rows change — use a ref to avoid infinite loop
+  const prevRARef = useRef("");
   useEffect(() => {
-    syncMeasurementFromRA();
-  }, [raRows, raBottomRows, syncMeasurementFromRA]);
+    const raKey = JSON.stringify(
+      [...raRows, ...raBottomRows].map(r => ({ id: r.id, desc: r.description, unit: r.unit }))
+    );
+    if (raKey !== prevRARef.current) {
+      prevRARef.current = raKey;
+      syncMeasurementFromRA();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [raRows, raBottomRows]);
 
   const addMeasurement = (itemIndex) => {
     const updated = [...measurementItems];

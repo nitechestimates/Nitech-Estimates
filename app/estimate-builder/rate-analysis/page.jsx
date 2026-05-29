@@ -97,56 +97,59 @@ function getDefaultMaterialsForDescription(description, leadSettings) {
   return defaultMaterials;
 }
 
-// ========== Numeric Input ==========
+// ========== Numeric Input — fires onChange only on blur to avoid store thrashing ==========
 function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
   const [displayValue, setDisplayValue] = useState(
     value !== undefined && value !== null ? value.toString() : "0"
   );
   const inputRef = useRef(null);
+  const isFocused = useRef(false);
 
   useEffect(() => {
-    if (document.activeElement !== inputRef.current) {
-      const formatted = (value || 0).toFixed(3);
-      setDisplayValue(formatted);
+    if (!isFocused.current) {
+      setDisplayValue(value !== undefined && value !== null ? (value || 0).toFixed(3) : "0.000");
     }
   }, [value]);
 
   const handleFocus = () => {
-    setDisplayValue((value || 0).toString());
+    isFocused.current = true;
+    setDisplayValue((value || 0) === 0 ? "" : (value || 0).toString());
   };
 
   const handleChange = (e) => {
     let raw = e.target.value;
+    // Allow only digits and one dot
     raw = raw.replace(/[^0-9.]/g, "");
     const parts = raw.split(".");
     if (parts.length > 2) raw = parts[0] + "." + parts.slice(1).join("");
-    if (parts.length === 2 && parts[1].length > 3)
-      raw = parts[0] + "." + parts[1].slice(0, 3);
+    if (parts.length === 2 && parts[1].length > 3) raw = parts[0] + "." + parts[1].slice(0, 3);
     setDisplayValue(raw);
-    const num = parseFloat(raw);
-    if (!isNaN(num)) onChange(num);
-    else if (raw === "") onChange(0);
+    // Only call onChange for complete valid numbers (not trailing-dot partials)
+    if (raw !== "" && !raw.endsWith(".")) {
+      const num = parseFloat(raw);
+      if (!isNaN(num)) onChange(num);
+    } else if (raw === "") {
+      onChange(0);
+    }
   };
 
   const handleBlur = () => {
+    isFocused.current = false;
     let num = parseFloat(displayValue);
     if (isNaN(num)) num = 0;
-    const formatted = num.toFixed(3);
-    setDisplayValue(formatted);
+    setDisplayValue(num.toFixed(3));
     onChange(num);
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      inputRef.current.blur();
-    }
+    if (e.key === "Enter") { e.preventDefault(); inputRef.current.blur(); }
   };
 
   return (
     <input
       ref={inputRef}
       type="text"
+      inputMode="decimal"
       value={displayValue}
       onFocus={handleFocus}
       onChange={handleChange}
@@ -315,22 +318,31 @@ export default function RateAnalysisPage() {
       .catch((err) => { console.error(err); setLoadingEstimate(false); });
   }, [loadId]);
 
-  useEffect(() => { if (nameFromURL) setEstimateMeta({ nameOfWork: nameFromURL }); }, [nameFromURL]);
-  useEffect(() => { if (tribalFromURL !== undefined) setEstimateMeta({ isTribal: tribalFromURL }); }, [tribalFromURL]);
-  useEffect(() => { if (tribalPercentFromURL) setEstimateMeta({ tribalPercent: tribalPercentFromURL }); }, [tribalPercentFromURL]);
-  useEffect(() => { if (estimateNameFromURL) setEstimateMeta({ estimateName: estimateNameFromURL }); }, [estimateNameFromURL]);
-  useEffect(() => { if (yojanaFromURL) setEstimateMeta({ yojana: yojanaFromURL }); }, [yojanaFromURL]);
-  useEffect(() => { if (estAmountFromURL) setEstimateMeta({ estAmount: estAmountFromURL }); }, [estAmountFromURL]);
-  useEffect(() => { if (labourInsuranceFromURL) setEstimateMeta({ labourInsurance: labourInsuranceFromURL }); }, [labourInsuranceFromURL]);
-  useEffect(() => { if (yearFromURL) setEstimateMeta({ year: yearFromURL }); }, [yearFromURL]);
-  useEffect(() => { if (distFromURL) setEstimateMeta({ dist: distFromURL }); }, [distFromURL]);
-  useEffect(() => { if (talukaFromURL) setEstimateMeta({ taluka: talukaFromURL }); }, [talukaFromURL]);
-  useEffect(() => { if (villageFromURL) setEstimateMeta({ village: villageFromURL }); }, [villageFromURL]);
-  useEffect(() => { if (headDivisionFromURL) setEstimateMeta({ headDivision: headDivisionFromURL }); }, [headDivisionFromURL]);
-  useEffect(() => { if (subDivisionFromURL) setEstimateMeta({ subDivision: subDivisionFromURL }); }, [subDivisionFromURL]);
-  useEffect(() => { if (deputyEngineerFromURL) setEstimateMeta({ deputyEngineer: deputyEngineerFromURL }); }, [deputyEngineerFromURL]);
-  useEffect(() => { if (jrEngineerFromURL) setEstimateMeta({ jrEngineer: jrEngineerFromURL }); }, [jrEngineerFromURL]);
-  useEffect(() => { if (adminApprovalNoFromURL) setEstimateMeta({ adminApprovalNo: adminApprovalNoFromURL }); }, [adminApprovalNoFromURL]);
+  // ── Apply ALL URL params once on mount (not on every re-render) ──
+  const urlParamsApplied = useRef(false);
+  useEffect(() => {
+    if (urlParamsApplied.current || loadId) return; // Skip if loading from DB
+    urlParamsApplied.current = true;
+    const updates = {};
+    if (nameFromURL)             updates.nameOfWork        = nameFromURL;
+    if (tribalFromURL !== undefined) updates.isTribal      = tribalFromURL;
+    if (tribalPercentFromURL)    updates.tribalPercent     = tribalPercentFromURL;
+    if (estimateNameFromURL)     updates.estimateName      = estimateNameFromURL;
+    if (yojanaFromURL)           updates.yojana            = yojanaFromURL;
+    if (estAmountFromURL)        updates.estAmount         = estAmountFromURL;
+    if (labourInsuranceFromURL)  updates.labourInsurance   = labourInsuranceFromURL;
+    if (yearFromURL)             updates.year              = yearFromURL;
+    if (distFromURL)             updates.dist              = distFromURL;
+    if (talukaFromURL)           updates.taluka            = talukaFromURL;
+    if (villageFromURL)          updates.village           = villageFromURL;
+    if (headDivisionFromURL)     updates.headDivision      = headDivisionFromURL;
+    if (subDivisionFromURL)      updates.subDivision       = subDivisionFromURL;
+    if (deputyEngineerFromURL)   updates.deputyEngineer    = deputyEngineerFromURL;
+    if (jrEngineerFromURL)       updates.jrEngineer        = jrEngineerFromURL;
+    if (adminApprovalNoFromURL)  updates.adminApprovalNo   = adminApprovalNoFromURL;
+    if (Object.keys(updates).length > 0) setEstimateMeta(updates);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Close edit yojana dropdown when clicking outside
   useEffect(() => {
@@ -541,12 +553,13 @@ export default function RateAnalysisPage() {
     finally { setSaving(false); }
   };
 
-  // Auto-save every 60 s (silent)
+  // Auto-save every 60 s — use a ref so interval is created once and never restarts
+  const saveRef = useRef(null);
+  useEffect(() => { saveRef.current = () => saveEstimate(true); });
   useEffect(() => {
-    const id = setInterval(() => saveEstimate(true), 60000);
+    const id = setInterval(() => saveRef.current?.(), 60000);
     return () => clearInterval(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nameOfWork, localRows, localBottomRows, currentEstimateId, session]);
+  }, []); // empty deps — interval created once
 
   // Save yojana to list when editing in modal
   const handleModalYojanaChange = (val) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   DndContext,
   closestCenter,
@@ -183,14 +183,18 @@ export default function LeadsPage() {
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  // Sync leadOrder when leadSettings changes (add new keys not yet in order)
+  // Sync leadOrder when leadSettings changes — read current leadOrder via getState to avoid dep loop
   useEffect(() => {
+    const currentOrder = useStore.getState().leadOrder;
     const allKeys = Object.keys(leadSettings);
-    const missing = allKeys.filter(k => !leadOrder.includes(k));
-    if (missing.length > 0) setLeadOrder([...leadOrder, ...missing]);
-    // Remove keys from order that no longer exist
-    const pruned = leadOrder.filter(k => allKeys.includes(k));
-    if (pruned.length !== leadOrder.length) setLeadOrder(pruned);
+    const missing = allKeys.filter(k => !currentOrder.includes(k));
+    const pruned = currentOrder.filter(k => allKeys.includes(k));
+    const needsAdd = missing.length > 0;
+    const needsPrune = pruned.length !== currentOrder.length;
+    if (needsAdd || needsPrune) {
+      setLeadOrder([...pruned, ...missing]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadSettings]);
 
   // ─── Show toast ───────────────────────────────────────────────────────────
@@ -202,34 +206,45 @@ export default function LeadsPage() {
 
   // ─── Manual save ─────────────────────────────────────────────────────────
   const handleSave = useCallback(async () => {
-    if (!estimateId) { showToast(); return; }
     try {
       const state = useStore.getState();
-      await fetch(`/api/estimate/${estimateId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadSettings: state.leadSettings, leadOrder: state.leadOrder }),
-      });
+      if (state.currentEstimateId) {
+        await fetch(`/api/estimate/${state.currentEstimateId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadSettings: state.leadSettings, leadOrder: state.leadOrder }),
+        });
+      }
     } catch (e) { console.error(e); }
     showToast();
-  }, [estimateId, showToast]);
+  }, [showToast]);
 
-  // ─── Auto-save every 60s ─────────────────────────────────────────────────
+  // ─── Auto-save every 60s — stable ref so interval never restarts ──────────
+  const saveRef = useRef(null);
+  useEffect(() => { saveRef.current = handleSave; });
   useEffect(() => {
-    const interval = setInterval(handleSave, 60000);
-    return () => clearInterval(interval);
-  }, [handleSave]);
+    const id = setInterval(() => saveRef.current?.(), 60000);
+    return () => clearInterval(id);
+  }, []);
 
-  // ─── Derived ─────────────────────────────────────────────────────────────
-  const filteredMaterials = STANDARD_MATERIALS.filter(m => m.toLowerCase().includes(searchQuery.toLowerCase()));
-  const regularRatePreview = selectedMaterial && regularKm && leadsData
-    ? getRateForMaterial(leadsData, selectedMaterial, parseFloat(regularKm))
-    : null;
+  // ─── Derived (memoized) ───────────────────────────────────────────────────
+  const filteredMaterials = useMemo(
+    () => STANDARD_MATERIALS.filter(m => m.toLowerCase().includes(searchQuery.toLowerCase())),
+    [searchQuery]
+  );
+  const regularRatePreview = useMemo(
+    () => selectedMaterial && regularKm && leadsData
+      ? getRateForMaterial(leadsData, selectedMaterial, parseFloat(regularKm))
+      : null,
+    [selectedMaterial, regularKm, leadsData]
+  );
 
-  // Ordered leads array
-  const leadsArray = leadOrder
-    .filter(name => leadSettings[name])
-    .map(name => ({ name, ...leadSettings[name] }));
+  // Ordered leads array (memoized)
+  const leadsArray = useMemo(
+    () => leadOrder.filter(name => leadSettings[name]).map(name => ({ name, ...leadSettings[name] })),
+    [leadOrder, leadSettings]
+  );
+
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
   const handleAddRegular = () => {
