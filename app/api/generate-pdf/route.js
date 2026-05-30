@@ -53,7 +53,13 @@ export async function POST(req) {
     totalLabCharges = data.labCharges || 3036;
 
     const GST_RATE = 18;
-    const LABOUR_INSURANCE_RATE = 0.5;
+    let LABOUR_INSURANCE_RATE = 0.5;
+    if (data.labourInsurance && !isNaN(parseFloat(data.labourInsurance))) {
+      LABOUR_INSURANCE_RATE = parseFloat(data.labourInsurance);
+    } else {
+      // General Notes Page 11: Work value upto 25.00 Lakhs (₹25,00,000) = 0.50%, above = 1.00%
+      LABOUR_INSURANCE_RATE = totalAmount > 2500000 ? 1.0 : 0.5;
+    }
 
     totalGST = (totalAmount * GST_RATE) / 100;
     totalLabourInsurance = (totalAmount * LABOUR_INSURANCE_RATE) / 100;

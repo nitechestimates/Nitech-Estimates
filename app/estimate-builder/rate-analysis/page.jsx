@@ -189,8 +189,8 @@ function AutoTextarea({ value, onChange, className = "text-left" }) {
 }
 
 const defaultBottomRows = [
-  { id: "royalty-sand", isRoyalty: true, ssr: "", description: "Royalty Charges ( sand)", unit: "", basicRate: 0, deduct: 0, materials: [{ id: "mat-r1", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" },
-  { id: "royalty-others", isRoyalty: true, ssr: "", description: "Royalty Charges ( others)", unit: "", basicRate: 0, deduct: 0, materials: [{ id: "mat-r2", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" }
+  { id: "royalty-sand", isRoyalty: true, ssr: "", description: "Royalty Charges ( sand)", unit: "Cum", basicRate: 237.37, deduct: 0, materials: [{ id: "mat-r1", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" },
+  { id: "royalty-others", isRoyalty: true, ssr: "", description: "Royalty Charges ( others)", unit: "Cum", basicRate: 216.18, deduct: 0, materials: [{ id: "mat-r2", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" }
 ];
 
 const formatNumber = (num) => (num !== undefined && num !== null && !isNaN(num) ? Number(num).toFixed(3) : "0.000");
@@ -198,6 +198,58 @@ const formatNumber = (num) => (num !== undefined && num !== null && !isNaN(num) 
 function RateAnalysisContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
+
+  // ── Custom Dialog Modal State ──
+  const [customDialog, setCustomDialog] = useState(null);
+
+  const triggerAlert = (message, title = "Notification") => {
+    const previouslyActive = typeof document !== "undefined" ? document.activeElement : null;
+    return new Promise((resolve) => {
+      setCustomDialog({
+        title,
+        message,
+        isConfirm: false,
+        onConfirm: () => {
+          setCustomDialog(null);
+          resolve(true);
+          setTimeout(() => {
+            if (previouslyActive && typeof previouslyActive.focus === "function") {
+              previouslyActive.focus();
+            }
+          }, 50);
+        }
+      });
+    });
+  };
+
+  const triggerConfirm = (message, title = "Confirmation") => {
+    const previouslyActive = typeof document !== "undefined" ? document.activeElement : null;
+    return new Promise((resolve) => {
+      setCustomDialog({
+        title,
+        message,
+        isConfirm: true,
+        onConfirm: () => {
+          setCustomDialog(null);
+          resolve(true);
+          setTimeout(() => {
+            if (previouslyActive && typeof previouslyActive.focus === "function") {
+              previouslyActive.focus();
+            }
+          }, 50);
+        },
+        onCancel: () => {
+          setCustomDialog(null);
+          resolve(false);
+          setTimeout(() => {
+            if (previouslyActive && typeof previouslyActive.focus === "function") {
+              previouslyActive.focus();
+            }
+          }, 50);
+        }
+      });
+    });
+  };
 
   const loadId = searchParams.get("load");
   const nameFromURL = searchParams.get("name");
@@ -266,6 +318,47 @@ function RateAnalysisContent() {
   const [localRows, setLocalRows] = useState(() => raRows);
   const [localBottomRows, setLocalBottomRows] = useState(() => raBottomRows);
 
+  const [modalFields, setModalFields] = useState({
+    estimateName: "",
+    nameOfWork: "",
+    yojana: "",
+    isTribal: false,
+    tribalPercent: "",
+    estAmount: "",
+    labourInsurance: "",
+    year: "",
+    dist: "",
+    taluka: "",
+    village: "",
+    headDivision: "",
+    subDivision: "",
+    deputyEngineer: "",
+    jrEngineer: "",
+    adminApprovalNo: "",
+  });
+
+  const handleOpenEditModal = () => {
+    setModalFields({
+      estimateName: estimateName || "",
+      nameOfWork: nameOfWork || "",
+      yojana: yojana || "",
+      isTribal: !!isTribal,
+      tribalPercent: tribalPercent || "",
+      estAmount: estAmount || "",
+      labourInsurance: labourInsurance || "",
+      year: year || "",
+      dist: dist || "",
+      taluka: taluka || "",
+      village: village || "",
+      headDivision: headDivision || "",
+      subDivision: subDivision || "",
+      deputyEngineer: deputyEngineer || "",
+      jrEngineer: jrEngineer || "",
+      adminApprovalNo: adminApprovalNo || "",
+    });
+    setShowEditModal(true);
+  };
+
   // Build material list: standard 36 + any custom/regular leads from leadSettings
   const materialList = useMemo(() => {
     const fromLeads = Object.keys(leadSettings).filter(
@@ -325,7 +418,7 @@ function RateAnalysisContent() {
     // Always apply URL params when creating a new estimate — do NOT guard on !s.field
     // because resetEstimate() may not have flushed to the persisted store yet
     if (nameFromURL)             updates.nameOfWork        = nameFromURL;
-    if (tribalFromURL)           updates.isTribal          = tribalFromURL;
+    if (searchParams.has("tribal"))       updates.isTribal          = tribalFromURL;
     if (tribalPercentFromURL)    updates.tribalPercent     = tribalPercentFromURL;
     if (estimateNameFromURL)     updates.estimateName      = estimateNameFromURL;
     if (yojanaFromURL)           updates.yojana            = yojanaFromURL;
@@ -399,7 +492,8 @@ function RateAnalysisContent() {
     if (!codeToUse) return;
     const existingRow = localRows.find(r => r.ssr === codeToUse.trim());
     if (existingRow) {
-      if (!window.confirm(`Item with SSR No. ${codeToUse} already exists. Add another copy?`)) {
+      const approved = await triggerConfirm(`Item with SSR No. "${codeToUse}" already exists in your estimate. Do you want to add another copy?`, "Duplicate SSR Item");
+      if (!approved) {
         if (typeof specificCode !== "string") setItemCode("");
         return;
       }
@@ -408,7 +502,10 @@ function RateAnalysisContent() {
       const code = codeToUse.trim();
       const res = await fetch(`/api/get-item?code=${code}`);
       const data = await res.json();
-      if (!data || data.error) { alert("Item not found!"); return; }
+      if (!data || data.error) {
+        await triggerAlert(`Item with SSR No. "${code}" not found in Nashik PWD SSR!`, "SSR Item Not Found");
+        return;
+      }
       const completedRate = parseFloat(data["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
       const description = data["Description of the item"] || "";
       const unitFormatted = (data["Unit"] || "").trim().split(/\s+/).join("\n");
@@ -501,7 +598,8 @@ function RateAnalysisContent() {
   }, [setRARows]);
 
   const refreshRow = useCallback(async (i) => {
-    if (!confirm("Revert to default SSR values? Your edits will be lost.")) return;
+    const approved = await triggerConfirm("Revert to default SSR values? Your edits will be lost.", "Revert SSR Item");
+    if (!approved) return;
     const code = useStore.getState().raRows[i]?.ssr?.trim();
     if (!code) return;
     const res = await fetch(`/api/get-item?code=${code}`);
@@ -583,8 +681,9 @@ function RateAnalysisContent() {
     setTimeout(() => { if (next) setRABottomRows(next); }, 0);
   }, [setRABottomRows]);
 
-  const clearBottomRow = useCallback((i) => {
-    if (!confirm("Clear this royalty row?")) return;
+  const clearBottomRow = useCallback(async (i) => {
+    const approved = await triggerConfirm("Are you sure you want to clear this royalty row?", "Clear Royalty");
+    if (!approved) return;
     let next;
     setLocalBottomRows(prev => {
       const updated = [...prev];
@@ -607,9 +706,9 @@ function RateAnalysisContent() {
 
 
   const saveEstimate = async (silent = false) => {
-    if (!session) { if (!silent) alert("You must be logged in."); return; }
+    if (!session) { if (!silent) await triggerAlert("You must be logged in.", "Auth Required"); return; }
     const currentName = useStore.getState().nameOfWork || nameOfWork;
-    if (!currentName.trim()) { if (!silent) alert("Please enter a Name of Work first."); return; }
+    if (!currentName.trim()) { if (!silent) await triggerAlert("Please enter a Name of Work first.", "Missing Field"); return; }
     setSaving(true);
     try {
       const s = useStore.getState();
@@ -637,11 +736,11 @@ function RateAnalysisContent() {
         syncMeasurementFromRA();
       } else {
         console.error("Save failed:", data);
-        if (!silent) alert(data.error || "Failed to save estimate.");
+        if (!silent) await triggerAlert(data.error || "Failed to save estimate.", "Save Error");
       }
     } catch (error) {
       console.error("Save error:", error);
-      if (!silent) alert("Network error — could not save.");
+      if (!silent) await triggerAlert("Network error — could not save.", "Save Error");
     } finally { setSaving(false); }
   };
 
@@ -655,22 +754,67 @@ function RateAnalysisContent() {
 
   // Save yojana to list when editing in modal
   const handleModalYojanaChange = (val) => {
-    setEstimateMeta({ yojana: val });
+    setModalFields(prev => ({ ...prev, yojana: val }));
     setEditYojanaDropdown(true);
   };
   const handleModalYojanaSelect = (val) => {
-    setEstimateMeta({ yojana: val });
+    setModalFields(prev => ({ ...prev, yojana: val }));
     setEditYojanaDropdown(false);
   };
   const handleModalSave = () => {
-    const y = yojana?.trim();
+    // 1. Save metadata to store
+    setEstimateMeta({
+      estimateName: modalFields.estimateName,
+      nameOfWork: modalFields.nameOfWork,
+      isTribal: modalFields.isTribal,
+      tribalPercent: modalFields.tribalPercent,
+      yojana: modalFields.yojana,
+      estAmount: modalFields.estAmount,
+      labourInsurance: modalFields.labourInsurance,
+      year: modalFields.year,
+      dist: modalFields.dist,
+      taluka: modalFields.taluka,
+      village: modalFields.village,
+      headDivision: modalFields.headDivision,
+      subDivision: modalFields.subDivision,
+      deputyEngineer: modalFields.deputyEngineer,
+      jrEngineer: modalFields.jrEngineer,
+      adminApprovalNo: modalFields.adminApprovalNo,
+    });
+
+    // 2. Add yojana to list if new
+    const y = modalFields.yojana?.trim();
     if (y && !yojanaList.includes(y)) addYojana(y);
+
+    // 3. Explicitly recalculate local & store rows for Tribal settings
+    const applyRecalculation = (rows) => rows.map(row => {
+      const netAfterDeduct = (row.basicRate || 0) - (row.deduct || 0);
+      const totalLead = (row.materials || []).reduce((sum, m) => sum + ((m.qty || 0) * (m.lead || 0)), 0);
+      const total = netAfterDeduct + totalLead;
+      const pct = modalFields.isTribal ? (parseFloat(modalFields.tribalPercent) || 0) : 0;
+      const tribalAmount = (total * pct) / 100;
+      const netTotal = total + tribalAmount;
+      return { ...row, netAfterDeduct, totalLead, total, tribal: tribalAmount, netTotal };
+    });
+
+    setLocalRows(prev => {
+      const nextRows = applyRecalculation(prev);
+      setTimeout(() => setRARows(nextRows), 0);
+      return nextRows;
+    });
+
+    setLocalBottomRows(prev => {
+      const nextRows = applyRecalculation(prev);
+      setTimeout(() => setRABottomRows(nextRows), 0);
+      return nextRows;
+    });
+
     setShowEditModal(false);
   };
 
   if (loadingEstimate) return <div className="p-4 bg-yellow-50 min-h-screen"><Tabs /><div className="flex justify-center items-center h-[70vh]"><div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div></div></div>;
 
-  const filteredYojanaList = (yojanaList || []).filter(y => y.toLowerCase().includes((yojana || "").toLowerCase()));
+  const filteredYojanaList = (yojanaList || []).filter(y => y.toLowerCase().includes((modalFields.yojana || "").toLowerCase()));
 
   return (
     <div className="p-4 bg-yellow-50 min-h-screen text-black animate-fade-in-up">
@@ -684,7 +828,7 @@ function RateAnalysisContent() {
         <div className="flex gap-2">
           {/* Edit Details Button */}
           <button
-            onClick={() => setShowEditModal(true)}
+            onClick={handleOpenEditModal}
             className="flex items-center gap-1.5 bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded hover:bg-gray-50 hover:border-gray-400 shadow-sm transition-all text-sm font-medium"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -736,8 +880,8 @@ function RateAnalysisContent() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Estimate Name <span className="text-gray-400 font-normal">(shown in history)</span></label>
                 <input
                   type="text"
-                  value={estimateName || ""}
-                  onChange={e => setEstimateMeta({ estimateName: e.target.value })}
+                  value={modalFields.estimateName || ""}
+                  onChange={e => setModalFields(prev => ({ ...prev, estimateName: e.target.value }))}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
                   placeholder="Short name for history"
                 />
@@ -748,8 +892,8 @@ function RateAnalysisContent() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Work</label>
                 <input
                   type="text"
-                  value={nameOfWork}
-                  onChange={e => setEstimateMeta({ nameOfWork: e.target.value })}
+                  value={modalFields.nameOfWork}
+                  onChange={e => setModalFields(prev => ({ ...prev, nameOfWork: e.target.value }))}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
                   placeholder="Name of Work"
                 />
@@ -760,7 +904,7 @@ function RateAnalysisContent() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Yojana / Fund</label>
                 <input
                   type="text"
-                  value={yojana || ""}
+                  value={modalFields.yojana || ""}
                   onChange={e => handleModalYojanaChange(e.target.value)}
                   onFocus={() => setEditYojanaDropdown(true)}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
@@ -773,7 +917,7 @@ function RateAnalysisContent() {
                     ))}
                   </ul>
                 )}
-                {(yojana || "").trim() && !yojanaList.includes((yojana || "").trim()) && (
+                {(modalFields.yojana || "").trim() && !yojanaList.includes((modalFields.yojana || "").trim()) && (
                   <p className="text-xs text-gray-400 mt-1">New entry – will be saved on submit.</p>
                 )}
               </div>
@@ -784,37 +928,43 @@ function RateAnalysisContent() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setEstimateMeta({ isTribal: false, tribalPercent: "" })}
+                    onClick={() => setModalFields(prev => ({ ...prev, isTribal: false, tribalPercent: "" }))}
                     className={`relative flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all text-sm ${
-                      !isTribal ? "border-blue-500 bg-blue-50 text-blue-700 font-bold" : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
+                      !modalFields.isTribal ? "border-blue-500 bg-blue-50 text-blue-700 font-bold" : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
                     }`}
                   >
-                    {!isTribal && <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-blue-500 rounded-full flex items-center justify-center"><svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg></span>}
+                    {!modalFields.isTribal && <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-blue-500 rounded-full flex items-center justify-center"><svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg></span>}
                     Non-Tribal
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEstimateMeta({ isTribal: true })}
+                    onClick={() => setModalFields(prev => ({ ...prev, isTribal: true }))}
                     className={`relative flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all text-sm ${
-                      isTribal ? "border-orange-500 bg-orange-50 text-orange-700 font-bold" : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
+                      modalFields.isTribal ? "border-orange-500 bg-orange-50 text-orange-700 font-bold" : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
                     }`}
                   >
-                    {isTribal && <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-orange-500 rounded-full flex items-center justify-center"><svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg></span>}
+                    {modalFields.isTribal && <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-orange-500 rounded-full flex items-center justify-center"><svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg></span>}
                     Tribal
                   </button>
                 </div>
                 {/* Tribal % */}
-                <div className={`mt-2 transition-all duration-300 overflow-hidden ${isTribal ? "max-h-20 opacity-100" : "max-h-0 opacity-0"}`}>
+                <div className={`mt-2 transition-all duration-300 overflow-hidden ${modalFields.isTribal ? "max-h-24 opacity-100" : "max-h-0 opacity-0"}`}>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Tribal Percentage</label>
                   <div className="relative">
                     <input
                       type="number" min="0" max="100"
-                      value={tribalPercent || ""}
-                      disabled={!isTribal}
+                      value={modalFields.tribalPercent || ""}
+                      disabled={!modalFields.isTribal}
                       onChange={e => {
                         const v = e.target.value;
-                        setEstimateMeta({ tribalPercent: v });
-                        if (v === "0" || v === "") setEstimateMeta({ isTribal: false, tribalPercent: "" });
+                        setModalFields(prev => {
+                          const updated = { ...prev, tribalPercent: v };
+                          if (v === "0" || v === "") {
+                            updated.isTribal = false;
+                            updated.tribalPercent = "";
+                          }
+                          return updated;
+                        });
                       }}
                       className="w-full border border-orange-300 bg-orange-50 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm text-gray-900 pr-8"
                       placeholder="Enter %"
@@ -831,8 +981,8 @@ function RateAnalysisContent() {
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">₹</span>
                   <input
                     type="number" min="0"
-                    value={estAmount || ""}
-                    onChange={e => setEstimateMeta({ estAmount: e.target.value })}
+                    value={modalFields.estAmount || ""}
+                    onChange={e => setModalFields(prev => ({ ...prev, estAmount: e.target.value }))}
                     className="w-full border border-gray-300 pl-7 pr-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
                     placeholder="Estimated amount in rupees"
                   />
@@ -845,8 +995,8 @@ function RateAnalysisContent() {
                 <div className="relative">
                   <input
                     type="number" min="0" max="100" step="0.01"
-                    value={labourInsurance || ""}
-                    onChange={e => setEstimateMeta({ labourInsurance: e.target.value })}
+                    value={modalFields.labourInsurance || ""}
+                    onChange={e => setModalFields(prev => ({ ...prev, labourInsurance: e.target.value }))}
                     className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 pr-8"
                     placeholder="Labour insurance %"
                   />
@@ -859,8 +1009,8 @@ function RateAnalysisContent() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Year</label>
                 <input
                   type="text"
-                  value={year || ""}
-                  onChange={e => setEstimateMeta({ year: e.target.value })}
+                  value={modalFields.year || ""}
+                  onChange={e => setModalFields(prev => ({ ...prev, year: e.target.value }))}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
                   placeholder="e.g. 2024-25"
                 />
@@ -870,50 +1020,50 @@ function RateAnalysisContent() {
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Dist.</label>
-                  <input type="text" value={dist || ""} onChange={e => setEstimateMeta({ dist: e.target.value })} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="District" />
+                  <input type="text" value={modalFields.dist || ""} onChange={e => setModalFields(prev => ({ ...prev, dist: e.target.value }))} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="District" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Taluka</label>
-                  <input type="text" value={taluka || ""} onChange={e => setEstimateMeta({ taluka: e.target.value })} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Taluka" />
+                  <input type="text" value={modalFields.taluka || ""} onChange={e => setModalFields(prev => ({ ...prev, taluka: e.target.value }))} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Taluka" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Village</label>
-                  <input type="text" value={village || ""} onChange={e => setEstimateMeta({ village: e.target.value })} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Village" />
+                  <input type="text" value={modalFields.village || ""} onChange={e => setModalFields(prev => ({ ...prev, village: e.target.value }))} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Village" />
                 </div>
               </div>
 
               {/* Head Division */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Head Division</label>
-                <input type="text" value={headDivision || ""} onChange={e => setEstimateMeta({ headDivision: e.target.value })}
+                <input type="text" value={modalFields.headDivision || ""} onChange={e => setModalFields(prev => ({ ...prev, headDivision: e.target.value }))}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Head Division" />
               </div>
 
               {/* Sub-Division */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Sub-Division</label>
-                <input type="text" value={subDivision || ""} onChange={e => setEstimateMeta({ subDivision: e.target.value })}
+                <input type="text" value={modalFields.subDivision || ""} onChange={e => setModalFields(prev => ({ ...prev, subDivision: e.target.value }))}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Sub-Division" />
               </div>
 
               {/* Deputy Engineer */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Deputy Engineer</label>
-                <input type="text" value={deputyEngineer || ""} onChange={e => setEstimateMeta({ deputyEngineer: e.target.value })}
+                <input type="text" value={modalFields.deputyEngineer || ""} onChange={e => setModalFields(prev => ({ ...prev, deputyEngineer: e.target.value }))}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Deputy Engineer" />
               </div>
 
               {/* Jr. / Sectional Engineer */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Jr. / Sectional Engineer</label>
-                <input type="text" value={jrEngineer || ""} onChange={e => setEstimateMeta({ jrEngineer: e.target.value })}
+                <input type="text" value={modalFields.jrEngineer || ""} onChange={e => setModalFields(prev => ({ ...prev, jrEngineer: e.target.value }))}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Jr. / Sectional Engineer" />
               </div>
 
               {/* Administrative Approval No. */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Administrative Approval No.</label>
-                <input type="text" value={adminApprovalNo || ""} onChange={e => setEstimateMeta({ adminApprovalNo: e.target.value })}
+                <input type="text" value={modalFields.adminApprovalNo || ""} onChange={e => setModalFields(prev => ({ ...prev, adminApprovalNo: e.target.value }))}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="e.g. AA/2024/XYZ/123" />
               </div>
 
@@ -988,6 +1138,47 @@ function RateAnalysisContent() {
           </div>
         </SortableContext>
       </DndContext>
+
+      {/* ── Custom non-blocking alert/confirm dialog ── */}
+      {customDialog && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-slate-100 overflow-hidden flex flex-col p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center gap-2 text-slate-950 font-extrabold text-base mb-2 select-none">
+              <span>⚠️</span> {customDialog.title}
+            </div>
+            <p className="text-sm font-semibold text-slate-700 leading-relaxed mb-6 select-none">
+              {customDialog.message}
+            </p>
+            <div className="flex gap-3">
+              {customDialog.isConfirm ? (
+                <>
+                  <button
+                    onClick={() => customDialog.onConfirm()}
+                    className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl transition cursor-pointer"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (customDialog.onCancel) customDialog.onCancel();
+                    }}
+                    className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition cursor-pointer border"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => customDialog.onConfirm()}
+                  className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition cursor-pointer"
+                >
+                  OK
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

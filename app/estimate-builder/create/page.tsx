@@ -26,10 +26,18 @@ export default function CreateEstimate() {
   const [deputyEngineer, setDeputyEngineer] = useState("");
   const [jrEngineer, setJrEngineer] = useState("");
   const [adminApprovalNo, setAdminApprovalNo] = useState("");
+  const [customAlert, setCustomAlert] = useState<{ message: string; title: string } | null>(null);
+  const [saveProfileName, setSaveProfileName] = useState("");
+
+  const triggerAlert = (message: string, title: string = "Notification") => {
+    setCustomAlert({ message, title });
+  };
 
   const yojanaList = useStore((state: any) => state.yojanaList) as string[];
   const addYojana = useStore((state: any) => state.addYojana) as (item: string) => void;
   const resetEstimate = useStore((state: any) => state.resetEstimate) as () => void;
+  const projectDetailsProfiles = useStore((state: any) => state.projectDetailsProfiles) as any[] || [];
+  const addProjectDetailsProfile = useStore((state: any) => state.addProjectDetailsProfile) as (profile: any) => void;
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -54,7 +62,7 @@ export default function CreateEstimate() {
 
   const handleCreate = () => {
     if (!name.trim()) {
-      alert("Please enter Name of Work");
+      triggerAlert("Please enter a Name of Work before continuing.", "Missing Name of Work");
       return;
     }
 
@@ -100,6 +108,44 @@ export default function CreateEstimate() {
           <p className="text-gray-500 text-sm text-center">Fill in the project details to get started.</p>
         </div>
 
+        {/* Quick Import Autofill Profile */}
+        {projectDetailsProfiles && projectDetailsProfiles.length > 0 && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+            <label className="block text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">📂 Quick Autofill from Profile</label>
+            <select
+              onChange={(e) => {
+                const profId = e.target.value;
+                if (!profId) return;
+                const p = projectDetailsProfiles.find(x => x.id === profId);
+                if (p) {
+                  setEstimateName(p.estimateName || "");
+                  setName(p.nameOfWork || "");
+                  setIsTribal(!!p.isTribal);
+                  setTribalPercent(p.tribalPercent || "");
+                  setYojana(p.yojana || "");
+                  setEstAmount(p.estAmount || "");
+                  setLabourInsurance(p.labourInsurance || "");
+                  setYear(p.year || "");
+                  setDist(p.dist || "");
+                  setTaluka(p.taluka || "");
+                  setVillage(p.village || "");
+                  setHeadDivision(p.headDivision || "");
+                  setSubDivision(p.subDivision || "");
+                  setDeputyEngineer(p.deputyEngineer || "");
+                  setJrEngineer(p.jrEngineer || "");
+                  setAdminApprovalNo(p.adminApprovalNo || "");
+                }
+              }}
+              className="w-full border border-blue-200 bg-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-blue-900"
+            >
+              <option value="">-- Choose a Profile to Autofill --</option>
+              {projectDetailsProfiles.map((p: any) => (
+                <option key={p.id} value={p.id}>{p.profileName}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Estimate Name (display name for history) */}
         <div className="mb-4">
           <label className={labelCls}>
@@ -118,6 +164,7 @@ export default function CreateEstimate() {
         <div className="mb-4">
           <label className={labelCls}>Name of Work</label>
           <input
+            id="name-input"
             type="text"
             placeholder="e.g., Construction of Road Phase 1"
             value={name}
@@ -299,6 +346,58 @@ export default function CreateEstimate() {
             onChange={(e) => setAdminApprovalNo(e.target.value)} className={inputCls} />
         </div>
 
+        {/* Save as Profile section */}
+        <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">💾 Save current details as Profile</p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="e.g. Nashik Roads Template..."
+              value={saveProfileName}
+              onChange={(e) => setSaveProfileName(e.target.value)}
+              className="flex-1 border border-slate-300 bg-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-slate-400 font-medium"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (!saveProfileName.trim()) {
+                  triggerAlert("Please enter a name for the profile.", "Profile Name Required");
+                  return;
+                }
+                if (projectDetailsProfiles.length >= 50) {
+                  triggerAlert("Maximum 50 details profiles allowed. Please delete some from the Hub.", "Limit Reached");
+                  return;
+                }
+                addProjectDetailsProfile({
+                  profileName: saveProfileName.trim(),
+                  estimateName,
+                  nameOfWork: name,
+                  isTribal,
+                  tribalPercent,
+                  yojana,
+                  estAmount,
+                  labourInsurance,
+                  year,
+                  dist,
+                  taluka,
+                  village,
+                  headDivision,
+                  subDivision,
+                  deputyEngineer,
+                  jrEngineer,
+                  adminApprovalNo
+                });
+                const nameSaved = saveProfileName.trim();
+                setSaveProfileName("");
+                triggerAlert(`Success! Profile "${nameSaved}" saved. You can quickly select it at the top of this page.`, "Success");
+              }}
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold text-xs active:scale-95 transition cursor-pointer"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+
         {/* Submit */}
         <button
           onClick={handleCreate}
@@ -317,6 +416,32 @@ export default function CreateEstimate() {
           Manage Yojana / Fund data sheet
         </button>
       </div>
+
+      {/* ── Custom non-blocking alert dialog ── */}
+      {customAlert && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-slate-100 overflow-hidden flex flex-col p-6 animate-in fade-in zoom-in duration-200 animate-duration-150">
+            <div className="flex items-center gap-2 text-slate-950 font-extrabold text-base mb-2 select-none">
+              <span>{customAlert.title === "Success" ? "✅" : "⚠️"}</span> {customAlert.title}
+            </div>
+            <p className="text-sm font-semibold text-slate-700 leading-relaxed mb-6 select-none">
+              {customAlert.message}
+            </p>
+            <button
+              onClick={() => {
+                setCustomAlert(null);
+                setTimeout(() => {
+                  const el = document.getElementById("name-input");
+                  if (el) el.focus();
+                }, 100);
+              }}
+              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition cursor-pointer"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
