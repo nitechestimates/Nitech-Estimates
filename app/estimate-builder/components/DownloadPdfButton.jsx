@@ -29,6 +29,7 @@ export default function DownloadPdfButton({
           leadSettings,
           measurementItems,   // ✅ include measurement items from store
           labCharges,         // ✅ optional lab charges
+          labourInsurance: s.labourInsurance, // ✅ include custom labour insurance rate
           year: s.year,
           dist: s.dist,
           taluka: s.taluka,
@@ -38,8 +39,8 @@ export default function DownloadPdfButton({
           deputyEngineer: s.deputyEngineer,
           jrEngineer: s.jrEngineer,
           adminApprovalNo: s.adminApprovalNo,
-          yojana: s.yojana,
           estAmount: s.estAmount,
+          yojana: s.yojana,
         }
       };
 

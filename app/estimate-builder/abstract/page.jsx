@@ -70,10 +70,8 @@ export default function AbstractPage() {
           <thead className="bg-gray-200">
             <tr className="text-center font-bold">
               <th className="border p-2">Sr. No.</th>
-              <th className="border p-2 w-[350px]">DESCRIPTION OF ITEM</th>
-              <th className="border p-2 w-[200px]">SPECIFICATIONS</th>
-              <th className="border p-2 w-[80px]">No.</th>
-              <th className="border p-2 w-[100px]">L (R.M.)</th>
+              <th className="border p-2 w-[450px]">DESCRIPTION OF ITEM</th>
+              <th className="border p-2 w-[250px]">SPECIFICATIONS</th>
               <th className="border p-2">QTY</th>
               <th className="border p-2">UNIT</th>
               <th className="border p-2">RATE (Rs.)</th>
@@ -86,24 +84,6 @@ export default function AbstractPage() {
                 <td className="border p-2 text-center font-semibold text-gray-700">{row.srNo}</td>
                 <td className="border p-2 text-left">{row.description}</td>
                 <td className="border p-2 text-left">{row.specs}</td>
-                <td className="border p-2 text-center">
-                  <input
-                    type="text"
-                    className="w-full text-center border p-1 rounded"
-                    value={row.no}
-                    onChange={(e) => updateAbstractCustomField(row.id, "no", e.target.value)}
-                    placeholder="-"
-                  />
-                </td>
-                <td className="border p-2 text-center">
-                  <input
-                    type="text"
-                    className="w-full text-center border p-1 rounded"
-                    value={row.l}
-                    onChange={(e) => updateAbstractCustomField(row.id, "l", e.target.value)}
-                    placeholder="-"
-                  />
-                </td>
                 <td className="border p-2 text-right">{row.qty.toFixed(3)}</td>
                 <td className="border p-2 text-center">{row.unit}</td>
                 <td className="border p-2 text-right">{formatMoney(row.rate)}</td>
@@ -113,13 +93,13 @@ export default function AbstractPage() {
 
             {/* Standard Items subtotal */}
             <tr className="bg-gray-50 font-bold text-gray-800 border-t-2 border-gray-300">
-              <td colSpan="8" className="border p-2 text-right uppercase tracking-wider text-[11px]">TOTAL (Cost of work proper):</td>
+              <td colSpan="6" className="border p-2 text-right uppercase tracking-wider text-[11px]">TOTAL (Cost of work proper):</td>
               <td className="border p-2 text-right">{formatMoney(standardTotal)}</td>
             </tr>
 
             {/* Add For GST */}
             <tr className="bg-blue-50/10 text-blue-950 font-bold text-[13px]">
-              <td colSpan="5" className="border p-2 text-right">Add For GST</td>
+              <td colSpan="3" className="border p-2 text-right">Add For GST</td>
               <td className="border p-2 text-center">18.00 %</td>
               <td colSpan="2" className="border"></td>
               <td className="border p-2 text-right">{formatMoney(gstAmount)}</td>
@@ -127,7 +107,7 @@ export default function AbstractPage() {
 
             {/* Add Labour Insurance */}
             <tr className="bg-blue-50/10 text-blue-950 font-bold text-[13px]">
-              <td colSpan="5" className="border p-2 text-right">Add Labour Insurance</td>
+              <td colSpan="3" className="border p-2 text-right">Add Labour Insurance</td>
               <td className="border p-2 text-center">{insuranceRate.toFixed(2)} %</td>
               <td colSpan="2" className="border"></td>
               <td className="border p-2 text-right">{formatMoney(insuranceAmount)}</td>
@@ -135,7 +115,7 @@ export default function AbstractPage() {
 
             {/* Subtotal with taxes */}
             <tr className="bg-gray-100 font-bold text-gray-800 border-t border-b border-gray-300">
-              <td colSpan="8" className="border p-2 text-right uppercase tracking-wider text-[11px]">TOTAL:</td>
+              <td colSpan="6" className="border p-2 text-right uppercase tracking-wider text-[11px]">TOTAL:</td>
               <td className="border p-2 text-right">{formatMoney(subTotalWithTax)}</td>
             </tr>
 
@@ -145,24 +125,6 @@ export default function AbstractPage() {
                 <td className="border p-2 text-center">{row.srNo}</td>
                 <td className="border p-2 text-left">{row.description}</td>
                 <td className="border p-2 text-left">{row.specs}</td>
-                <td className="border p-2 text-center">
-                  <input
-                    type="text"
-                    className="w-full text-center border p-1 rounded font-normal text-black"
-                    value={row.no}
-                    onChange={(e) => updateAbstractCustomField(row.id, "no", e.target.value)}
-                    placeholder="-"
-                  />
-                </td>
-                <td className="border p-2 text-center">
-                  <input
-                    type="text"
-                    className="w-full text-center border p-1 rounded font-normal text-black"
-                    value={row.l}
-                    onChange={(e) => updateAbstractCustomField(row.id, "l", e.target.value)}
-                    placeholder="-"
-                  />
-                </td>
                 <td className="border p-2 text-right">{row.qty.toFixed(3)}</td>
                 <td className="border p-2 text-center">{row.unit}</td>
                 <td className="border p-2 text-right">{formatMoney(row.rate)}</td>
@@ -172,7 +134,7 @@ export default function AbstractPage() {
           </tbody>
           <tfoot className="bg-gray-250 font-black text-blue-950 border-t-2 border-gray-400">
             <tr className="bg-gray-200 text-[14px]">
-              <td colSpan="8" className="border p-2.5 text-right uppercase tracking-wider font-extrabold text-blue-950">TOTAL RS. (Grand Total):</td>
+              <td colSpan="6" className="border p-2.5 text-right uppercase tracking-wider font-extrabold text-blue-950">TOTAL RS. (Grand Total):</td>
               <td className="border p-2.5 text-right font-black text-blue-950">{formatMoney(grandTotal)}</td>
             </tr>
           </tfoot>

@@ -32,29 +32,32 @@ export async function POST(req) {
       console.warn("Could not load ZP logo image:", err);
     }
 
-    // Calculate totals for abstract
-    let totalAmount = 0;
-    let totalGST = 0;
-    let totalLabourInsurance = 0;
-    let totalRoyaltySand = 0;
-    let totalRoyaltyOthers = 0;
-    let totalLabCharges = 0;
+    // Map measurementItems for lookup
+    const msMap = new Map((Array.isArray(measurementItems) ? measurementItems : []).map(item => [item.id, item]));
 
-    // Calculate from rows (basic + lead + tribal)
-    rows.forEach(row => {
-      if (!row.isRoyalty) {
-        totalAmount += (row.netTotal || 0);
-      }
+    // Calculate abstract rows exactly as in standard frontend page
+    const abstractRows = rows.map((raItem, idx) => {
+      const msItem = msMap.get(raItem.id);
+      const totalQty = msItem?.totalQty || 0;
+      const rate = raItem.netTotal || raItem.netAfterDeduct || 0;
+      const amount = totalQty * rate;
+      return {
+        id: raItem.id,
+        srNo: idx + 1,
+        description: raItem.description,
+        specs: raItem.specs || "",
+        qty: totalQty,
+        unit: raItem.unit,
+        rate,
+        amount,
+        isRoyalty: raItem.isRoyalty
+      };
     });
-    // Royalty rows are included in rows (isRoyalty flag)
-    const royaltySandRow = rows.find(r => r.isRoyalty && r.description.toLowerCase().includes("sand"));
-    const royaltyOthersRow = rows.find(r => r.isRoyalty && r.description.toLowerCase().includes("others"));
-    const labChargesRow = rows.find(r => r.isRoyalty && r.description.toLowerCase().includes("lab"));
 
-    if (royaltySandRow) totalRoyaltySand = royaltySandRow.netTotal || 0;
-    if (royaltyOthersRow) totalRoyaltyOthers = royaltyOthersRow.netTotal || 0;
-    if (labChargesRow) totalLabCharges = labChargesRow.netTotal || 0;
-    else totalLabCharges = data.labCharges || 3036;
+    const standardRows = abstractRows.filter(r => !r.isRoyalty);
+    const royaltyRows = abstractRows.filter(r => r.isRoyalty);
+
+    const totalAmount = standardRows.reduce((sum, r) => sum + r.amount, 0); // standardTotal (Cost of work proper)
 
     const GST_RATE = 18;
     let LABOUR_INSURANCE_RATE = 0.5;
@@ -65,9 +68,20 @@ export async function POST(req) {
       LABOUR_INSURANCE_RATE = totalAmount > 2500000 ? 1.0 : 0.5;
     }
 
-    totalGST = (totalAmount * GST_RATE) / 100;
-    totalLabourInsurance = (totalAmount * LABOUR_INSURANCE_RATE) / 100;
-    const grandTotal = totalAmount + totalGST + totalLabourInsurance + totalRoyaltySand + totalRoyaltyOthers + totalLabCharges;
+    const totalGST = (totalAmount * GST_RATE) / 100;
+    const totalLabourInsurance = (totalAmount * LABOUR_INSURANCE_RATE) / 100;
+    const subTotalWithTax = totalAmount + totalGST + totalLabourInsurance;
+
+    // Separate royalty amounts
+    const royaltySandRow = royaltyRows.find(r => r.id === "royalty-sand" || r.description.toLowerCase().includes("sand"));
+    const royaltyOthersRow = royaltyRows.find(r => r.id === "royalty-others" || r.description.toLowerCase().includes("others"));
+    const labChargesRow = royaltyRows.find(r => r.id === "lab-charges" || r.description.toLowerCase().includes("lab"));
+
+    const totalRoyaltySand = royaltySandRow ? royaltySandRow.amount : 0;
+    const totalRoyaltyOthers = royaltyOthersRow ? royaltyOthersRow.amount : 0;
+    const totalLabCharges = labChargesRow ? labChargesRow.amount : 0;
+
+    const grandTotal = subTotalWithTax + totalRoyaltySand + totalRoyaltyOthers + totalLabCharges;
 
     // HTML template
     const year = data.year || "2024-25";
@@ -273,35 +287,73 @@ export async function POST(req) {
         <table class="table-container">
           <thead>
             <tr>
-              <th style="width:6%">Sr..No.</th>
-              <th style="width:50%">DESCRIPTION OF ITEM</th>
+              <th style="width:6%">Sr. No.</th>
+              <th style="width:44%">DESCRIPTION OF ITEM</th>
+              <th style="width:14%">SPECIFICATIONS</th>
               <th style="width:8%">QTY</th>
-              <th style="width:10%">UNIT</th>
-              <th style="width:12%">RATE<br/>Rs.-Ps.</th>
-              <th style="width:14%">AMOUNT<br/>Rs.-PS.</th>
+              <th style="width:8%">UNIT</th>
+              <th style="width:9%">RATE<br/>Rs.-Ps.</th>
+              <th style="width:11%">AMOUNT<br/>Rs.-PS.</th>
             </tr>
-            <tr style="background:#f9f9f9;"><th class="center">1</th><th class="center">2</th><th class="center"></th><th class="center">3</th><th class="center">4</th><th class="center">5</th><th class="center">6</th></tr>
+            <tr style="background:#f9f9f9;">
+              <th class="center">1</th>
+              <th class="center">2</th>
+              <th class="center"></th>
+              <th class="center">3</th>
+              <th class="center">4</th>
+              <th class="center">5</th>
+              <th class="center">6</th>
+            </tr>
           </thead>
           <tbody>
-            ${rows.filter(r => !r.isRoyalty).map((row, i) => `
+            ${standardRows.map((row, i) => `
               <tr>
                 <td class="center">${i+1}</td>
                 <td class="left">${row.description || ''}</td>
-                <td class="center">${((row.materials || [])[0]?.qty || 0).toFixed(2)}</td>
+                <td class="left">${row.specs || ''}</td>
+                <td class="right">${(row.qty || 0).toFixed(3)}</td>
                 <td class="center">${row.unit || ''}</td>
-                <td class="center">${(row.netTotal / Math.max(1, ((row.materials || [])[0]?.qty || 1))).toFixed(2)}</td>
-                <td class="center bold">${(row.netTotal || 0).toFixed(2)}</td>
+                <td class="right">${(row.rate || 0).toFixed(2)}</td>
+                <td class="right bold">${(row.amount || 0).toFixed(2)}</td>
               </tr>
             `).join('')}
-            <tr><td colspan="4"></td><td class="right bold">TOTAL</td><td class="center bold">${totalAmount.toFixed(2)}</td></tr>
-            <tr><td colspan="4" class="right bold">Add For GST</td><td class="center bold">${GST_RATE}.00 %</td><td class="center">${totalGST.toFixed(2)}</td></tr>
-            <tr><td colspan="4" class="right bold">Add Labour Insurance</td><td class="center bold">${LABOUR_INSURANCE_RATE} %</td><td class="center">${totalLabourInsurance.toFixed(2)}</td></tr>
-            <tr><td colspan="4"></td><td class="right bold">TOTAL</td><td class="center bold">${(totalAmount + totalGST + totalLabourInsurance).toFixed(2)}</td></tr>
+            <tr>
+              <td colspan="6" class="right bold">TOTAL (Cost of work proper):</td>
+              <td class="right bold">${totalAmount.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td colspan="3" class="right bold">Add For GST</td>
+              <td class="center bold">${GST_RATE}.00 %</td>
+              <td colspan="2"></td>
+              <td class="right">${totalGST.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td colspan="3" class="right bold">Add Labour Insurance</td>
+              <td class="center bold">${LABOUR_INSURANCE_RATE.toFixed(2)} %</td>
+              <td colspan="2"></td>
+              <td class="right">${totalLabourInsurance.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td colspan="6" class="right bold">TOTAL:</td>
+              <td class="right bold">${subTotalWithTax.toFixed(2)}</td>
+            </tr>
             
-            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">${royaltySandRow ? royaltySandRow.description : 'Royalty Charges ( sand)'}</td><td class="center"></td><td class="center">${royaltySandRow ? royaltySandRow.unit : 'Cubic<br/>Metre'}</td><td class="center"></td><td class="center">${totalRoyaltySand.toFixed(2)}</td></tr>
-            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">${royaltyOthersRow ? royaltyOthersRow.description : 'Royalty Charges ( others)'}</td><td class="center"></td><td class="center">${royaltyOthersRow ? royaltyOthersRow.unit : 'Cubic<br/>Metre'}</td><td class="center"></td><td class="center">${totalRoyaltyOthers.toFixed(2)}</td></tr>
-            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">${labChargesRow ? labChargesRow.description : 'laboratory charges'}</td><td class="center"></td><td class="center">${labChargesRow ? labChargesRow.unit : 'for all<br/>test'}</td><td class="center"></td><td class="center">${totalLabCharges.toFixed(2)}</td></tr>
-            <tr><td colspan="4"></td><td class="right bold">TOTAL RS.</td><td class="center bold" style="font-size:14px;">${grandTotal.toFixed(2)}</td></tr>
+            ${royaltyRows.map((row) => `
+              <tr style="background:#e0f2fe;">
+                <td class="center">${row.srNo}</td>
+                <td class="left">${row.description || ''}</td>
+                <td class="left">${row.specs || ''}</td>
+                <td class="right">${(row.qty || 0).toFixed(3)}</td>
+                <td class="center">${row.unit || ''}</td>
+                <td class="right">${(row.rate || 0).toFixed(2)}</td>
+                <td class="right bold">${(row.amount || 0).toFixed(2)}</td>
+              </tr>
+            `).join('')}
+            
+            <tr>
+              <td colspan="6" class="right bold" style="font-size:13px;">TOTAL RS. (Grand Total):</td>
+              <td class="right bold" style="font-size:13px; background-color:#eff6ff;">${grandTotal.toFixed(2)}</td>
+            </tr>
           </tbody>
         </table>
         
