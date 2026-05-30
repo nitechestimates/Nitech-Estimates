@@ -197,7 +197,16 @@ export default function MeasurementPage() {
         <table className="w-full border text-sm bg-white">
           <thead className="bg-gray-200 border-b-2 border-gray-300">
             <tr className="text-center font-bold text-gray-700">
-              <th className="border p-2 w-[50px]">Sr. No.</th><th className="border p-2 w-[400px]">DESCRIPTION OF ITEM</th><th className="border p-2 w-[80px]">No.</th><th className="border p-2 w-[100px]">L.</th><th className="border p-2 w-[100px]">B/W</th><th className="border p-2 w-[100px]">H/D.</th><th className="border p-2 w-[120px]">TOTAL</th><th className="border p-2 w-[80px]">UNIT</th><th className="border p-2 w-[60px]"></th>
+              <th className="border p-2 w-[50px]">Sr. No.</th>
+              <th className="border p-2 w-[350px]">DESCRIPTION OF ITEM</th>
+              <th className="border p-2 w-[220px]">PARTICULARS (Measurement Name)</th>
+              <th className="border p-2 w-[80px]">No.</th>
+              <th className="border p-2 w-[100px]">L.</th>
+              <th className="border p-2 w-[100px]">B/W</th>
+              <th className="border p-2 w-[100px]">H/D.</th>
+              <th className="border p-2 w-[120px]">TOTAL</th>
+              <th className="border p-2 w-[80px]">UNIT</th>
+              <th className="border p-2 w-[60px]"></th>
             </tr>
           </thead>
           <tbody>
@@ -237,6 +246,15 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
         </td>
         {measCount > 0 ? (
           <>
+            <td className="border p-1 bg-white hover:bg-yellow-50">
+              <input
+                type="text"
+                value={measurements[0]?.description || ""}
+                onChange={(e) => updateMeasurement(itemIdx, 0, "description", e.target.value)}
+                className="w-full bg-transparent px-2 py-1 text-left border rounded text-xs focus:bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors text-black"
+                placeholder="e.g. below soling"
+              />
+            </td>
             <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={measurements[0]?.no} onChange={(val) => updateMeasurement(itemIdx, 0, "no", val)} /></td>
             <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={measurements[0]?.l} onChange={(val) => updateMeasurement(itemIdx, 0, "l", val)} /></td>
             <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={measurements[0]?.b} onChange={(val) => updateMeasurement(itemIdx, 0, "b", val)} /></td>
@@ -247,7 +265,7 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
           </>
         ) : (
           <>
-            <td className="border p-4 text-center text-gray-400 italic bg-gray-50" colSpan={5}>Click "+ Add Meas" to enter measurements</td>
+            <td className="border p-4 text-center text-gray-400 italic bg-gray-50" colSpan={6}>Click "+ Add Meas" to enter measurements</td>
             <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-top bg-gray-50/50" rowSpan={rowSpan}><div className="mt-2">{item?.unit}</div></td>
             <td className="border p-2 bg-gray-50"></td>
           </>
@@ -257,6 +275,15 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
         const measIdx = mIdx + 1;
         return (
           <tr key={meas?.id || measIdx} className="bg-white hover:bg-yellow-50 transition-colors">
+            <td className="border p-1 bg-white">
+              <input
+                type="text"
+                value={meas?.description || ""}
+                onChange={(e) => updateMeasurement(itemIdx, measIdx, "description", e.target.value)}
+                className="w-full bg-transparent px-2 py-1 text-left border rounded text-xs focus:bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors text-black"
+                placeholder="e.g. left side"
+              />
+            </td>
             <td className="border p-1 bg-white"><NumericInput value={meas?.no} onChange={(val) => updateMeasurement(itemIdx, measIdx, "no", val)} /></td>
             <td className="border p-1 bg-white"><NumericInput value={meas?.l} onChange={(val) => updateMeasurement(itemIdx, measIdx, "l", val)} /></td>
             <td className="border p-1 bg-white"><NumericInput value={meas?.b} onChange={(val) => updateMeasurement(itemIdx, measIdx, "b", val)} /></td>
@@ -267,7 +294,7 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
         );
       })}
       <tr className="bg-blue-50/60">
-        <td colSpan={4} className="border p-2 font-bold text-gray-700 text-xs align-middle">
+        <td colSpan={5} className="border p-2 font-bold text-gray-700 text-xs align-middle">
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
