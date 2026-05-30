@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import fs from "fs";
+import path from "path";
 
 export const maxDuration = 60;
 
@@ -18,6 +19,18 @@ export async function POST(req) {
     // Get measurement items (passed from frontend or fetch from store)
     // For now, we assume estimateData includes measurementItems
     const measurementItems = data.measurementItems || [];
+
+    // Convert public/zp-logo.png to Base64 for Puppeteer inline rendering
+    let logoBase64 = "";
+    try {
+      const logoPath = path.join(process.cwd(), "public", "zp-logo.png");
+      if (fs.existsSync(logoPath)) {
+        const logoBuffer = fs.readFileSync(logoPath);
+        logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+      }
+    } catch (err) {
+      console.warn("Could not load ZP logo image:", err);
+    }
 
     // Calculate totals for abstract
     let totalAmount = 0;
@@ -110,12 +123,14 @@ export async function POST(req) {
         <div class="doc-title">DETAILED ESTIMATE</div>
         
         <div class="logo-box">
+          ${logoBase64 ? `<img src="${logoBase64}" style="max-width: 90px; max-height: 110px; object-fit: contain;" />` : `
           <svg viewBox="0 0 100 100" width="80" height="80">
             <!-- Simplified crest placeholder just for aesthetic match -->
             <circle cx="50" cy="50" r="45" fill="none" stroke="#000" stroke-width="2"/>
             <path d="M50 10 L50 90 M10 50 L90 50" stroke="#000" stroke-width="1"/>
             <text x="50" y="55" font-size="12" text-anchor="middle" font-weight="bold">Z P</text>
           </svg>
+          `}
         </div>
         
         <div class="front-details uppercase">
