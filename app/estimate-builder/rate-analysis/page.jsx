@@ -313,10 +313,8 @@ function RateAnalysisContent() {
   const [editYojanaDropdown, setEditYojanaDropdown] = useState(false);
   const editYojanaRef = useRef(null);
 
-  // Local copies — source of truth for UI; store is written for persistence only
-  // We do NOT sync store→local via useEffect (that caused triple renders per keystroke)
   const [localRows, setLocalRows] = useState(() => raRows);
-  const [localBottomRows, setLocalBottomRows] = useState(() => raBottomRows);
+  const [localBottomRows, setLocalBottomRows] = useState(() => raBottomRows && raBottomRows.length > 0 ? raBottomRows : defaultBottomRows);
 
   const [modalFields, setModalFields] = useState({
     estimateName: "",
@@ -414,6 +412,9 @@ function RateAnalysisContent() {
   // Apply URL params on mount — always overwrite for new estimates (no loadId)
   useEffect(() => {
     if (loadId) return; // DB load will set these
+    if (!useStore.getState().raBottomRows || useStore.getState().raBottomRows.length === 0) {
+      setRABottomRows(defaultBottomRows);
+    }
     const updates = {};
     // Always apply URL params when creating a new estimate — do NOT guard on !s.field
     // because resetEstimate() may not have flushed to the persisted store yet
@@ -547,7 +548,11 @@ function RateAnalysisContent() {
       row.materials[matIndex] = { ...row.materials[matIndex], [field]: value };
       const s = useStore.getState();
       if (field === "name") {
-        row.materials[matIndex].lead = s.leadSettings[value]?.leadCharge || 0;
+        const matName = value?.trim();
+        if (matName && !STANDARD_MATERIALS.includes(matName) && !s.leadSettings[matName]) {
+          s.updateLeadSetting(matName, { distance: 0, leadCharge: 0, unit: "", type: "custom" });
+        }
+        row.materials[matIndex].lead = useStore.getState().leadSettings[matName]?.leadCharge || 0;
       }
       updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
       next = updated;
@@ -644,7 +649,11 @@ function RateAnalysisContent() {
       row.materials[matIndex] = { ...row.materials[matIndex], [field]: value };
       const s = useStore.getState();
       if (field === "name") {
-        row.materials[matIndex].lead = s.leadSettings[value]?.leadCharge || 0;
+        const matName = value?.trim();
+        if (matName && !STANDARD_MATERIALS.includes(matName) && !s.leadSettings[matName]) {
+          s.updateLeadSetting(matName, { distance: 0, leadCharge: 0, unit: "", type: "custom" });
+        }
+        row.materials[matIndex].lead = useStore.getState().leadSettings[matName]?.leadCharge || 0;
       }
       updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
       next = updated;
