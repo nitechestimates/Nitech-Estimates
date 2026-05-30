@@ -245,6 +245,7 @@ function RateAnalysisContent() {
   const syncMeasurementFromRA = useStore((state) => state.syncMeasurementFromRA);
   const yojanaList = useStore((state) => state.yojanaList);
   const addYojana = useStore((state) => state.addYojana);
+  const setMeasurementItems = useStore((state) => state.setMeasurementItems);
 
   // Local UI state
   const [itemCode, setItemCode] = useState("");
@@ -308,6 +309,7 @@ function RateAnalysisContent() {
             adminApprovalNo:  data.data.adminApprovalNo  || "",
             currentEstimateId: data.data._id,
           });
+          setMeasurementItems(data.data.measurementItems || []);
           syncMeasurementFromRA();
         }
         setLoadingEstimate(false);
@@ -338,8 +340,6 @@ function RateAnalysisContent() {
     if (deputyEngineerFromURL)   updates.deputyEngineer    = deputyEngineerFromURL;
     if (jrEngineerFromURL)       updates.jrEngineer        = jrEngineerFromURL;
     if (adminApprovalNoFromURL)  updates.adminApprovalNo   = adminApprovalNoFromURL;
-    // Always clear the previous estimate ID so we don't overwrite an old estimate on save
-    updates.currentEstimateId = null;
     if (Object.keys(updates).length > 0) setEstimateMeta(updates);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -625,6 +625,7 @@ function RateAnalysisContent() {
           deputyEngineer: s.deputyEngineer, jrEngineer: s.jrEngineer,
           adminApprovalNo: s.adminApprovalNo,
           rows: [...localRows, ...localBottomRows],
+          measurementItems: s.measurementItems,
           estimateId: s.currentEstimateId,
           leadSettings: s.leadSettings, leadOrder: s.leadOrder,
         }),
@@ -689,8 +690,15 @@ function RateAnalysisContent() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
             Edit Details
           </button>
-          <DownloadPdfButton estimateId={currentEstimateId} nameOfWork={nameOfWork} isTribal={isTribal} rows={[...localRows, ...localBottomRows]} leadSettings={leadSettings} />
-          <div className="flex items-center gap-3">
+<DownloadPdfButton 
+  estimateId={currentEstimateId} 
+  nameOfWork={nameOfWork} 
+  isTribal={isTribal}
+  tribalPercent={tribalPercent}
+  rows={[...localRows, ...localBottomRows]} 
+  leadSettings={leadSettings}
+  labCharges={3036}
+/>          <div className="flex items-center gap-3">
             {lastSavedTime && (
               <span className="text-xs text-gray-500 flex items-center gap-1 font-medium bg-gray-100 px-2 py-1 rounded-md border border-gray-200 shadow-sm animate-fade-in">
                 <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

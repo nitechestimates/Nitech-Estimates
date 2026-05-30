@@ -1,20 +1,45 @@
 "use client";
 
 import { useState } from "react";
+import { useStore } from "@/lib/store";
 
-export default function DownloadPdfButton({ estimateId, nameOfWork, rows, isTribal, leadSettings }) {
+export default function DownloadPdfButton({ 
+  estimateId, 
+  nameOfWork, 
+  rows, 
+  isTribal, 
+  leadSettings,
+  tribalPercent,
+  labCharges = 3036  // default as in your sample
+}) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const measurementItems = useStore((state) => state.measurementItems);
 
   const handleDownload = async () => {
     setIsGenerating(true);
     try {
+      const s = useStore.getState();
       const payload = {
         estimateId,
         estimateData: {
           nameOfWork,
           isTribal,
+          tribalPercent: tribalPercent || 0,
           rows,
-          leadSettings
+          leadSettings,
+          measurementItems,   // ✅ include measurement items from store
+          labCharges,         // ✅ optional lab charges
+          year: s.year,
+          dist: s.dist,
+          taluka: s.taluka,
+          village: s.village,
+          headDivision: s.headDivision,
+          subDivision: s.subDivision,
+          deputyEngineer: s.deputyEngineer,
+          jrEngineer: s.jrEngineer,
+          adminApprovalNo: s.adminApprovalNo,
+          yojana: s.yojana,
+          estAmount: s.estAmount,
         }
       };
 
@@ -25,7 +50,8 @@ export default function DownloadPdfButton({ estimateId, nameOfWork, rows, isTrib
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate PDF");
+        const errorText = await response.text();
+        throw new Error(`Failed to generate PDF: ${errorText}`);
       }
 
       const blob = await response.blob();
@@ -35,12 +61,11 @@ export default function DownloadPdfButton({ estimateId, nameOfWork, rows, isTrib
       link.download = `Estimate_${nameOfWork ? nameOfWork.replace(/\s+/g, '_') : 'Report'}.pdf`;
       document.body.appendChild(link);
       link.click();
-      
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
 
     } catch (error) {
-      console.error(error);
+      console.error("PDF download error:", error);
       alert("Error generating PDF. Please try again.");
     } finally {
       setIsGenerating(false);
@@ -66,7 +91,7 @@ export default function DownloadPdfButton({ estimateId, nameOfWork, rows, isTrib
         </>
       ) : (
         <>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           Export PDF

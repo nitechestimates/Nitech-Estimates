@@ -13,7 +13,7 @@ export default function AbstractPage() {
   const updateAbstractCustomField = useStore((state) => state.updateAbstractCustomField);
 
   const allRaRows = [...raRows, ...raBottomRows];
-  const msMap = new Map(measurementItems.map(item => [item.id, item]));
+  const msMap = new Map((Array.isArray(measurementItems) ? measurementItems : []).map(item => [item.id, item]));
 
   const abstractRows = allRaRows.map((raItem, idx) => {
     const msItem = msMap.get(raItem.id);

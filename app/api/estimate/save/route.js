@@ -9,6 +9,7 @@ import { ObjectId } from "mongodb"; // ← Add this import
 const estimateSchema = z.object({
   nameOfWork: z.string().min(1, "Name is required"),
   rows: z.array(z.any()).optional().default([]),  // Allow empty rows
+  measurementItems: z.array(z.any()).optional().default([]),
   isTribal: z.boolean().optional(),
   estimateName: z.string().optional(),
   tribalPercent: z.string().optional(),
@@ -73,6 +74,7 @@ export async function POST(request) {
             estimateName: body.estimateName || "",
             nameOfWork: data.nameOfWork.trim(),
             rows: data.rows,
+            measurementItems: data.measurementItems,
             isTribal: body.isTribal || false,
             tribalPercent: body.tribalPercent || "",
             yojana: body.yojana || "",
@@ -106,6 +108,7 @@ export async function POST(request) {
       estimateName: body.estimateName || "",
       nameOfWork: data.nameOfWork.trim(),
       rows: data.rows,
+      measurementItems: data.measurementItems,
       isTribal: body.isTribal || false,
       tribalPercent: body.tribalPercent || "",
       yojana: body.yojana || "",

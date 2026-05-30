@@ -102,7 +102,7 @@ export async function PUT(request, context) {
     const body = await request.json();
 
     // Only allow patching specific safe fields
-    const allowedFields = ["leadSettings", "leadOrder", "estimateName", "nameOfWork"];
+    const allowedFields = ["leadSettings", "leadOrder", "estimateName", "nameOfWork", "measurementItems"];
     const patch = {};
     for (const key of allowedFields) {
       if (body[key] !== undefined) patch[key] = body[key];

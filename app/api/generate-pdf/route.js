@@ -3,199 +3,462 @@ import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import fs from "fs";
 
-// Increase max duration for Vercel as PDF generation can take a few seconds
-export const maxDuration = 60; 
+export const maxDuration = 60;
 
 export async function POST(req) {
   try {
     const { estimateId, estimateData } = await req.json();
-
-    const data = estimateData || {}; 
+    const data = estimateData || {};
     const nameOfWork = data.nameOfWork || "Unknown Work";
     const isTribal = data.isTribal || false;
     const rows = data.rows || [];
-    
-    // Extract lead settings passed from the frontend
     const leadSettings = data.leadSettings || {};
     const leadCategories = Object.keys(leadSettings);
 
-    // MAHARASHTRA PWD / ZP HTML TEMPLATE
+    // Get measurement items (passed from frontend or fetch from store)
+    // For now, we assume estimateData includes measurementItems
+    const measurementItems = data.measurementItems || [];
+
+    // Calculate totals for abstract
+    let totalAmount = 0;
+    let totalGST = 0;
+    let totalLabourInsurance = 0;
+    let totalRoyaltySand = 0;
+    let totalRoyaltyOthers = 0;
+    let totalLabCharges = 0;
+
+    // Calculate from rows (basic + lead + tribal)
+    rows.forEach(row => {
+      totalAmount += (row.netTotal || 0);
+    });
+    // Royalty rows are included in rows (isRoyalty flag)
+    const royaltySandRow = rows.find(r => r.isRoyalty && r.description.includes("sand"));
+    const royaltyOthersRow = rows.find(r => r.isRoyalty && r.description.includes("others"));
+    if (royaltySandRow) totalRoyaltySand = royaltySandRow.netTotal || 0;
+    if (royaltyOthersRow) totalRoyaltyOthers = royaltyOthersRow.netTotal || 0;
+    // Lab charges (if any)
+    totalLabCharges = data.labCharges || 3036;
+
+    const GST_RATE = 18;
+    const LABOUR_INSURANCE_RATE = 0.5;
+
+    totalGST = (totalAmount * GST_RATE) / 100;
+    totalLabourInsurance = (totalAmount * LABOUR_INSURANCE_RATE) / 100;
+    const grandTotal = totalAmount + totalGST + totalLabourInsurance + totalRoyaltySand + totalRoyaltyOthers + totalLabCharges;
+
+    // HTML template
+    const year = data.year || "2024-25";
+    const headDivision = data.headDivision || "";
+    const subDivision = data.subDivision || "";
+    const deputyEngineer = data.deputyEngineer || "";
+    const jrEngineer = data.jrEngineer || "";
+    const adminApprovalNo = data.adminApprovalNo || "";
+    const yojana = data.yojana || "";
+    const estAmount = data.estAmount || grandTotal.toFixed(2);
+    
+    // HTML template
     const htmlTemplate = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8">
         <style>
-          @page { margin: 15mm; }
-          body { font-family: 'Arial', sans-serif; font-size: 11px; margin: 0; padding: 0; color: #000; }
+          @page { size: A4; margin: 15mm; }
+          @page landscape { size: A4 landscape; margin: 15mm; }
+          .landscape-page { page: landscape; }
+          body { font-family: 'Arial', sans-serif; font-size: 12px; color: #000; margin: 0; line-height: 1.3; }
           .page-break { page-break-before: always; }
-          h1, h2, h3, h4 { text-align: center; margin: 4px 0; font-weight: bold; }
-          .header { margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-          .sub-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 12px; font-weight: bold; }
-          
-          /* Table Layout Fixes for Long Text */
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 10px; table-layout: auto; }
-          th, td { border: 1px solid #000; padding: 6px; text-align: center; vertical-align: top; }
-          th { background-color: #f2f2f2; }
-          
-          /* Force description column to wrap text properly */
-          .text-left { text-align: left; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; }
+          .center { text-align: center; }
+          .right { text-align: right; }
+          .left { text-align: left; }
           .bold { font-weight: bold; }
-          .tribal-badge { border: 1px solid #000; padding: 2px 6px; float: right; font-size: 10px; }
+          .uppercase { text-transform: uppercase; }
+          
+          h1 { font-size: 20px; font-weight: bold; text-decoration: underline; margin: 20px 0; }
+          h2 { font-size: 16px; font-weight: bold; margin: 10px 0; }
+          h3 { font-size: 14px; font-weight: bold; margin: 8px 0; }
+          h4 { font-size: 13px; font-weight: bold; margin: 6px 0; }
+          
+          /* Titles matching the PDF exactly */
+          .doc-title { text-align: center; font-size: 24px; font-weight: bold; text-decoration: underline; margin-bottom: 30px; letter-spacing: 1px; }
+          .logo-box { width: 100px; height: 120px; border: 2px solid #000; margin: 0 auto 30px auto; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; }
+          
+          .front-details { text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 40px; line-height: 1.8; }
+          .front-details u { text-decoration: underline; }
+          
+          .work-name-table { width: 100%; border: none; margin-bottom: 30px; }
+          .work-name-table td { border: none; padding: 2px; font-size: 14px; font-weight: bold; }
+          
+          .meta-table { width: 100%; border: none; font-size: 14px; font-weight: bold; margin-bottom: 30px; }
+          .meta-table td { border: none; padding: 8px 2px; }
+          
+          .yojana-box { text-align: center; font-size: 14px; font-weight: bold; text-decoration: underline; margin: 20px 0 40px 0; }
+          
+          .table-container { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px; }
+          .table-container th, .table-container td { border: 1.5px solid #000; padding: 6px 4px; vertical-align: middle; }
+          .table-container th { font-weight: bold; text-align: center; }
+          
+          .signature-block { margin-top: 60px; display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; }
+          .signature-block div { width: 33%; text-align: center; }
+          
+          .header-row { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 15px; font-size: 12px; }
         </style>
       </head>
       <body>
 
-        <div class="header">
-          <h2>GOVERNMENT OF MAHARASHTRA</h2>
-          <h3>PUBLIC WORKS DEPARTMENT / ZILLA PARISHAD</h3>
-          <h1>GENERAL ABSTRACT</h1>
-          ${isTribal ? '<div class="tribal-badge">TRIBAL AREA</div>' : ''}
+        <!-- PAGE 1: DETAILED ESTIMATE (FRONT PAGE) -->
+        <div class="doc-title">DETAILED ESTIMATE</div>
+        
+        <div class="logo-box">
+          <svg viewBox="0 0 100 100" width="80" height="80">
+            <!-- Simplified crest placeholder just for aesthetic match -->
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#000" stroke-width="2"/>
+            <path d="M50 10 L50 90 M10 50 L90 50" stroke="#000" stroke-width="1"/>
+            <text x="50" y="55" font-size="12" text-anchor="middle" font-weight="bold">Z P</text>
+          </svg>
         </div>
-        <div class="sub-header">
-          <span>Name of Work: ${nameOfWork}</span>
+        
+        <div class="front-details uppercase">
+          <u>ZILLHA PARISHAD ${data.dist || 'NASIK'}</u><br/>
+          <u>(B.&.C.) DIVISION NO: ${headDivision || '-'}</u><br/>
+          <u>SUB-DIVISION (B&C) ${subDivision || '-'}</u>
         </div>
-        <table>
+        
+        <table class="work-name-table">
+          <tr>
+            <td style="width: 15%; vertical-align: top;"><u>NAME OF<br/>WORK:</u></td>
+            <td style="width: 85%; vertical-align: top;">${nameOfWork}</td>
+          </tr>
+        </table>
+        
+        <table class="meta-table">
+          <tr>
+            <td style="width: 15%;"><u>EST. COST</u></td>
+            <td style="width: 35%;"><u>${Number(estAmount).toFixed(2)}</u></td>
+            <td style="width: 50%;"><u>ONLY</u></td>
+          </tr>
+          <tr><td colspan="3"><br/><u>T.S.NO/DA</u><br/></td></tr>
+          <tr><td colspan="3"><br/><u>A.A.NO/</u> ${adminApprovalNo}<br/></td></tr>
+          <tr><td colspan="3"><br/><u>JOB NO.</u><br/></td></tr>
+        </table>
+        
+        <div class="yojana-box">${yojana || '15 th fin comm ( G P LEVEL )'}<br/>${year}</div>
+        
+        <!-- PAGE 2: ESTIMATE -->
+        <div class="page-break"></div>
+        <div class="doc-title">ESTIMATE</div>
+        
+        <table class="meta-table" style="font-weight: normal; font-size: 13px;">
+          <tr><td style="width:30%;">YEAR</td><td class="bold">${year}</td></tr>
+          <tr><td>DIVISION</td><td class="bold uppercase">(B.&.C.) DIVISION NO: ${headDivision}</td></tr>
+          <tr><td>SUBDIVISION</td><td class="bold uppercase">SUB-DIVISION (B&C) ${subDivision}</td></tr>
+          <tr><td>SANCTIONED ESTIMATE NO</td><td></td></tr>
+          <tr><td>FUND HEAD</td><td class="bold underline"><u>${yojana}</u></td></tr>
+          <tr><td>MAJOR HEAD</td><td></td></tr>
+          <tr><td>MINOR HEAD</td><td></td></tr>
+          <tr><td>SERVICE HEAD</td><td></td></tr>
+          <tr><td>DEPARTMENTAL HEAD</td><td></td></tr>
+        </table>
+        
+        <p style="font-size: 13px; text-transform: uppercase; margin: 30px 0; line-height: 1.5; text-align: justify;">
+          THIS ESTIMATE IS FRAMED IN THE OFFICE OF EXECUTIVE ENGINEER, Z.P.(B.&.C.) DIVISION ${data.dist || 'NASIK'}. 
+          THE PROBABLE EXPENSES THAT WILL BE INCURRED ON THE WORK NAMED BELOW :-
+        </p>
+        
+        <table class="work-name-table" style="font-size: 13px;">
+          <tr>
+            <td style="width: 25%; font-weight: bold;">NAME OF WORK:</td>
+            <td style="width: 75%; font-weight: bold;">${nameOfWork}</td>
+          </tr>
+        </table>
+        
+        <div class="right bold" style="font-size: 14px; margin: 40px 0;">
+          ESTIMATED COST Rs: &nbsp;&nbsp; ${Number(estAmount).toFixed(2)} &nbsp;&nbsp; ONLY
+        </div>
+        
+        <p style="font-size: 13px;">TECHNICALY SANCTIONED UNDER<br/>NO</p><br/>
+        <p style="font-size: 13px;">ADMINISTRATIVELY APPROVED UNDER<br/>NO</p><br/>
+        
+        <table class="meta-table" style="font-size: 12px; margin-top: 30px;">
+          <tr>
+            <td style="width: 30%;">ESTIMATE PREPARED BY</td>
+            <td style="width: 35%;" class="bold uppercase">Engr.Shri. ${jrEngineer}</td>
+            <td style="width: 35%;" class="bold">Sectional Engineer</td>
+          </tr>
+          <tr>
+            <td>ESTIMATE CHECKED BY</td>
+            <td class="bold uppercase">Engr.Shri. ${deputyEngineer}</td>
+            <td class="bold">Deputy Engineer</td>
+          </tr>
+          <tr>
+            <td colspan="3"><br/>CALL OR ATHORITY:-</td>
+          </tr>
+        </table>
+        
+        <div class="center bold" style="text-decoration: underline; margin-top: 30px; font-size: 14px;">GENERAL DISCRIPTION</div>
+        <div class="center" style="margin-top: 20px; font-size: 13px;">AS PER SEPERATE SHEET ATTACHED</div>
+
+
+        <!-- PAGE 3: RECAPULATION SHEET -->
+        <div class="page-break"></div>
+        <div class="header-row uppercase">
+          <div style="width:15%">NAME OF WORK:</div>
+          <div style="width:85%; font-weight:normal;">${nameOfWork}</div>
+        </div>
+        
+        <div class="doc-title" style="margin: 20px 0;">RECAPULATION SHEET</div>
+        
+        <table class="table-container" style="font-size: 13px;">
           <thead>
             <tr>
-              <th width="5%">Sr No.</th>
-              <th width="45%">Description of Work</th>
-              <th width="10%">Quantity</th>
-              <th width="15%">Estimated Rate (Rs)</th>
-              <th width="10%">Unit</th>
-              <th width="15%">Amount (Rs)</th>
+              <th style="width:10%">Sr.No.</th>
+              <th style="width:50%">DESCRIPTION</th>
+              <th style="width:15%">% CONSIDERED</th>
+              <th style="width:15%">AMOUNT Rs-Ps.</th>
+              <th style="width:10%">REMARK.</th>
             </tr>
+            <tr style="background:#f9f9f9;"><th class="center"></th><th class="center">2</th><th class="center">3</th><th class="center">4</th><th class="center">5</th></tr>
           </thead>
           <tbody>
-            ${rows.map((r, i) => `
-              <tr>
-                <td>${i + 1}</td>
-                <td class="text-left">${r.description || r.ssr}</td>
-                <td>--</td> 
-                <td>${(r.netTotal || 0).toFixed(2)}</td>
-                <td>${r.unit || 'No.'}</td>
-                <td>--</td> 
-              </tr>
-            `).join('')}
+            <tr><td class="center">1</td><td class="left">Cost of work proper</td><td class="center"></td><td class="right">${totalAmount.toFixed(2)}</td><td></td></tr>
+            <tr><td class="center">2</td><td class="left">SQM and Contegencies (GST)</td><td class="center bold" style="color:red;">${GST_RATE}%</td><td class="right">${totalGST.toFixed(2)}</td><td></td></tr>
+            <tr><td class="center">3</td><td class="left">Labour Insurance</td><td class="center bold" style="color:red;">${LABOUR_INSURANCE_RATE}%</td><td class="right">${totalLabourInsurance.toFixed(2)}</td><td></td></tr>
+            <tr><td colspan="3" class="right bold" style="border-right:1px solid #000;">Total Rs-Ps</td><td class="right bold border-2">${grandTotal.toFixed(2)}</td><td></td></tr>
           </tbody>
         </table>
+        
+        <div class="right bold" style="font-size: 14px; margin-top: 20px;">say Rs. &nbsp;&nbsp;&nbsp;&nbsp; <span style="color:red; text-decoration:underline;">${Math.round(grandTotal)}.00</span></div>
+        
+        <div class="signature-block">
+          <div>SECTIONAL ENGINEER<br/>Z.P.(B&C)SUB-DIVISION ${subDivision.toUpperCase()}</div>
+          <div></div>
+          <div>DEPUTY ENGINEER<br/>Z.P.(B&C)SUB-DIVISION ${subDivision.toUpperCase()}</div>
+        </div>
 
+
+        <!-- PAGE 4: ABSTRACT -->
         <div class="page-break"></div>
-
-        <div class="header">
-          <h2>MEASUREMENT SHEET</h2>
+        <div class="header-row uppercase" style="font-size: 11px;">
+          <div style="width:10%">NAME<br/>OF<br/>WORK:</div>
+          <div style="width:90%; font-weight:normal;">${nameOfWork}</div>
         </div>
-        <div class="sub-header">
-          <span>Name of Work: ${nameOfWork}</span>
-        </div>
-        <table>
+        
+        <div class="doc-title" style="margin: 10px 0;">ABSTRACT</div>
+        
+        <table class="table-container">
           <thead>
             <tr>
-              <th width="5%">Item No.</th>
-              <th width="40%">Description</th>
-              <th width="10%">No.</th>
-              <th width="10%">L</th>
-              <th width="10%">B</th>
-              <th width="10%">D/H</th>
-              <th width="15%">Quantity</th>
+              <th style="width:6%">Sr..No.</th>
+              <th style="width:50%">DESCRIPTION OF ITEM</th>
+              <th style="width:8%">QTY</th>
+              <th style="width:10%">UNIT</th>
+              <th style="width:12%">RATE<br/>Rs.-Ps.</th>
+              <th style="width:14%">AMOUNT<br/>Rs.-PS.</th>
             </tr>
+            <tr style="background:#f9f9f9;"><th class="center">1</th><th class="center">2</th><th class="center"></th><th class="center">3</th><th class="center">4</th><th class="center">5</th><th class="center">6</th></tr>
           </thead>
           <tbody>
-            ${rows.map((r, i) => `
+            ${rows.map((row, i) => `
               <tr>
-                <td>${i + 1}</td>
-                <td class="text-left"><strong>${r.ssr}</strong> - ${r.description || ''}</td>
-                <td>1</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td class="bold">-</td>
+                <td class="center">${i+1}</td>
+                <td class="left">${row.description || ''}</td>
+                <td class="center">${((row.materials || [])[0]?.qty || 0).toFixed(2)}</td>
+                <td class="center">${row.unit || ''}</td>
+                <td class="center">${(row.netTotal / Math.max(1, ((row.materials || [])[0]?.qty || 1))).toFixed(2)}</td>
+                <td class="center bold">${(row.netTotal || 0).toFixed(2)}</td>
               </tr>
             `).join('')}
+            <tr><td colspan="4"></td><td class="right bold">TOTAL</td><td class="center bold">${totalAmount.toFixed(2)}</td></tr>
+            <tr><td colspan="4" class="right bold">Add For GST</td><td class="center bold">${GST_RATE}.00 %</td><td class="center">${totalGST.toFixed(2)}</td></tr>
+            <tr><td colspan="4" class="right bold">Add Labour Insurance</td><td class="center bold">${LABOUR_INSURANCE_RATE} %</td><td class="center">${totalLabourInsurance.toFixed(2)}</td></tr>
+            <tr><td colspan="4"></td><td class="right bold">TOTAL</td><td class="center bold">${(totalAmount + totalGST + totalLabourInsurance).toFixed(2)}</td></tr>
+            
+            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">Royalty Charges ( sand)</td><td class="center"></td><td class="center">Cubic<br/>Metre</td><td class="center"></td><td class="center">${totalRoyaltySand.toFixed(2)}</td></tr>
+            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">Royalty Charges ( others)</td><td class="center"></td><td class="center">Cubic<br/>Metre</td><td class="center"></td><td class="center">${totalRoyaltyOthers.toFixed(2)}</td></tr>
+            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">laboratory charges</td><td class="center"></td><td class="center">for all<br/>test</td><td class="center"></td><td class="center">${totalLabCharges.toFixed(2)}</td></tr>
+            <tr><td colspan="4"></td><td class="right bold">TOTAL RS.</td><td class="center bold" style="font-size:14px;">${grandTotal.toFixed(2)}</td></tr>
           </tbody>
         </table>
+        
+        <div class="signature-block">
+          <div>SECTIONAL ENGINEER<br/>Z.P.(B&C)SUB-DIVISION ${subDivision.toUpperCase()}</div>
+          <div></div>
+          <div>DEPUTY ENGINEER<br/>Z.P.(B&C)SUB-DIVISION ${subDivision.toUpperCase()}</div>
+        </div>
 
+
+        <!-- PAGE 5: MEASUREMENT -->
         <div class="page-break"></div>
-
-        <div class="header">
-          <h2>RATE ANALYSIS</h2>
+        <div class="header-row uppercase" style="font-size: 11px;">
+          <div style="width:15%">NAME OF WORK:</div>
+          <div style="width:85%; font-weight:normal;">${nameOfWork}</div>
         </div>
-        <div class="sub-header">
-          <span>Name of Work: ${nameOfWork}</span>
-        </div>
-        <table>
+        
+        <div class="doc-title" style="margin: 10px 0;">MEASUREMENT</div>
+        
+        <table class="table-container" style="border: 2px solid #000;">
           <thead>
-            <tr>
-              <th width="5%">Item No.</th>
-              <th width="35%">Description / SSR Code</th>
-              <th width="10%">Basic Rate</th>
-              <th width="15%">Material Lead</th>
-              <th width="10%">Deduct</th>
-              <th width="10%">Tribal (10%)</th>
-              <th width="15%">Net Rate (Rs)</th>
+            <tr style="border-bottom: 2px solid #000;">
+              <th style="width:5%">I. No.</th>
+              <th style="width:45%">DESCRIPTION OF ITEM</th>
+              <th style="width:8%">No.</th>
+              <th style="width:8%">L.</th>
+              <th style="width:8%">B/W</th>
+              <th style="width:8%">H/D.</th>
+              <th style="width:10%">TOTAL</th>
+              <th style="width:8%">UNIT</th>
             </tr>
+            <tr style="background:#f9f9f9;"><th class="center">1</th><th class="center">2</th><th class="center">3</th><th class="center">4</th><th class="center">5</th><th class="center">6</th><th class="center">7</th><th class="center">8</th></tr>
           </thead>
           <tbody>
-            ${rows.map((r, i) => `
-              <tr>
-                <td>${i + 1}</td>
-                <td class="text-left"><strong>${r.ssr}</strong><br/>${r.description || ''}</td>
-                <td>${(r.basicRate || 0).toFixed(2)}</td>
-                <td>${(r.totalLead || 0).toFixed(2)}</td>
-                <td>${(r.deduct || 0).toFixed(2)}</td>
-                <td>${(r.tribal || 0).toFixed(2)}</td>
-                <td class="bold">${(r.netTotal || 0).toFixed(2)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-
-        <div class="page-break"></div>
-
-        <div class="header">
-          <h2>MATERIAL LEAD STATEMENT</h2>
-        </div>
-        <div class="sub-header">
-          <span>Name of Work: ${nameOfWork}</span>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th width="10%">Sr No.</th>
-              <th width="50%">Material Category</th>
-              <th width="20%">Distance (Km)</th>
-              <th width="20%">Lead Charge (Rs)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${leadCategories.length > 0 ? leadCategories.map((cat, i) => {
-              const setting = leadSettings[cat] || {};
-              const dist = setting.distance !== undefined ? setting.distance : setting.leadDistance;
-              const charge = setting.leadCharge;
-              
-              // Formatting logic: show NA if value is 0, blank, null, or undefined
-              const displayDist = (!dist || dist === 0 || dist === "0") ? "NA" : Number(dist).toFixed(2);
-              const displayCharge = (!charge || charge === 0 || charge === "0") ? "NA" : Number(charge).toFixed(2);
-              
+            ${measurementItems.length === 0 ? `<tr><td colspan="8" class="center">No measurement data available</td></tr>` : 
+              measurementItems.map((item, idx) => {
+              const measurements = item.measurements || [];
+              const totalQty = item.totalQty || 0;
               return `
                 <tr>
-                  <td>${i + 1}</td>
-                  <td class="text-left">${cat}</td>
-                  <td class="${displayDist === 'NA' ? 'bold' : ''}">${displayDist}</td>
-                  <td class="${displayCharge === 'NA' ? 'bold' : ''}">${displayCharge}</td>
+                  <td class="center bold" style="font-size:14px;">${idx + 1}</td>
+                  <td class="left" colspan="7">${item.description || ''}</td>
+                </tr>
+                ${measurements.map(meas => `
+                  <tr>
+                    <td></td>
+                    <td class="left pl-4">${meas.description || ''}</td>
+                    <td class="center" style="color:blue; font-weight:bold;">${meas.no !== undefined && meas.no !== '' ? meas.no : '-'}</td>
+                    <td class="center" style="color:red; font-weight:bold;">${meas.l !== undefined && meas.l !== '' ? meas.l : '-'}</td>
+                    <td class="center" style="color:red; font-weight:bold;">${meas.b !== undefined && meas.b !== '' ? meas.b : '-'}</td>
+                    <td class="center" style="color:red; font-weight:bold;">${meas.h !== undefined && meas.h !== '' ? meas.h : '-'}</td>
+                    <td class="center bold">${(meas.total || 0).toFixed(2)}</td>
+                    <td></td>
+                  </tr>
+                `).join('')}
+                <tr>
+                  <td colspan="5"></td>
+                  <td class="center" style="color:red;">TOTAL</td>
+                  <td class="center bold" style="border-top:2px solid #000; border-bottom:2px solid #000;">${totalQty.toFixed(2)}</td>
+                  <td class="center" style="color:#6b21a8; font-weight:bold;">${item.unit || 'One'}</td>
                 </tr>
               `;
-            }).join('') : `<tr><td colspan="4">No lead data configured for this estimate.</td></tr>`}
+            }).join('')}
           </tbody>
         </table>
 
+
+        <!-- PAGE 6: MATERIAL LEAD STATEMENT -->
+        <div class="page-break"></div>
+        <div class="doc-title" style="margin: 20px 0;">LEAD CHARGES STATEMENT</div>
+        <div class="header-row" style="margin-bottom: 20px;">
+          <div style="width:15%"><u>Name Of Work -</u></div>
+          <div style="width:85%; color:red; text-transform:uppercase;">${nameOfWork}</div>
+        </div>
+        
+        <table class="table-container" style="border: 2px solid #000; font-size: 13px;">
+          <thead>
+            <tr>
+              <th style="width:50%; font-size:16px;">Type of Material</th>
+              <th style="width:15%">Lead In<br/>Km s</th>
+              <th style="width:15%">Lead<br/>Charges<br/>Rs.</th>
+              <th style="width:20%">SOURCE</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${leadCategories.length === 0 ? '<tr><td colspan="4" class="text-center">No lead data available</td></tr>' : 
+              leadCategories.map((cat) => {
+                const setting = leadSettings[cat] || {};
+                const distance = setting.distance !== undefined ? setting.distance : (setting.leadDistance || 0);
+                const charge = setting.leadCharge || 0;
+                return `
+                  <tr>
+                    <td class="left bold">${cat}</td>
+                    <td class="center bold" style="color:red;">${distance === 0 ? '0.00' : distance.toFixed(2)}</td>
+                    <td class="center bold">${charge === 0 ? '#N/A' : charge.toFixed(2)}</td>
+                    <td class="center bold" style="color:red;">${distance === 0 ? 'Local' : 'Local'}</td>
+                  </tr>
+                `;
+              }).join('')
+            }
+          </tbody>
+        </table>
+        
+        <div class="signature-block" style="margin-top:80px;">
+          <div>SECTIONAL ENGINEER<br/><span style="color:red;">Z.P.(B&C)SUB-DIVISION ${subDivision.toUpperCase()}</span></div>
+          <div></div>
+          <div>DEPUTY ENGINEER<br/><span style="color:red;">Z.P.(B&C)SUB-DIVISION ${subDivision.toUpperCase()}</span></div>
+        </div>
+
+
+        <!-- PAGE 7: RATE ANALYSIS -->
+        <div class="page-break landscape-page">
+          <div class="header-row" style="font-size: 11px;">
+            <div style="width:10%">Name of<br/>work</div>
+            <div style="width:90%; font-weight:normal;">${nameOfWork}</div>
+          </div>
+          
+          <div class="doc-title" style="margin: 10px 0;">RATE ANALYSIS</div>
+          
+          <table class="table-container" style="font-size:10px;">
+            <thead>
+              <tr>
+                <th style="width:3%">Sr.<br/>No.</th>
+                <th style="width:4%">S.S.R.<br/>Item<br/>No.</th>
+                <th style="width:43%">Description of the Item in Brief</th>
+                <th style="width:3%">Unit</th>
+                <th style="width:4%">Basic<br/>Rate<br/>(Rs.Ps.)</th>
+                <th style="width:3%">deduct<br/>for<br/>scada</th>
+                <th style="width:4%">Net<br/>amount<br/>after<br/>deductng</th>
+                <th style="width:7%">Type of<br/>material<br/>requ- ired</th>
+                <th style="width:3%">Qty of<br/>material<br/>reqd</th>
+                <th style="width:4%; color:#3b82f6;">Net<br/>lead<br/>charges</th>
+                <th style="width:4%">Total lead<br/>charges<br/>(Rs.Ps)</th>
+                <th style="width:4%">Total (Rs.-<br/>Ps.)</th>
+                <th style="width:4%">TRIBAL<br/>${isTribal ? data.tribalPercent : '0'}%</th>
+                <th style="width:6%">Net Total<br/>Amount (Rs.<br/>Ps.)</th>
+                <th style="width:4%">specificati<br/>ons</th>
+              </tr>
+            <tr style="background:#f9f9f9;">
+              <th class="center">1</th><th class="center">2</th><th class="center">3</th><th class="center">4</th>
+              <th class="center">5</th><th class="center">6</th><th class="center">7</th><th class="center">8</th>
+              <th class="center">9</th><th class="center">10</th><th class="center">11</th><th class="center">12</th>
+              <th class="center">13</th><th class="center">14</th><th class="center">15</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((row, i) => {
+              const materialsHtml = (row.materials || []).map(mat => `<div style="border-bottom:1px dotted #ccc; padding:2px 0;">${mat.name || ''}</div>`).join('');
+              const qtyHtml = (row.materials || []).map(mat => `<div style="border-bottom:1px dotted #ccc; padding:2px 0;">${(mat.qty || 0).toFixed(2)}</div>`).join('');
+              const netLeadHtml = (row.materials || []).map(mat => `<div style="border-bottom:1px dotted #ccc; padding:2px 0; color:#3b82f6; font-weight:bold;">${(mat.lead || 0).toFixed(2)}</div>`).join('');
+              const totalLeadHtml = (row.materials || []).map(mat => `<div style="border-bottom:1px dotted #ccc; padding:2px 0;">${((mat.lead || 0) * (mat.qty || 0)).toFixed(2)}</div>`).join('');
+              return `
+                <tr>
+                  <td class="center bold">${i+1}</td>
+                  <td class="center bold" style="color:red;">${row.ssr || ''}</td>
+                  <td class="left">${row.description || ''}</td>
+                  <td class="center">${row.unit || ''}</td>
+                  <td class="center bold">${(row.basicRate || 0).toFixed(2)}</td>
+                  <td class="center">${(row.deduct || 0).toFixed(2)}</td>
+                  <td class="center">${(row.netAfterDeduct || 0).toFixed(2)}</td>
+                  <td class="left">${materialsHtml}</td>
+                  <td class="center">${qtyHtml}</td>
+                  <td class="center">${netLeadHtml}</td>
+                  <td class="center">${totalLeadHtml}</td>
+                  <td class="center">${(row.total || 0).toFixed(2)}</td>
+                  <td class="center">${(row.tribal || 0).toFixed(2)}</td>
+                  <td class="center bold">${(row.netTotal || 0).toFixed(2)}</td>
+                  <td class="center" style="font-size:9px;">${row.specs || ''}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+        
+        </div>
       </body>
       </html>
     `;
 
+
+    // Puppeteer browser launch (same as before)
     const isLocal = process.env.NODE_ENV === "development";
-    
-    // Auto-detect local browser path by checking common installation folders
     const getLocalBrowserPath = () => {
       if (process.platform === 'win32') {
         const paths = [
@@ -209,31 +472,33 @@ export async function POST(req) {
         for (const p of paths) {
           if (fs.existsSync(p)) return p;
         }
-      } else if (process.platform === 'darwin') { // Mac
+      } else if (process.platform === 'darwin') {
         return '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
       }
-      return '/usr/bin/brave-browser'; // Linux
+      return '/usr/bin/brave-browser';
     };
 
     const browser = await puppeteer.launch({
       args: isLocal ? [] : chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: isLocal 
-        ? (process.env.LOCAL_CHROME_PATH || getLocalBrowserPath()) 
+      executablePath: isLocal
+        ? (process.env.LOCAL_CHROME_PATH || getLocalBrowserPath())
         : await chromium.executablePath(),
       headless: isLocal ? "new" : chromium.headless,
       ignoreHTTPSErrors: true,
     });
-    
+
     const page = await browser.newPage();
     await page.setContent(htmlTemplate, { waitUntil: 'networkidle0' });
-    
+
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      displayHeaderFooter: false,
+      displayHeaderFooter: true,
+      footerTemplate: '<div style="font-size:9px; text-align:center; width:100%;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>',
+      margin: { top: '15mm', bottom: '20mm', left: '15mm', right: '15mm' },
     });
-    
+
     await browser.close();
 
     return new NextResponse(pdfBuffer, {
