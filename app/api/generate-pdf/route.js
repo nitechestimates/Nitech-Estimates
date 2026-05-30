@@ -42,15 +42,19 @@ export async function POST(req) {
 
     // Calculate from rows (basic + lead + tribal)
     rows.forEach(row => {
-      totalAmount += (row.netTotal || 0);
+      if (!row.isRoyalty) {
+        totalAmount += (row.netTotal || 0);
+      }
     });
     // Royalty rows are included in rows (isRoyalty flag)
-    const royaltySandRow = rows.find(r => r.isRoyalty && r.description.includes("sand"));
-    const royaltyOthersRow = rows.find(r => r.isRoyalty && r.description.includes("others"));
+    const royaltySandRow = rows.find(r => r.isRoyalty && r.description.toLowerCase().includes("sand"));
+    const royaltyOthersRow = rows.find(r => r.isRoyalty && r.description.toLowerCase().includes("others"));
+    const labChargesRow = rows.find(r => r.isRoyalty && r.description.toLowerCase().includes("lab"));
+
     if (royaltySandRow) totalRoyaltySand = royaltySandRow.netTotal || 0;
     if (royaltyOthersRow) totalRoyaltyOthers = royaltyOthersRow.netTotal || 0;
-    // Lab charges (if any)
-    totalLabCharges = data.labCharges || 3036;
+    if (labChargesRow) totalLabCharges = labChargesRow.netTotal || 0;
+    else totalLabCharges = data.labCharges || 3036;
 
     const GST_RATE = 18;
     let LABOUR_INSURANCE_RATE = 0.5;
@@ -279,7 +283,7 @@ export async function POST(req) {
             <tr style="background:#f9f9f9;"><th class="center">1</th><th class="center">2</th><th class="center"></th><th class="center">3</th><th class="center">4</th><th class="center">5</th><th class="center">6</th></tr>
           </thead>
           <tbody>
-            ${rows.map((row, i) => `
+            ${rows.filter(r => !r.isRoyalty).map((row, i) => `
               <tr>
                 <td class="center">${i+1}</td>
                 <td class="left">${row.description || ''}</td>
@@ -294,9 +298,9 @@ export async function POST(req) {
             <tr><td colspan="4" class="right bold">Add Labour Insurance</td><td class="center bold">${LABOUR_INSURANCE_RATE} %</td><td class="center">${totalLabourInsurance.toFixed(2)}</td></tr>
             <tr><td colspan="4"></td><td class="right bold">TOTAL</td><td class="center bold">${(totalAmount + totalGST + totalLabourInsurance).toFixed(2)}</td></tr>
             
-            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">Royalty Charges ( sand)</td><td class="center"></td><td class="center">Cubic<br/>Metre</td><td class="center"></td><td class="center">${totalRoyaltySand.toFixed(2)}</td></tr>
-            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">Royalty Charges ( others)</td><td class="center"></td><td class="center">Cubic<br/>Metre</td><td class="center"></td><td class="center">${totalRoyaltyOthers.toFixed(2)}</td></tr>
-            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">laboratory charges</td><td class="center"></td><td class="center">for all<br/>test</td><td class="center"></td><td class="center">${totalLabCharges.toFixed(2)}</td></tr>
+            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">${royaltySandRow ? royaltySandRow.description : 'Royalty Charges ( sand)'}</td><td class="center"></td><td class="center">${royaltySandRow ? royaltySandRow.unit : 'Cubic<br/>Metre'}</td><td class="center"></td><td class="center">${totalRoyaltySand.toFixed(2)}</td></tr>
+            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">${royaltyOthersRow ? royaltyOthersRow.description : 'Royalty Charges ( others)'}</td><td class="center"></td><td class="center">${royaltyOthersRow ? royaltyOthersRow.unit : 'Cubic<br/>Metre'}</td><td class="center"></td><td class="center">${totalRoyaltyOthers.toFixed(2)}</td></tr>
+            <tr style="background:#e0f2fe;"><td class="center"></td><td class="left">${labChargesRow ? labChargesRow.description : 'laboratory charges'}</td><td class="center"></td><td class="center">${labChargesRow ? labChargesRow.unit : 'for all<br/>test'}</td><td class="center"></td><td class="center">${totalLabCharges.toFixed(2)}</td></tr>
             <tr><td colspan="4"></td><td class="right bold">TOTAL RS.</td><td class="center bold" style="font-size:14px;">${grandTotal.toFixed(2)}</td></tr>
           </tbody>
         </table>

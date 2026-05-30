@@ -190,7 +190,8 @@ function AutoTextarea({ value, onChange, className = "text-left" }) {
 
 const defaultBottomRows = [
   { id: "royalty-sand", isRoyalty: true, ssr: "", description: "Royalty Charges ( sand)", unit: "Cum", basicRate: 237.37, deduct: 0, materials: [{ id: "mat-r1", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" },
-  { id: "royalty-others", isRoyalty: true, ssr: "", description: "Royalty Charges ( others)", unit: "Cum", basicRate: 216.18, deduct: 0, materials: [{ id: "mat-r2", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" }
+  { id: "royalty-others", isRoyalty: true, ssr: "", description: "Royalty Charges ( others)", unit: "Cum", basicRate: 216.18, deduct: 0, materials: [{ id: "mat-r2", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" },
+  { id: "lab-charges", isRoyalty: true, ssr: "", description: "laboratory charges ", unit: "for all test", basicRate: 3036, deduct: 0, materials: [{ id: "mat-r3", name: "", qty: 1, lead: 0 }], totalLead: 0, total: 3036, tribal: 0, netTotal: 3036, specs: "" }
 ];
 
 const formatNumber = (num) => (num !== undefined && num !== null && !isNaN(num) ? Number(num).toFixed(3) : "0.000");
@@ -375,7 +376,11 @@ function RateAnalysisContent() {
           const loadedRows = data.data.rows || [];
           const bRows = loadedRows.filter((r) => r.isRoyalty);
           const standardRows = loadedRows.filter((r) => !r.isRoyalty).map((r, i) => ({ ...r, srNo: i + 1 }));
-          const bottomRows = bRows.length ? bRows : defaultBottomRows;
+          const bottomRows = [...(bRows.length ? bRows : defaultBottomRows)];
+          const hasLabCharges = bottomRows.some(r => r.id === "lab-charges" || r.description.toLowerCase().includes("lab"));
+          if (!hasLabCharges) {
+            bottomRows.push({ id: "lab-charges", isRoyalty: true, ssr: "", description: "laboratory charges ", unit: "for all test", basicRate: 3036, deduct: 0, materials: [{ id: "mat-r3", name: "", qty: 1, lead: 0 }], totalLead: 0, total: 3036, tribal: 0, netTotal: 3036, specs: "" });
+          }
           // Set BOTH store AND local state — avoids needing the sync useEffect
           setRARows(standardRows);
           setLocalRows(standardRows);
@@ -691,7 +696,7 @@ function RateAnalysisContent() {
   }, [setRABottomRows]);
 
   const clearBottomRow = useCallback(async (i) => {
-    const approved = await triggerConfirm("Are you sure you want to clear this royalty row?", "Clear Royalty");
+    const approved = await triggerConfirm("Are you sure you want to clear this row?", "Clear Row");
     if (!approved) return;
     let next;
     setLocalBottomRows(prev => {
