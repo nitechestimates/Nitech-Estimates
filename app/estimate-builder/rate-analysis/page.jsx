@@ -544,6 +544,68 @@ function RateAnalysisContent() {
     setTimeout(() => { if (next) setRARows(next); }, 0);
   }, [setRARows]);
 
+  const pruneUnusedRALeads = useCallback((customRows = null, customBottomRows = null) => {
+    const s = useStore.getState();
+    const rows = customRows || localRows;
+    const bRows = customBottomRows || localBottomRows;
+
+    const usedMaterials = new Set();
+    rows.forEach(r => {
+      (r.materials || []).forEach(m => {
+        if (m.name?.trim()) usedMaterials.add(m.name.trim());
+      });
+    });
+    bRows.forEach(r => {
+      (r.materials || []).forEach(m => {
+        if (m.name?.trim()) usedMaterials.add(m.name.trim());
+      });
+    });
+
+    let changed = false;
+    const updatedSettings = { ...s.leadSettings };
+    Object.keys(updatedSettings).forEach(name => {
+      const entry = updatedSettings[name];
+      if (entry && entry.type === "custom" && entry.origin === "ra" && !usedMaterials.has(name)) {
+        delete updatedSettings[name];
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      s.setLeadSettings(updatedSettings);
+      s.setLeadOrder(s.leadOrder.filter(k => updatedSettings[k]));
+      setTimeout(s.recalculateRARowsWithLeadSettings, 0);
+    }
+  }, [localRows, localBottomRows]);
+
+  const commitMaterialName = useCallback((rowIndex, matIndex, value) => {
+    const matName = value?.trim();
+    if (!matName) return;
+    const s = useStore.getState();
+    if (!STANDARD_MATERIALS.includes(matName) && !s.leadSettings[matName]) {
+      s.updateLeadSetting(matName, { distance: 0, leadCharge: 0, unit: "", type: "custom", origin: "ra" });
+    }
+    let next;
+    setLocalRows(prev => {
+      const updated = [...prev];
+      const row = { ...updated[rowIndex] };
+      row.materials = [...row.materials];
+      row.materials[matIndex] = { 
+        ...row.materials[matIndex], 
+        lead: useStore.getState().leadSettings[matName]?.leadCharge || 0 
+      };
+      updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
+      next = updated;
+      return updated;
+    });
+    setTimeout(() => { 
+      if (next) {
+        setRARows(next);
+        pruneUnusedRALeads(next, null);
+      }
+    }, 0);
+  }, [setRARows, pruneUnusedRALeads]);
+
   const updateMaterial = useCallback((rowIndex, matIndex, field, value) => {
     let next;
     setLocalRows(prev => {
@@ -554,10 +616,7 @@ function RateAnalysisContent() {
       const s = useStore.getState();
       if (field === "name") {
         const matName = value?.trim();
-        if (matName && !STANDARD_MATERIALS.includes(matName) && !s.leadSettings[matName]) {
-          s.updateLeadSetting(matName, { distance: 0, leadCharge: 0, unit: "", type: "custom" });
-        }
-        row.materials[matIndex].lead = useStore.getState().leadSettings[matName]?.leadCharge || 0;
+        row.materials[matIndex].lead = s.leadSettings[matName]?.leadCharge || 0;
       }
       updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
       next = updated;
@@ -591,8 +650,13 @@ function RateAnalysisContent() {
       next = updated;
       return updated;
     });
-    setTimeout(() => { if (next) setRARows(next); }, 0);
-  }, [setRARows]);
+    setTimeout(() => { 
+      if (next) {
+        setRARows(next);
+        pruneUnusedRALeads(next, null);
+      }
+    }, 0);
+  }, [setRARows, pruneUnusedRALeads]);
 
   const deleteRow = useCallback((id) => {
     let next;
@@ -602,10 +666,13 @@ function RateAnalysisContent() {
       return updated;
     });
     setTimeout(() => {
-      if (next) setRARows(next);
+      if (next) {
+        setRARows(next);
+        pruneUnusedRALeads(next, null);
+      }
       useStore.getState().syncMeasurementFromRA();
     }, 0);
-  }, [setRARows]);
+  }, [setRARows, pruneUnusedRALeads]);
 
   const refreshRow = useCallback(async (i) => {
     const approved = await triggerConfirm("Revert to default SSR values? Your edits will be lost.", "Revert SSR Item");
@@ -628,8 +695,13 @@ function RateAnalysisContent() {
       next = updated;
       return updated;
     });
-    setTimeout(() => { if (next) setRARows(next); }, 0);
-  }, [setRARows]);
+    setTimeout(() => { 
+      if (next) {
+        setRARows(next);
+        pruneUnusedRALeads(next, null);
+      }
+    }, 0);
+  }, [setRARows, pruneUnusedRALeads]);
 
   // Bottom rows handlers
   const updateBottomRow = useCallback((i, field, value) => {
@@ -645,6 +717,34 @@ function RateAnalysisContent() {
     setTimeout(() => { if (next) setRABottomRows(next); }, 0);
   }, [setRABottomRows]);
 
+  const commitBottomMaterialName = useCallback((rowIndex, matIndex, value) => {
+    const matName = value?.trim();
+    if (!matName) return;
+    const s = useStore.getState();
+    if (!STANDARD_MATERIALS.includes(matName) && !s.leadSettings[matName]) {
+      s.updateLeadSetting(matName, { distance: 0, leadCharge: 0, unit: "", type: "custom", origin: "ra" });
+    }
+    let next;
+    setLocalBottomRows(prev => {
+      const updated = [...prev];
+      const row = { ...updated[rowIndex] };
+      row.materials = [...row.materials];
+      row.materials[matIndex] = { 
+        ...row.materials[matIndex], 
+        lead: useStore.getState().leadSettings[matName]?.leadCharge || 0 
+      };
+      updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
+      next = updated;
+      return updated;
+    });
+    setTimeout(() => { 
+      if (next) {
+        setRABottomRows(next);
+        pruneUnusedRALeads(null, next);
+      }
+    }, 0);
+  }, [setRABottomRows, pruneUnusedRALeads]);
+
   const updateBottomMaterial = useCallback((rowIndex, matIndex, field, value) => {
     let next;
     setLocalBottomRows(prev => {
@@ -655,10 +755,7 @@ function RateAnalysisContent() {
       const s = useStore.getState();
       if (field === "name") {
         const matName = value?.trim();
-        if (matName && !STANDARD_MATERIALS.includes(matName) && !s.leadSettings[matName]) {
-          s.updateLeadSetting(matName, { distance: 0, leadCharge: 0, unit: "", type: "custom" });
-        }
-        row.materials[matIndex].lead = useStore.getState().leadSettings[matName]?.leadCharge || 0;
+        row.materials[matIndex].lead = s.leadSettings[matName]?.leadCharge || 0;
       }
       updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
       next = updated;
@@ -692,8 +789,13 @@ function RateAnalysisContent() {
       next = updated;
       return updated;
     });
-    setTimeout(() => { if (next) setRABottomRows(next); }, 0);
-  }, [setRABottomRows]);
+    setTimeout(() => { 
+      if (next) {
+        setRABottomRows(next);
+        pruneUnusedRALeads(null, next);
+      }
+    }, 0);
+  }, [setRABottomRows, pruneUnusedRALeads]);
 
   const clearBottomRow = useCallback(async (i) => {
     const approved = await triggerConfirm("Are you sure you want to clear this row?", "Clear Row");
@@ -705,8 +807,13 @@ function RateAnalysisContent() {
       next = updated;
       return updated;
     });
-    setTimeout(() => { if (next) setRABottomRows(next); }, 0);
-  }, [setRABottomRows]);
+    setTimeout(() => { 
+      if (next) {
+        setRABottomRows(next);
+        pruneUnusedRALeads(null, next);
+      }
+    }, 0);
+  }, [setRABottomRows, pruneUnusedRALeads]);
 
   const handleDragEnd = (e) => {
     const { active, over } = e;
@@ -1141,11 +1248,11 @@ function RateAnalysisContent() {
                 {localRows.map((row, i) => (
                   <React.Fragment key={row.id}>
                     <tr><td colSpan="17" className="border text-center bg-gray-50/50"><button onClick={() => setInsertIndex(insertIndex === i ? null : i)} className={`px-4 py-0.5 text-[10px] rounded transition-all ${insertIndex === i ? "bg-blue-500 text-white font-bold scale-110" : "text-blue-500 hover:bg-blue-100"}`}>➕ Insert Here</button></td></tr>
-                    <SortableRow row={row} index={i} isTribal={isTribal} updateRow={updateRow} updateMaterial={updateMaterial} addMaterial={addMaterial} removeMaterial={removeMaterial} deleteRow={deleteRow} refreshRow={refreshRow} formatNumber={formatNumber} materialList={materialList} />
+                    <SortableRow row={row} index={i} isTribal={isTribal} updateRow={updateRow} updateMaterial={updateMaterial} addMaterial={addMaterial} removeMaterial={removeMaterial} deleteRow={deleteRow} refreshRow={refreshRow} formatNumber={formatNumber} materialList={materialList} commitMaterialName={commitMaterialName} />
                   </React.Fragment>
                 ))}
                 {localBottomRows.map((row, i) => (
-                  <StaticRow key={row.id} row={row} index={i} globalIndex={localRows.length + i + 1} isTribal={isTribal} updateRow={updateBottomRow} updateMaterial={updateBottomMaterial} addMaterial={addBottomMaterial} removeMaterial={removeBottomMaterial} clearRow={() => clearBottomRow(i)} formatNumber={formatNumber} materialList={materialList} />
+                  <StaticRow key={row.id} row={row} index={i} globalIndex={localRows.length + i + 1} isTribal={isTribal} updateRow={updateBottomRow} updateMaterial={updateBottomMaterial} addMaterial={addBottomMaterial} removeMaterial={removeBottomMaterial} clearRow={() => clearBottomRow(i)} formatNumber={formatNumber} materialList={materialList} commitMaterialName={commitBottomMaterialName} />
                 ))}
               </tbody>
             </table>
@@ -1208,7 +1315,7 @@ export default function RateAnalysisPage() {
 // SortableRow and StaticRow components remain exactly the same as in the original file.
 // I'll include them here for completeness.
 
-const SortableRow = React.memo(function SortableRow({ row, index, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, deleteRow, refreshRow, formatNumber, materialList }) {
+const SortableRow = React.memo(function SortableRow({ row, index, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, deleteRow, refreshRow, formatNumber, materialList, commitMaterialName }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: row.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const [activeMatIdx, setActiveMatIdx] = React.useState(null);
@@ -1248,6 +1355,7 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
                     setFilterText(mat.name || "");
                   }}
                   onBlur={() => {
+                    commitMaterialName(index, matIdx, mat.name);
                     setTimeout(() => setActiveMatIdx(null), 200);
                   }}
                   className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none bg-white text-black"
@@ -1264,6 +1372,7 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
                         onMouseDown={(e) => {
                           e.preventDefault();
                           updateMaterial(index, matIdx, "name", matName);
+                          commitMaterialName(index, matIdx, matName);
                           setActiveMatIdx(null);
                         }}
                         className="px-2 py-1.5 hover:bg-blue-50 cursor-pointer text-left text-[11px] border-b border-gray-100 last:border-b-0 font-medium"
@@ -1302,7 +1411,7 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
   );
 });
 
-const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, clearRow, formatNumber, materialList }) {
+const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, clearRow, formatNumber, materialList, commitMaterialName }) {
   const [activeMatIdx, setActiveMatIdx] = React.useState(null);
   const [filterText, setFilterText] = React.useState("");
 
@@ -1340,6 +1449,7 @@ const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTri
                     setFilterText(mat.name || "");
                   }}
                   onBlur={() => {
+                    commitMaterialName(index, matIdx, mat.name);
                     setTimeout(() => setActiveMatIdx(null), 200);
                   }}
                   className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none bg-white text-black"
@@ -1356,6 +1466,7 @@ const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTri
                         onMouseDown={(e) => {
                           e.preventDefault();
                           updateMaterial(index, matIdx, "name", matName);
+                          commitMaterialName(index, matIdx, matName);
                           setActiveMatIdx(null);
                         }}
                         className="px-2 py-1.5 hover:bg-blue-50 cursor-pointer text-left text-[11px] border-b border-gray-100 last:border-b-0 font-medium"

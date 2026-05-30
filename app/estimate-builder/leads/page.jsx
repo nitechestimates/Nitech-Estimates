@@ -262,7 +262,7 @@ export default function LeadsPage() {
     const isStandard = STANDARD_MATERIALS.includes(customName.trim());
     const displayName = isStandard ? `${customName.trim()} (Custom)` : customName.trim();
     const km = parseFloat(customKm) || 0;
-    updateLeadSetting(displayName, { distance: km, leadCharge: parseFloat(customRate), unit: "", type: "custom" });
+    updateLeadSetting(displayName, { distance: km, leadCharge: parseFloat(customRate), unit: "", type: "custom", origin: "leads" });
     setTimeout(recalculate, 0);
     setCustomName(""); setCustomKm(""); setCustomRate(""); setMode(null);
   };
@@ -318,7 +318,7 @@ export default function LeadsPage() {
     (profile.customLeads || []).forEach(cl => {
       const name = cl.name;
       if (!updated[name]) {
-        updated[name] = { distance: cl.distance || 0, leadCharge: cl.leadCharge || 0, unit: "", type: "custom" };
+        updated[name] = { distance: cl.distance || 0, leadCharge: cl.leadCharge || 0, unit: "", type: "custom", origin: "leads" };
         if (!newOrder.includes(name)) newOrder.push(name);
       }
     });

@@ -96,7 +96,13 @@ export default function MeasurementPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [raRows, raBottomRows]);
 
-  const recalcItemTotal = (item) => (Array.isArray(item?.measurements) ? item.measurements : []).reduce((sum, m) => sum + (m?.total || 0), 0);
+  const recalcItemTotal = (item) => {
+    const sum = (Array.isArray(item?.measurements) ? item.measurements : []).reduce((sum, m) => sum + (m?.total || 0), 0);
+    if (item?.usePercent && item?.percentValue !== undefined) {
+      return (sum * (parseFloat(item.percentValue) || 0)) / 100;
+    }
+    return sum;
+  };
 
   const addMeasurement = useCallback((itemIndex) => {
     setMeasurementItems(prev => {
@@ -153,6 +159,18 @@ export default function MeasurementPage() {
     });
   }, [setMeasurementItems]);
 
+  const updateItemPercent = useCallback((itemIndex, usePercent, percentValue) => {
+    setMeasurementItems(prev => {
+      const updated = [...prev];
+      const item = { ...updated[itemIndex] };
+      item.usePercent = usePercent;
+      if (percentValue !== undefined) item.percentValue = percentValue;
+      item.totalQty = recalcItemTotal(item);
+      updated[itemIndex] = item;
+      return updated;
+    });
+  }, [setMeasurementItems]);
+
   if (loading) return <div className="p-4 bg-yellow-50 min-h-screen text-black"><Tabs /><div className="flex justify-center items-center h-64">Loading...</div></div>;
 
   return (
@@ -192,6 +210,7 @@ export default function MeasurementPage() {
                 updateMeasurement={updateMeasurement}
                 removeMeasurement={removeMeasurement}
                 updateDescription={updateDescription}
+                updateItemPercent={updateItemPercent}
               />
             ))}
           </tbody>
@@ -202,10 +221,12 @@ export default function MeasurementPage() {
   );
 }
 
-const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMeasurement, updateMeasurement, removeMeasurement, updateDescription }) {
+const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMeasurement, updateMeasurement, removeMeasurement, updateDescription, updateItemPercent }) {
   const measurements = Array.isArray(item?.measurements) ? item.measurements : [];
   const measCount = measurements.length;
   const rowSpan = measCount > 0 ? measCount + 1 : 2;
+  const rawSum = measurements.reduce((sum, m) => sum + (m?.total || 0), 0);
+
   return (
     <React.Fragment>
       <tr className="bg-white border-t-4 border-gray-400 group">
@@ -246,8 +267,52 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
         );
       })}
       <tr className="bg-blue-50/60">
-        <td colSpan={4} className="border p-2 text-right font-bold text-gray-700 uppercase pr-4 text-xs tracking-wider">Total Qty:</td>
-        <td className="border p-2 text-center font-extrabold text-blue-900 text-[15px]">{item?.totalQty === 0 || !item?.totalQty ? "-" : Number(item.totalQty).toFixed(3)}</td>
+        <td colSpan={4} className="border p-2 font-bold text-gray-700 text-xs align-middle">
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={item?.usePercent || false}
+                  onChange={(e) => updateItemPercent(itemIdx, e.target.checked, item?.percentValue || 100)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer"
+                />
+                <span className="text-gray-600 text-[11px] font-semibold">Apply % of Total</span>
+              </label>
+
+              {item?.usePercent && (
+                <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-left-2 duration-150">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={item?.percentValue !== undefined ? item.percentValue : 100}
+                    onChange={(e) => {
+                      const val = e.target.value === "" ? "" : parseFloat(e.target.value);
+                      updateItemPercent(itemIdx, true, val);
+                    }}
+                    onBlur={() => {
+                      if (item?.percentValue === "" || item?.percentValue === undefined || isNaN(item?.percentValue)) {
+                        updateItemPercent(itemIdx, true, 100);
+                      }
+                    }}
+                    className="w-12 border border-gray-300 rounded px-1.5 py-0.5 text-center text-xs font-bold focus:ring-1 focus:ring-blue-400 focus:outline-none bg-white text-black"
+                  />
+                  <span className="text-gray-600 font-bold text-xs">%</span>
+                  <span className="text-gray-400 text-[10px] italic font-normal">
+                    (i.e. {rawSum.toFixed(3)} × {item.percentValue || 100}%)
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <span className="uppercase text-xs tracking-wider font-bold">Total Qty:</span>
+          </div>
+        </td>
+        <td className="border p-2 text-center font-extrabold text-blue-900 text-[15px] align-middle">
+          {item?.totalQty === 0 || !item?.totalQty ? "-" : Number(item.totalQty).toFixed(3)}
+        </td>
         <td className="border p-2"></td>
       </tr>
     </React.Fragment>

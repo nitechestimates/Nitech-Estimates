@@ -340,6 +340,43 @@ export async function POST(req) {
               measurementItems.map((item, idx) => {
               const measurements = item.measurements || [];
               const totalQty = item.totalQty || 0;
+              const usePercent = item.usePercent || false;
+              const percentValue = item.percentValue !== undefined ? item.percentValue : 100;
+              const rawSum = measurements.reduce((sum, m) => sum + (m.total || 0), 0);
+
+              let footerRowsHtml = "";
+              if (usePercent) {
+                footerRowsHtml = `
+                  <tr>
+                    <td colspan="5"></td>
+                    <td class="center" style="color:red; font-weight:bold; font-size:11px;">TOTAL</td>
+                    <td class="center bold" style="border-top:1px solid #000; border-bottom:1px solid #000; font-size:11px;">${rawSum.toFixed(2)}</td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td colspan="5"></td>
+                    <td class="center" style="color:purple; font-weight:bold; font-size:11px;">${percentValue}%</td>
+                    <td class="center bold" style="color:purple; border-bottom:1px solid #000; font-size:11px;">${totalQty.toFixed(2)}</td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td colspan="5"></td>
+                    <td class="center font-bold" style="font-weight:bold; font-size:12px;">Total Qty.</td>
+                    <td class="center bold" style="border-top:2px solid #000; border-bottom:2px solid #000; font-size:12px; background-color:#eff6ff;">${totalQty.toFixed(2)}</td>
+                    <td class="center" style="color:#6b21a8; font-weight:bold; font-size:12px;">${item.unit || 'One'}</td>
+                  </tr>
+                `;
+              } else {
+                footerRowsHtml = `
+                  <tr>
+                    <td colspan="5"></td>
+                    <td class="center" style="color:red; font-weight:bold;">TOTAL</td>
+                    <td class="center bold" style="border-top:2px solid #000; border-bottom:2px solid #000;">${totalQty.toFixed(2)}</td>
+                    <td class="center" style="color:#6b21a8; font-weight:bold;">${item.unit || 'One'}</td>
+                  </tr>
+                `;
+              }
+
               return `
                 <tr>
                   <td class="center bold" style="font-size:14px;">${idx + 1}</td>
@@ -357,12 +394,7 @@ export async function POST(req) {
                     <td></td>
                   </tr>
                 `).join('')}
-                <tr>
-                  <td colspan="5"></td>
-                  <td class="center" style="color:red;">TOTAL</td>
-                  <td class="center bold" style="border-top:2px solid #000; border-bottom:2px solid #000;">${totalQty.toFixed(2)}</td>
-                  <td class="center" style="color:#6b21a8; font-weight:bold;">${item.unit || 'One'}</td>
-                </tr>
+                ${footerRowsHtml}
               `;
             }).join('')}
           </tbody>
