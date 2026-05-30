@@ -1127,7 +1127,7 @@ function RateAnalysisContent() {
 
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={localRows.map(r => r.id)} strategy={verticalListSortingStrategy}>
-          <div className="overflow-x-auto relative shadow-sm border rounded">
+          <div className="overflow-x-auto relative shadow-sm border rounded min-h-[450px]">
             <table className="w-full border text-xs bg-white relative" style={{ minWidth: "1400px" }}>
               <thead className="bg-gray-200 border-b-2 border-gray-300">
                 <tr className="text-center font-bold text-gray-700">
@@ -1211,6 +1211,14 @@ export default function RateAnalysisPage() {
 const SortableRow = React.memo(function SortableRow({ row, index, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, deleteRow, refreshRow, formatNumber, materialList }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: row.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
+  const [activeMatIdx, setActiveMatIdx] = React.useState(null);
+  const [filterText, setFilterText] = React.useState("");
+
+  const filteredMaterials = React.useMemo(() => {
+    if (!filterText.trim()) return materialList;
+    return materialList.filter(m => m.toLowerCase().includes(filterText.toLowerCase()));
+  }, [filterText, materialList]);
+
   return (
     <tr ref={setNodeRef} style={style} className="hover:bg-yellow-50 group transition-colors">
       <td {...attributes} {...listeners} className="border p-2 text-center cursor-grab text-gray-400 hover:text-black">☰</td>
@@ -1227,8 +1235,45 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
         ) : (
           row.materials.map((mat, matIdx) => (
             <div key={mat.id} className="flex items-center gap-1 leading-none mb-1">
-              <input list={`material-options-${row.id}-${matIdx}`} value={mat.name} onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)} className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none" placeholder="Select/type" />
-              <datalist id={`material-options-${row.id}-${matIdx}`}>{materialList.map((matName) => <option key={matName} value={matName} />)}</datalist>
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  value={mat.name}
+                  onChange={(e) => {
+                    updateMaterial(index, matIdx, "name", e.target.value);
+                    setFilterText(e.target.value);
+                  }}
+                  onFocus={() => {
+                    setActiveMatIdx(matIdx);
+                    setFilterText(mat.name || "");
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setActiveMatIdx(null), 200);
+                  }}
+                  className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none bg-white text-black"
+                  placeholder="Select/type"
+                />
+                {activeMatIdx === matIdx && filteredMaterials.length > 0 && (
+                  <ul 
+                    onMouseDown={(e) => e.preventDefault()}
+                    className="absolute left-0 top-[28px] w-full max-h-40 overflow-y-auto bg-white border border-gray-300 rounded-md shadow-lg z-[100] text-black"
+                  >
+                    {filteredMaterials.map((matName) => (
+                      <li
+                        key={matName}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          updateMaterial(index, matIdx, "name", matName);
+                          setActiveMatIdx(null);
+                        }}
+                        className="px-2 py-1.5 hover:bg-blue-50 cursor-pointer text-left text-[11px] border-b border-gray-100 last:border-b-0 font-medium"
+                      >
+                        {matName}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <button onClick={() => removeMaterial(index, matIdx)} className="text-red-600 text-xs px-1 hover:scale-110 transition font-bold" title="Remove material">−</button>
               {matIdx === row.materials.length - 1 && <button onClick={() => addMaterial(index)} className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold" title="Add another material">+</button>}
             </div>
@@ -1258,6 +1303,14 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
 });
 
 const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTribal, updateRow, updateMaterial, addMaterial, removeMaterial, clearRow, formatNumber, materialList }) {
+  const [activeMatIdx, setActiveMatIdx] = React.useState(null);
+  const [filterText, setFilterText] = React.useState("");
+
+  const filteredMaterials = React.useMemo(() => {
+    if (!filterText.trim()) return materialList;
+    return materialList.filter(m => m.toLowerCase().includes(filterText.toLowerCase()));
+  }, [filterText, materialList]);
+
   return (
     <tr className="bg-gray-50 hover:bg-yellow-50 group transition-colors border-t-2 border-gray-200">
       <td className="border p-2 text-center text-gray-300">📌</td>
@@ -1274,8 +1327,45 @@ const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTri
         ) : (
           row.materials.map((mat, matIdx) => (
             <div key={mat.id} className="flex items-center gap-1 leading-none mb-1">
-              <input list={`material-options-${row.id}-${matIdx}`} value={mat.name} onChange={(e) => updateMaterial(index, matIdx, "name", e.target.value)} className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none" placeholder="Select/type" />
-              <datalist id={`material-options-${row.id}-${matIdx}`}>{materialList.map((matName) => <option key={matName} value={matName} />)}</datalist>
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  value={mat.name}
+                  onChange={(e) => {
+                    updateMaterial(index, matIdx, "name", e.target.value);
+                    setFilterText(e.target.value);
+                  }}
+                  onFocus={() => {
+                    setActiveMatIdx(matIdx);
+                    setFilterText(mat.name || "");
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setActiveMatIdx(null), 200);
+                  }}
+                  className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none bg-white text-black"
+                  placeholder="Select/type"
+                />
+                {activeMatIdx === matIdx && filteredMaterials.length > 0 && (
+                  <ul 
+                    onMouseDown={(e) => e.preventDefault()}
+                    className="absolute left-0 top-[28px] w-full max-h-40 overflow-y-auto bg-white border border-gray-300 rounded-md shadow-lg z-[100] text-black"
+                  >
+                    {filteredMaterials.map((matName) => (
+                      <li
+                        key={matName}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          updateMaterial(index, matIdx, "name", matName);
+                          setActiveMatIdx(null);
+                        }}
+                        className="px-2 py-1.5 hover:bg-blue-50 cursor-pointer text-left text-[11px] border-b border-gray-100 last:border-b-0 font-medium"
+                      >
+                        {matName}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <button onClick={() => removeMaterial(index, matIdx)} className="text-red-600 text-xs px-1 hover:scale-110 transition font-bold" title="Remove material">−</button>
               {matIdx === row.materials.length - 1 && <button onClick={() => addMaterial(index)} className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold" title="Add another material">+</button>}
             </div>
