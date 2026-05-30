@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import leadsData from '@/app/lib/leads.json';
+import leadsData from '@/lib/leads.json';
 
 // Normalize string: trim, lowercase, collapse multiple spaces
 function normalize(str) {

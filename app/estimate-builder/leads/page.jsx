@@ -302,10 +302,16 @@ export default function LeadsPage() {
     const updated = { ...leadSettings };
     const newOrder = [...leadOrder];
     // Add standard materials from profile
-    (profile.materials || []).forEach(matName => {
+    // Support both legacy string[] and new { name, km }[] formats
+    (profile.materials || []).forEach(matEntry => {
+      const matName = typeof matEntry === "string" ? matEntry : matEntry.name;
+      const matKm   = typeof matEntry === "string" ? 0 : (matEntry.km || 0);
       if (!updated[matName]) {
-        updated[matName] = { distance: 0, leadCharge: 0, unit: getUnitForMaterial(leadsData, matName), type: "regular" };
+        updated[matName] = { distance: matKm, leadCharge: 0, unit: getUnitForMaterial(leadsData, matName), type: "regular" };
         if (!newOrder.includes(matName)) newOrder.push(matName);
+      } else if (matKm > 0 && updated[matName].distance === 0) {
+        // If the material already exists but has no distance set, fill it in from the profile
+        updated[matName] = { ...updated[matName], distance: matKm };
       }
     });
     // Add custom leads from profile

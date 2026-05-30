@@ -1,0 +1,2 @@
+{"sessionId":"9a3af0","location":"history/page.jsx:useEffect","message":"history session effect","data":{"sessionStatus":"loading","hasSession":false,"hasEmail":false},"timestamp":1780118240576,"hypothesisId":"A-D","runId":"post-fix"}
+{"sessionId":"9a3af0","location":"history/page.jsx:useEffect","message":"history session effect","data":{"sessionStatus":"unauthenticated","hasSession":false,"hasEmail":false},"timestamp":1780118240668,"hypothesisId":"A-D","runId":"post-fix"}

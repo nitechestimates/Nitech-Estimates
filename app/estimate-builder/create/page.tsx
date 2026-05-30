@@ -27,19 +27,19 @@ export default function CreateEstimate() {
   const [jrEngineer, setJrEngineer] = useState("");
   const [adminApprovalNo, setAdminApprovalNo] = useState("");
 
-  const yojanaList = useStore((state) => state.yojanaList);
-  const addYojana = useStore((state) => state.addYojana);
-  const resetEstimate = useStore((state) => state.resetEstimate);
+  const yojanaList = useStore((state: any) => state.yojanaList) as string[];
+  const addYojana = useStore((state: any) => state.addYojana) as (item: string) => void;
+  const resetEstimate = useStore((state: any) => state.resetEstimate) as () => void;
 
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const filteredSuggestions = yojanaList.filter((item) =>
+  const filteredSuggestions = yojanaList.filter((item: string) =>
     item.toLowerCase().includes(yojana.toLowerCase())
   );
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
       }
     };
@@ -140,7 +140,7 @@ export default function CreateEstimate() {
           />
           {showDropdown && filteredSuggestions.length > 0 && (
             <ul className="absolute z-10 bg-white border border-gray-200 w-full mt-1 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-              {filteredSuggestions.map((suggestion) => (
+              {filteredSuggestions.map((suggestion: string) => (
                 <li
                   key={suggestion}
                   onClick={() => { setYojana(suggestion); setShowDropdown(false); }}

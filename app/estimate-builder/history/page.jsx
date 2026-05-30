@@ -6,13 +6,17 @@ import Link from "next/link";
 export default function HistoryPage() {
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");               // NEW error state
+  const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ estimateName: "", nameOfWork: "" });
 
   const fetchEstimates = () => {
     setLoading(true);
     setError("");
     fetch("/api/estimate/get", {
       credentials: "include",
+      cache: "no-store",
     })
       .then((res) => res.json())
       .then((data) => {
@@ -45,6 +49,51 @@ export default function HistoryPage() {
       alert(data.error || "Delete failed");
     }
   };
+
+  const duplicateEstimate = async (id) => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/estimate/duplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        fetchEstimates(); // Reload the list
+      } else {
+        alert(data.error || "Duplicate failed");
+        setLoading(false);
+      }
+    } catch (err) {
+      alert("Network error while duplicating");
+      setLoading(false);
+    }
+  };
+
+  const handleSaveEdit = async (id) => {
+    try {
+      const res = await fetch(`/api/estimate/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      if (res.ok) {
+        setEstimates(estimates.map(e => e._id === id ? { ...e, ...editForm } : e));
+        setEditingId(null);
+      } else {
+        alert("Failed to update estimate details");
+      }
+    } catch (err) {
+      alert("Network error");
+    }
+  };
+
+  const filteredEstimates = estimates.filter(est => {
+    const q = searchQuery.toLowerCase();
+    return (est.estimateName || "").toLowerCase().includes(q) ||
+           (est.nameOfWork || "").toLowerCase().includes(q);
+  });
 
   if (loading) {
     return (
@@ -79,13 +128,23 @@ export default function HistoryPage() {
         </div>
         <Link
           href="/estimate-builder/create"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow transition-colors whitespace-nowrap"
         >
           + New Estimate
         </Link>
       </div>
 
-      {estimates.length === 0 ? (
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search by estimate name or name of work..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full md:w-1/2 px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+        />
+      </div>
+
+      {filteredEstimates.length === 0 ? (
         <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-16 text-center">
           <svg
             className="w-16 h-16 text-gray-300 mx-auto mb-4"
@@ -102,11 +161,11 @@ export default function HistoryPage() {
             />
           </svg>
           <h2 className="text-xl font-bold text-gray-700 mb-2">No estimates found</h2>
-          <p className="text-gray-500">You haven't created any estimates yet.</p>
+          <p className="text-gray-500">{estimates.length === 0 ? "You haven't created any estimates yet." : "No estimates match your search."}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {estimates.map((est) => (
+          {filteredEstimates.map((est) => (
             <div
               key={est._id}
               className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative group"
@@ -115,30 +174,73 @@ export default function HistoryPage() {
                 <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center font-bold text-xl flex-shrink-0">
                   {(est.estimateName || est.nameOfWork)?.charAt(0).toUpperCase() || "E"}
                 </div>
-                <button
-                  onClick={() => deleteEstimate(est._id)}
-                  className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-md transition-colors opacity-0 group-hover:opacity-100"
-                  title="Delete Estimate"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => duplicateEstimate(est._id)}
+                    className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-md transition-colors"
+                    title="Duplicate Estimate"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => deleteEstimate(est._id)}
+                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-md transition-colors"
+                    title="Delete Estimate"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
-              {/* Estimate Name (primary) */}
-              <h2 className="font-bold text-xl text-gray-900 mb-0.5 line-clamp-1" title={est.estimateName || est.nameOfWork}>
-                {est.estimateName || est.nameOfWork || "Untitled Estimate"}
-              </h2>
-
-              {/* Name of Work (subtitle, only if estimateName exists and is different) */}
-              {est.estimateName && est.nameOfWork && (
-                <p className="text-xs text-gray-500 mb-3 line-clamp-2" title={est.nameOfWork}>
-                  {est.nameOfWork}
-                </p>
-              )}
-              {!est.estimateName && (
-                <p className="text-xs text-gray-400 mb-3">No estimate name set</p>
+              {/* Inline Edit Form */}
+              {editingId === est._id ? (
+                <div className="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200 shadow-inner">
+                  <input
+                    type="text"
+                    value={editForm.estimateName}
+                    onChange={(e) => setEditForm({ ...editForm, estimateName: e.target.value })}
+                    className="w-full text-sm font-bold text-gray-900 mb-2 px-2 py-1.5 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Estimate Name"
+                  />
+                  <textarea
+                    value={editForm.nameOfWork}
+                    onChange={(e) => setEditForm({ ...editForm, nameOfWork: e.target.value })}
+                    className="w-full text-xs text-gray-700 mb-3 px-2 py-1.5 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none min-h-[60px]"
+                    placeholder="Name of Work"
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={() => handleSaveEdit(est._id)} className="bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded hover:bg-blue-700 transition">Save Changes</button>
+                    <button onClick={() => setEditingId(null)} className="bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded hover:bg-gray-300 transition">Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  className="group/edit relative cursor-pointer bg-white rounded-md transition-colors"
+                  onClick={() => { setEditingId(est._id); setEditForm({ estimateName: est.estimateName || "", nameOfWork: est.nameOfWork || "" }); }}
+                  title="Click to edit titles"
+                >
+                  <div className="absolute -left-6 top-1 opacity-0 group-hover/edit:opacity-100 text-blue-500 transition-opacity">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </div>
+                  {/* Estimate Name (primary) */}
+                  <h2 className="font-bold text-xl text-gray-900 mb-0.5 line-clamp-1">
+                    {est.estimateName || est.nameOfWork || "Untitled Estimate"}
+                  </h2>
+                  
+                  {/* Name of Work (subtitle, only if estimateName exists and is different) */}
+                  {est.estimateName && est.nameOfWork && (
+                    <p className="text-xs text-gray-500 mb-3 line-clamp-2">
+                      {est.nameOfWork}
+                    </p>
+                  )}
+                  {!est.estimateName && (
+                    <p className="text-xs text-gray-400 mb-3">No estimate name set</p>
+                  )}
+                </div>
               )}
 
               {/* Meta info */}

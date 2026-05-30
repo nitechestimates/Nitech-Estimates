@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { DndContext, closestCenter } from "@dnd-kit/core";
@@ -193,7 +193,9 @@ const defaultBottomRows = [
   { id: "royalty-others", isRoyalty: true, ssr: "", description: "Royalty Charges ( others)", unit: "", basicRate: 0, deduct: 0, materials: [{ id: "mat-r2", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" }
 ];
 
-export default function RateAnalysisPage() {
+const formatNumber = (num) => (num !== undefined && num !== null && !isNaN(num) ? Number(num).toFixed(3) : "0.000");
+
+function RateAnalysisContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
 
@@ -249,14 +251,7 @@ export default function RateAnalysisPage() {
   const [insertIndex, setInsertIndex] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loadingEstimate, setLoadingEstimate] = useState(false);
-  const [toastVisible, setToastVisible] = useState(false);
-  const toastTimerRef = useRef(null);
-
-  const showToast = () => {
-    setToastVisible(true);
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(() => setToastVisible(false), 2500);
-  };
+  const [lastSavedTime, setLastSavedTime] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -281,7 +276,7 @@ export default function RateAnalysisPage() {
   useEffect(() => {
     if (!loadId) return;
     setLoadingEstimate(true);
-    fetch(`/api/estimate/${loadId}`)
+    fetch(`/api/estimate/${loadId}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -321,27 +316,30 @@ export default function RateAnalysisPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadId]);
 
-  // Apply URL params on mount — only overwrites empty store fields (idempotent)
+  // Apply URL params on mount — always overwrite for new estimates (no loadId)
   useEffect(() => {
     if (loadId) return; // DB load will set these
-    const s = useStore.getState();
     const updates = {};
-    if (nameFromURL && !s.nameOfWork)            updates.nameOfWork        = nameFromURL;
-    if (tribalFromURL && !s.isTribal)             updates.isTribal          = tribalFromURL;
-    if (tribalPercentFromURL && !s.tribalPercent) updates.tribalPercent     = tribalPercentFromURL;
-    if (estimateNameFromURL && !s.estimateName)   updates.estimateName      = estimateNameFromURL;
-    if (yojanaFromURL && !s.yojana)               updates.yojana            = yojanaFromURL;
-    if (estAmountFromURL && !s.estAmount)         updates.estAmount         = estAmountFromURL;
-    if (labourInsuranceFromURL && !s.labourInsurance) updates.labourInsurance = labourInsuranceFromURL;
-    if (yearFromURL && !s.year)                   updates.year              = yearFromURL;
-    if (distFromURL && !s.dist)                   updates.dist              = distFromURL;
-    if (talukaFromURL && !s.taluka)               updates.taluka            = talukaFromURL;
-    if (villageFromURL && !s.village)             updates.village           = villageFromURL;
-    if (headDivisionFromURL && !s.headDivision)   updates.headDivision      = headDivisionFromURL;
-    if (subDivisionFromURL && !s.subDivision)     updates.subDivision       = subDivisionFromURL;
-    if (deputyEngineerFromURL && !s.deputyEngineer) updates.deputyEngineer  = deputyEngineerFromURL;
-    if (jrEngineerFromURL && !s.jrEngineer)       updates.jrEngineer        = jrEngineerFromURL;
-    if (adminApprovalNoFromURL && !s.adminApprovalNo) updates.adminApprovalNo = adminApprovalNoFromURL;
+    // Always apply URL params when creating a new estimate — do NOT guard on !s.field
+    // because resetEstimate() may not have flushed to the persisted store yet
+    if (nameFromURL)             updates.nameOfWork        = nameFromURL;
+    if (tribalFromURL)           updates.isTribal          = tribalFromURL;
+    if (tribalPercentFromURL)    updates.tribalPercent     = tribalPercentFromURL;
+    if (estimateNameFromURL)     updates.estimateName      = estimateNameFromURL;
+    if (yojanaFromURL)           updates.yojana            = yojanaFromURL;
+    if (estAmountFromURL)        updates.estAmount         = estAmountFromURL;
+    if (labourInsuranceFromURL)  updates.labourInsurance   = labourInsuranceFromURL;
+    if (yearFromURL)             updates.year              = yearFromURL;
+    if (distFromURL)             updates.dist              = distFromURL;
+    if (talukaFromURL)           updates.taluka            = talukaFromURL;
+    if (villageFromURL)          updates.village           = villageFromURL;
+    if (headDivisionFromURL)     updates.headDivision      = headDivisionFromURL;
+    if (subDivisionFromURL)      updates.subDivision       = subDivisionFromURL;
+    if (deputyEngineerFromURL)   updates.deputyEngineer    = deputyEngineerFromURL;
+    if (jrEngineerFromURL)       updates.jrEngineer        = jrEngineerFromURL;
+    if (adminApprovalNoFromURL)  updates.adminApprovalNo   = adminApprovalNoFromURL;
+    // Always clear the previous estimate ID so we don't overwrite an old estimate on save
+    updates.currentEstimateId = null;
     if (Object.keys(updates).length > 0) setEstimateMeta(updates);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -431,17 +429,20 @@ export default function RateAnalysisPage() {
   };
 
   const updateRow = useCallback((i, field, value) => {
+    let next;
     setLocalRows(prev => {
       const updated = [...prev];
       updated[i] = { ...updated[i], [field]: value };
       const s = useStore.getState();
       updated[i] = calculateRow(updated[i], s.isTribal, s.tribalPercent);
-      setRARows(updated);
+      next = updated;
       return updated;
     });
+    setTimeout(() => { if (next) setRARows(next); }, 0);
   }, [setRARows]);
 
   const updateMaterial = useCallback((rowIndex, matIndex, field, value) => {
+    let next;
     setLocalRows(prev => {
       const updated = [...prev];
       const row = { ...updated[rowIndex] };
@@ -452,23 +453,27 @@ export default function RateAnalysisPage() {
         row.materials[matIndex].lead = s.leadSettings[value]?.leadCharge || 0;
       }
       updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
-      setRARows(updated);
+      next = updated;
       return updated;
     });
+    setTimeout(() => { if (next) setRARows(next); }, 0);
   }, [setRARows]);
 
   const addMaterial = useCallback((rowIndex) => {
+    let next;
     setLocalRows(prev => {
       const updated = [...prev];
       const row = { ...updated[rowIndex] };
       row.materials = [...row.materials, { id: Date.now().toString() + "-mat" + Math.random(), name: "", qty: 0, lead: 0 }];
       updated[rowIndex] = row;
-      setRARows(updated);
+      next = updated;
       return updated;
     });
+    setTimeout(() => { if (next) setRARows(next); }, 0);
   }, [setRARows]);
 
   const removeMaterial = useCallback((rowIndex, matIndex) => {
+    let next;
     setLocalRows(prev => {
       const updated = [...prev];
       const row = { ...updated[rowIndex] };
@@ -476,18 +481,23 @@ export default function RateAnalysisPage() {
       row.materials.splice(matIndex, 1);
       const s = useStore.getState();
       updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
-      setRARows(updated);
+      next = updated;
       return updated;
     });
+    setTimeout(() => { if (next) setRARows(next); }, 0);
   }, [setRARows]);
 
   const deleteRow = useCallback((id) => {
+    let next;
     setLocalRows(prev => {
       const updated = prev.filter(r => r.id !== id).map((r, i) => ({ ...r, srNo: i + 1 }));
-      setRARows(updated);
-      setTimeout(() => useStore.getState().syncMeasurementFromRA(), 0);
+      next = updated;
       return updated;
     });
+    setTimeout(() => {
+      if (next) setRARows(next);
+      useStore.getState().syncMeasurementFromRA();
+    }, 0);
   }, [setRARows]);
 
   const refreshRow = useCallback(async (i) => {
@@ -501,29 +511,34 @@ export default function RateAnalysisPage() {
     const description = data["Description of the item"] || "";
     const unitFormatted = (data["Unit"] || "").trim().split(/\s+/).join("\n");
     
+    let next;
     setLocalRows(prev => {
       const updated = [...prev];
       const s = useStore.getState();
       const autoMaterials = getDefaultMaterialsForDescription(description, s.leadSettings);
       updated[i] = calculateRow({ ...updated[i], description, unit: unitFormatted, basicRate: completedRate, specs: data["Additional Specification"] || "", deduct: 0, materials: autoMaterials, tribal: 0 }, s.isTribal, s.tribalPercent);
-      setRARows(updated);
+      next = updated;
       return updated;
     });
+    setTimeout(() => { if (next) setRARows(next); }, 0);
   }, [setRARows]);
 
   // Bottom rows handlers
   const updateBottomRow = useCallback((i, field, value) => {
+    let next;
     setLocalBottomRows(prev => {
       const updated = [...prev];
       updated[i] = { ...updated[i], [field]: value };
       const s = useStore.getState();
       updated[i] = calculateRow(updated[i], s.isTribal, s.tribalPercent);
-      setRABottomRows(updated);
+      next = updated;
       return updated;
     });
+    setTimeout(() => { if (next) setRABottomRows(next); }, 0);
   }, [setRABottomRows]);
 
   const updateBottomMaterial = useCallback((rowIndex, matIndex, field, value) => {
+    let next;
     setLocalBottomRows(prev => {
       const updated = [...prev];
       const row = { ...updated[rowIndex] };
@@ -534,23 +549,27 @@ export default function RateAnalysisPage() {
         row.materials[matIndex].lead = s.leadSettings[value]?.leadCharge || 0;
       }
       updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
-      setRABottomRows(updated);
+      next = updated;
       return updated;
     });
+    setTimeout(() => { if (next) setRABottomRows(next); }, 0);
   }, [setRABottomRows]);
 
   const addBottomMaterial = useCallback((rowIndex) => {
+    let next;
     setLocalBottomRows(prev => {
       const updated = [...prev];
       const row = { ...updated[rowIndex] };
       row.materials = [...row.materials, { id: Date.now().toString() + "-mat", name: "", qty: 0, lead: 0 }];
       updated[rowIndex] = row;
-      setRABottomRows(updated);
+      next = updated;
       return updated;
     });
+    setTimeout(() => { if (next) setRABottomRows(next); }, 0);
   }, [setRABottomRows]);
 
   const removeBottomMaterial = useCallback((rowIndex, matIndex) => {
+    let next;
     setLocalBottomRows(prev => {
       const updated = [...prev];
       const row = { ...updated[rowIndex] };
@@ -558,19 +577,22 @@ export default function RateAnalysisPage() {
       row.materials.splice(matIndex, 1);
       const s = useStore.getState();
       updated[rowIndex] = calculateRow(row, s.isTribal, s.tribalPercent);
-      setRABottomRows(updated);
+      next = updated;
       return updated;
     });
+    setTimeout(() => { if (next) setRABottomRows(next); }, 0);
   }, [setRABottomRows]);
 
   const clearBottomRow = useCallback((i) => {
     if (!confirm("Clear this royalty row?")) return;
+    let next;
     setLocalBottomRows(prev => {
       const updated = [...prev];
       updated[i] = { ...defaultBottomRows[i], id: updated[i].id };
-      setRABottomRows(updated);
+      next = updated;
       return updated;
     });
+    setTimeout(() => { if (next) setRABottomRows(next); }, 0);
   }, [setRABottomRows]);
 
   const handleDragEnd = (e) => {
@@ -582,7 +604,7 @@ export default function RateAnalysisPage() {
     const updated = newRows.map((r, i) => ({ ...r, srNo: i + 1 }));
     setLocalRows(updated); setRARows(updated);
   };
-  const formatNumber = (num) => (num !== undefined && num !== null && !isNaN(num) ? Number(num).toFixed(3) : "0.000");
+
 
   const saveEstimate = async (silent = false) => {
     if (!session) { if (!silent) alert("You must be logged in."); return; }
@@ -610,7 +632,7 @@ export default function RateAnalysisPage() {
       const data = await response.json();
       if (response.ok) {
         if (data.id) setEstimateMeta({ currentEstimateId: data.id });
-        showToast();
+        setLastSavedTime(new Date());
         syncMeasurementFromRA();
       } else {
         console.error("Save failed:", data);
@@ -652,13 +674,6 @@ export default function RateAnalysisPage() {
   return (
     <div className="p-4 bg-yellow-50 min-h-screen text-black animate-fade-in-up">
       <Tabs />
-      {/* ── Save Toast ── */}
-      <div className={`fixed bottom-6 right-6 z-50 transition-all duration-500 ${toastVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
-        <div className="bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
-          <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-          Saved
-        </div>
-      </div>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <span className="font-bold">Name of Work: </span>
@@ -675,7 +690,17 @@ export default function RateAnalysisPage() {
             Edit Details
           </button>
           <DownloadPdfButton estimateId={currentEstimateId} nameOfWork={nameOfWork} isTribal={isTribal} rows={[...localRows, ...localBottomRows]} leadSettings={leadSettings} />
-          <button onClick={saveEstimate} disabled={saving} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 shadow-md transition-all">{saving ? "Saving..." : "Save Estimate"}</button>
+          <div className="flex items-center gap-3">
+            {lastSavedTime && (
+              <span className="text-xs text-gray-500 flex items-center gap-1 font-medium bg-gray-100 px-2 py-1 rounded-md border border-gray-200 shadow-sm animate-fade-in">
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Last saved at {lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            )}
+            <button onClick={() => saveEstimate(false)} disabled={saving} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 shadow-md transition-all">{saving ? "Saving..." : "Save Estimate"}</button>
+          </div>
         </div>
       </div>
 
@@ -956,6 +981,14 @@ export default function RateAnalysisPage() {
         </SortableContext>
       </DndContext>
     </div>
+  );
+}
+
+export default function RateAnalysisPage() {
+  return (
+    <Suspense fallback={<div className="p-4 bg-yellow-50 min-h-screen text-black flex justify-center items-center h-64">Loading...</div>}>
+      <RateAnalysisContent />
+    </Suspense>
   );
 }
 

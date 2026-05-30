@@ -26,42 +26,69 @@ const COLOR_MAP = {
   emerald: { bg: "bg-emerald-600", light: "bg-emerald-50",border: "border-emerald-200",text: "text-emerald-700",ring: "focus:ring-emerald-400" },
 };
 
+// Helper: normalise materials array — supports both legacy string[] and new { name, km }[]
+function normaliseMaterials(mats) {
+  if (!Array.isArray(mats)) return [];
+  return mats.map(m => (typeof m === "string" ? { name: m, km: 0 } : m));
+}
+
 export default function DatasheetPage() {
   // ── Yojana ──
-  const yojanaList  = useStore(s => s.yojanaList);
-  const addYojana   = useStore(s => s.addYojana);
+  const yojanaList   = useStore(s => s.yojanaList);
+  const addYojana    = useStore(s => s.addYojana);
   const removeYojana = useStore(s => s.removeYojana);
   const [newYojana, setNewYojana] = useState("");
   const [editingYojana, setEditingYojana] = useState(null);
   const [editYojanaVal, setEditYojanaVal] = useState("");
 
   // ── Lead Profiles ──
-  const leadsProfiles            = useStore(s => s.leadsProfiles);
-  const addLeadsProfile          = useStore(s => s.addLeadsProfile);
-  const deleteLeadsProfile       = useStore(s => s.deleteLeadsProfile);
-  const renameLeadsProfile       = useStore(s => s.renameLeadsProfile);
+  const leadsProfiles               = useStore(s => s.leadsProfiles);
+  const addLeadsProfile             = useStore(s => s.addLeadsProfile);
+  const deleteLeadsProfile          = useStore(s => s.deleteLeadsProfile);
+  const renameLeadsProfile          = useStore(s => s.renameLeadsProfile);
   const updateLeadsProfileMaterials = useStore(s => s.updateLeadsProfileMaterials);
-  const addCustomLeadToProfile   = useStore(s => s.addCustomLeadToProfile);
+  const addCustomLeadToProfile      = useStore(s => s.addCustomLeadToProfile);
   const removeCustomLeadFromProfile = useStore(s => s.removeCustomLeadFromProfile);
 
-  const [activeCategory, setActiveCategory] = useState("buildings");
+  const [activeCategory, setActiveCategory]     = useState("buildings");
   const [selectedProfileId, setSelectedProfileId] = useState(null);
-  const [newProfileName, setNewProfileName] = useState("");
-  const [renamingId, setRenamingId] = useState(null);
-  const [renameVal, setRenameVal] = useState("");
-  const [customLeadName, setCustomLeadName] = useState("");
-  const [customLeadKm, setCustomLeadKm] = useState("");
-  const [customLeadRate, setCustomLeadRate] = useState("");
+  const [newProfileName, setNewProfileName]       = useState("");
+  const [renamingId, setRenamingId]               = useState(null);
+  const [renameVal, setRenameVal]                 = useState("");
+  const [customLeadName, setCustomLeadName]       = useState("");
+  const [customLeadKm, setCustomLeadKm]           = useState("");
+  const [customLeadRate, setCustomLeadRate]       = useState("");
 
-  const cat = CATEGORIES.find(c => c.key === activeCategory);
-  const clr = COLOR_MAP[cat.color];
-  const profiles = leadsProfiles[activeCategory] || [];
+  const cat            = CATEGORIES.find(c => c.key === activeCategory);
+  const clr            = COLOR_MAP[cat.color];
+  const profiles       = leadsProfiles[activeCategory] || [];
   const selectedProfile = profiles.find(p => p.id === selectedProfileId) || null;
+
+  // Normalised materials array for the selected profile
+  const profileMaterials = normaliseMaterials(selectedProfile?.materials);
+
+  // -- Material helpers --
+  const getMaterialEntry = (matName) => profileMaterials.find(m => m.name === matName) || null;
+  const isMaterialSelected = (matName) => !!getMaterialEntry(matName);
 
   const toggleMaterial = (matName) => {
     if (!selectedProfile) return;
-    const current = selectedProfile.materials || [];
-    const updated = current.includes(matName) ? current.filter(m => m !== matName) : [...current, matName];
+    const current = normaliseMaterials(selectedProfile.materials);
+    let updated;
+    if (isMaterialSelected(matName)) {
+      updated = current.filter(m => m.name !== matName);
+    } else {
+      updated = [...current, { name: matName, km: 0 }];
+    }
+    updateLeadsProfileMaterials(activeCategory, selectedProfileId, updated);
+  };
+
+  const updateMaterialKm = (matName, km) => {
+    if (!selectedProfile) return;
+    const current = normaliseMaterials(selectedProfile.materials);
+    const updated = current.map(m =>
+      m.name === matName ? { ...m, km: parseFloat(km) || 0 } : m
+    );
     updateLeadsProfileMaterials(activeCategory, selectedProfileId, updated);
   };
 
@@ -73,8 +100,13 @@ export default function DatasheetPage() {
   };
 
   const handleAddCustomToProfile = () => {
-    if (!customLeadName.trim() || !customLeadRate) return;
-    const lead = { name: customLeadName.trim(), distance: parseFloat(customLeadKm) || 0, leadCharge: parseFloat(customLeadRate) || 0 };
+    if (!customLeadName.trim()) { alert("Please enter a material name."); return; }
+    if (!customLeadRate) { alert("Please enter a lead rate."); return; }
+    const rate = parseFloat(customLeadRate);
+    if (isNaN(rate) || rate < 0) { alert("Rate must be a valid positive number."); return; }
+    const km = parseFloat(customLeadKm) || 0;
+    if (km < 0) { alert("KM must be 0 or a positive number."); return; }
+    const lead = { name: customLeadName.trim(), distance: km, leadCharge: rate };
     addCustomLeadToProfile(activeCategory, selectedProfileId, lead);
     setCustomLeadName(""); setCustomLeadKm(""); setCustomLeadRate("");
   };
@@ -133,7 +165,7 @@ export default function DatasheetPage() {
         {/* ══ SECTION 2: LEADS PROFILES ══════════════════════════════════════ */}
         <div>
           <h2 className="text-2xl font-extrabold text-gray-900 mb-1">Lead Profiles</h2>
-          <p className="text-sm text-gray-500 mb-5">Create material profiles for Buildings, Roads, or Bridges. Apply a profile on the Leads page to auto-add materials.</p>
+          <p className="text-sm text-gray-500 mb-5">Create material profiles for Buildings, Roads, or Bridges. Select materials and set their KM distance. Apply a profile on the Leads page to auto-add materials.</p>
 
           {/* Category Tabs */}
           <div className="flex gap-2 mb-6">
@@ -195,13 +227,13 @@ export default function DatasheetPage() {
                             className="flex-1 border rounded px-2 py-0.5 text-xs text-gray-800 focus:outline-none"
                             autoFocus
                           />
-                          <button onClick={() => { renameLeadsProfile(activeCategory, p.id, renameVal); setRenamingId(null); }} className="text-xs px-2 py-0.5 bg-white text-green-700 rounded font-bold">✓</button>
+                          <button onClick={() => { if (renameVal.trim()) renameLeadsProfile(activeCategory, p.id, renameVal); setRenamingId(null); }} className="text-xs px-2 py-0.5 bg-white text-green-700 rounded font-bold">✓</button>
                           <button onClick={() => setRenamingId(null)} className="text-xs px-2 py-0.5 bg-white text-gray-500 rounded">✕</button>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between gap-1">
                           <span className="font-semibold text-sm truncate">{p.name}</span>
-                          <span className={`text-xs opacity-70`}>{(p.materials?.length || 0) + (p.customLeads?.length || 0)} items</span>
+                          <span className={`text-xs opacity-70`}>{(normaliseMaterials(p.materials).length) + (p.customLeads?.length || 0)} items</span>
                           <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                             <button
                               onClick={() => { setRenamingId(p.id); setRenameVal(p.name); }}
@@ -231,12 +263,12 @@ export default function DatasheetPage() {
               ) : (
                 <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                   <h3 className="font-bold text-lg text-gray-800 mb-1">{selectedProfile.name}</h3>
-                  <p className="text-xs text-gray-500 mb-4">Click materials to toggle them on/off. Green = included in this profile.</p>
+                  <p className="text-xs text-gray-500 mb-4">Click a material to add/remove it. For selected materials, enter the KM distance in the field below the toggle.</p>
 
-                  {/* Standard material boxes */}
+                  {/* ── Standard material toggle grid ── */}
                   <div className="flex flex-wrap gap-2 mb-5">
                     {STANDARD_MATERIALS.map(mat => {
-                      const selected = (selectedProfile.materials || []).includes(mat);
+                      const selected = isMaterialSelected(mat);
                       return (
                         <button
                           key={mat}
@@ -253,7 +285,39 @@ export default function DatasheetPage() {
                     })}
                   </div>
 
-                  {/* Custom leads in profile */}
+                  {/* ── Selected standard materials with KM inputs ── */}
+                  {profileMaterials.length > 0 && (
+                    <div className="mb-5">
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Selected Materials &amp; KM Distance</p>
+                      <div className="space-y-2">
+                        {profileMaterials.map(m => (
+                          <div key={m.name} className="flex items-center gap-3 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl">
+                            <span className="flex-1 text-sm font-semibold text-emerald-800 truncate">{m.name}</span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <label className="text-xs text-gray-500 whitespace-nowrap">km:</label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                value={m.km === 0 ? "" : m.km}
+                                onChange={e => updateMaterialKm(m.name, e.target.value)}
+                                onBlur={e => { if (e.target.value === "") updateMaterialKm(m.name, 0); }}
+                                placeholder="0"
+                                className="w-20 border border-emerald-300 rounded-lg px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                              />
+                            </div>
+                            <button
+                              onClick={() => toggleMaterial(m.name)}
+                              className="text-red-400 hover:text-red-600 text-sm ml-1 transition"
+                              title="Remove"
+                            >✕</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Custom leads in profile ── */}
                   {(selectedProfile.customLeads || []).length > 0 && (
                     <div className="mb-4">
                       <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Custom Leads</p>
@@ -269,7 +333,7 @@ export default function DatasheetPage() {
                     </div>
                   )}
 
-                  {/* Add custom lead to profile */}
+                  {/* ── Add custom lead to profile ── */}
                   <div className={`border-t ${clr.border} pt-4 mt-4`}>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Add Custom Lead to Profile</p>
                     <div className="flex flex-wrap gap-2 items-end">
@@ -279,11 +343,11 @@ export default function DatasheetPage() {
                       </div>
                       <div className="w-24">
                         <label className="text-xs text-gray-400 mb-1 block">km</label>
-                        <input type="number" value={customLeadKm} onChange={e => setCustomLeadKm(e.target.value)} placeholder="0" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+                        <input type="number" min="0" step="0.1" value={customLeadKm} onChange={e => setCustomLeadKm(e.target.value)} placeholder="0" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
                       </div>
                       <div className="w-28">
                         <label className="text-xs text-gray-400 mb-1 block">Rate (₹)</label>
-                        <input type="number" value={customLeadRate} onChange={e => setCustomLeadRate(e.target.value)} placeholder="0.00" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+                        <input type="number" min="0" step="0.01" value={customLeadRate} onChange={e => setCustomLeadRate(e.target.value)} placeholder="0.00" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
                       </div>
                       <button
                         onClick={handleAddCustomToProfile}

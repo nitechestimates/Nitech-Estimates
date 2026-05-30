@@ -47,10 +47,11 @@
   }
 }
 
+/* Always use light theme — dark mode intentionally disabled for this app */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #f9fafb;
+    --foreground: #111827;
   }
 }
 
