@@ -24,6 +24,7 @@
       "main.js",
       "package.json",
       "next.config.ts",
+      ".env",
       ".env.local",
       "node_modules/**/*",
       "!node_modules/electron/**/*",

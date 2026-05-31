@@ -2,6 +2,39 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+// ── Explicit Environment Variables Loader ─────────────────────────────────────
+function loadEnvFiles() {
+  const envFiles = ['.env', '.env.local'];
+  envFiles.forEach(file => {
+    const envPath = path.join(__dirname, file);
+    if (fs.existsSync(envPath)) {
+      try {
+        const content = fs.readFileSync(envPath, 'utf8');
+        content.split(/\r?\n/).forEach(line => {
+          line = line.trim();
+          if (!line || line.startsWith('#')) return;
+          const index = line.indexOf('=');
+          if (index > 0) {
+            const key = line.substring(0, index).trim();
+            let val = line.substring(index + 1).trim();
+            // Remove wrapping quotes if present
+            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+              val = val.substring(1, val.length - 1);
+            }
+            if (key) {
+              process.env[key] = val;
+            }
+          }
+        });
+        console.log(`✓ Loaded environment variables from ${file}`);
+      } catch (err) {
+        console.error(`Failed to parse ${file}:`, err);
+      }
+    }
+  });
+}
+loadEnvFiles();
+
 // ── Global Crash Handling and Logging ─────────────────────────────────────────
 function logCrash(err) {
   const logDir = path.join(os.homedir(), 'NitechEstimatesLogs');
