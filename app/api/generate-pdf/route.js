@@ -57,6 +57,9 @@ export async function POST(req) {
         specs: raItem.specs || "",
         qty: totalQty,
         unit: raItem.unit,
+        basicRate: rate,
+        useReducedRate,
+        reducedRate: reducedRateVal,
         rate: activeRate,
         amount,
         isRoyalty: raItem.isRoyalty
@@ -322,7 +325,15 @@ export async function POST(req) {
                 <td class="left">${row.specs || ''}</td>
                 <td class="right">${(row.qty || 0).toFixed(3)}</td>
                 <td class="center">${row.unit || ''}</td>
-                <td class="right">${(row.rate || 0).toFixed(2)}</td>
+                <td class="right" style="font-size: 10px; line-height: 1.2;">
+                  ${row.useReducedRate && row.reducedRate !== null ? `
+                    <span style="color: #777777; text-decoration: line-through; font-size: 9px;">${(row.basicRate || 0).toFixed(2)}</span>
+                    <div style="font-weight: bold; margin-top: 2px; color: #1e3a8a; font-size: 8px; line-height: 1.1;">Reduced Rate</div>
+                    <div style="font-weight: bold; color: #1e3a8a;">${(row.reducedRate || 0).toFixed(2)}</div>
+                  ` : `
+                    ${(row.rate || 0).toFixed(2)}
+                  `}
+                </td>
                 <td class="right bold">${(row.amount || 0).toFixed(2)}</td>
               </tr>
             `).join('')}
@@ -354,7 +365,15 @@ export async function POST(req) {
                 <td class="left">${row.specs || ''}</td>
                 <td class="right">${(row.qty || 0).toFixed(3)}</td>
                 <td class="center">${row.unit || ''}</td>
-                <td class="right">${(row.rate || 0).toFixed(2)}</td>
+                <td class="right" style="font-size: 10px; line-height: 1.2;">
+                  ${row.useReducedRate && row.reducedRate !== null ? `
+                    <span style="color: #777777; text-decoration: line-through; font-size: 9px;">${(row.basicRate || 0).toFixed(2)}</span>
+                    <div style="font-weight: bold; margin-top: 2px; color: #1e3a8a; font-size: 8px; line-height: 1.1;">Reduced Rate</div>
+                    <div style="font-weight: bold; color: #1e3a8a;">${(row.reducedRate || 0).toFixed(2)}</div>
+                  ` : `
+                    ${(row.rate || 0).toFixed(2)}
+                  `}
+                </td>
                 <td class="right bold">${(row.amount || 0).toFixed(2)}</td>
               </tr>
             `).join('')}

@@ -123,21 +123,29 @@ export default function MeasurementPage() {
       const measurements = Array.isArray(item.measurements) ? item.measurements : [];
       
       let sourceMeas = null;
-      if (measIndex > 0) {
-        sourceMeas = measurements[measIndex - 1];
-      } else if (itemIndex > 0) {
+      let targetIndex = measIndex + 1;
+      
+      if (measIndex === 0 && itemIndex > 0) {
+        // Special case: copying from the previous item into the beginning of the current item
         const prevItem = updated[itemIndex - 1];
         const prevMeasurements = Array.isArray(prevItem?.measurements) ? prevItem.measurements : [];
         if (prevMeasurements.length > 0) {
           sourceMeas = prevMeasurements[prevMeasurements.length - 1];
+          targetIndex = 0;
+        } else {
+          sourceMeas = measurements[0];
+          targetIndex = 1;
         }
+      } else {
+        // Standard duplication of the current row
+        sourceMeas = measurements[measIndex];
+        targetIndex = measIndex + 1;
       }
       
-      if (!sourceMeas || !measurements[measIndex]) return prev;
+      if (!sourceMeas) return prev;
       
-      item.measurements = [...measurements];
-      const targetMeas = {
-        ...item.measurements[measIndex],
+      const newMeas = {
+        id: Date.now() + Math.random(),
         description: sourceMeas.description || "",
         no: sourceMeas.no !== undefined && sourceMeas.no !== null ? sourceMeas.no : "",
         l: sourceMeas.l !== undefined && sourceMeas.l !== null ? sourceMeas.l : "",
@@ -146,7 +154,10 @@ export default function MeasurementPage() {
         total: sourceMeas.total || 0
       };
       
-      item.measurements[measIndex] = targetMeas;
+      const newMeasurements = [...measurements];
+      newMeasurements.splice(targetIndex, 0, newMeas);
+      
+      item.measurements = newMeasurements;
       item.totalQty = recalcItemTotal(item);
       updated[itemIndex] = item;
       return updated;
