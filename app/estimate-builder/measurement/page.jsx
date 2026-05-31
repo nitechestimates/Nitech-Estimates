@@ -300,6 +300,7 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
                   type="text"
                   value={measurements[0]?.description || ""}
                   onChange={(e) => updateMeasurement(itemIdx, 0, "description", e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                   className="w-full bg-transparent px-2 py-1 text-left border rounded text-xs focus:bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors text-black"
                   placeholder="e.g. below soling"
                 />
@@ -339,6 +340,7 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
                   type="text"
                   value={meas?.description || ""}
                   onChange={(e) => updateMeasurement(itemIdx, measIdx, "description", e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                   className="w-full bg-transparent px-2 py-1 text-left border rounded text-xs focus:bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors text-black"
                   placeholder="e.g. left side"
                 />

@@ -281,6 +281,7 @@ export default function AbstractPage() {
                             min="0"
                             value={row.reducedRate}
                             onChange={(e) => handleUpdateReducedRate(row.id, e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                             placeholder={row.rate.toFixed(2)}
                             className="w-24 border border-blue-400 rounded px-1.5 py-0.5 text-right text-xs font-bold focus:ring-1 focus:ring-blue-500 focus:outline-none bg-blue-50/35 text-blue-950 shadow-sm"
                           />
@@ -352,6 +353,7 @@ export default function AbstractPage() {
                             min="0"
                             value={row.reducedRate}
                             onChange={(e) => handleUpdateReducedRate(row.id, e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                             placeholder={row.rate.toFixed(2)}
                             className="w-20 border border-blue-400 rounded px-1.5 py-0.5 text-right text-xs font-bold focus:outline-none bg-blue-50/20 text-blue-950"
                           />

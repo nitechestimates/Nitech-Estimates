@@ -25,7 +25,7 @@ const estimateSchema = z.object({
   deputyEngineer: z.string().optional(),
   jrEngineer: z.string().optional(),
   adminApprovalNo: z.string().optional(),
-  abstractCustomData: z.record(z.any()).optional().default({}),
+  abstractCustomData: z.any().optional().default({}),
 });
 
 export async function POST(request) {

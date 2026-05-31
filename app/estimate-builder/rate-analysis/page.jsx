@@ -946,7 +946,7 @@ function RateAnalysisContent() {
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <span className="font-bold">Name of Work: </span>
-          <input value={nameOfWork} onChange={e => setEstimateMeta({ nameOfWork: e.target.value })} className="border p-2 w-[400px] rounded" placeholder="Enter Name of Work" />
+          <input value={nameOfWork} onChange={e => setEstimateMeta({ nameOfWork: e.target.value })} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="border p-2 w-[400px] rounded" placeholder="Enter Name of Work" />
           {isTribal && <span className="ml-2 bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded">Tribal {tribalPercent ? `(${tribalPercent}%)` : ""}</span>}
         </div>
         <div className="flex gap-2">
@@ -1361,6 +1361,7 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
                     commitMaterialName(index, matIdx, mat.name);
                     setTimeout(() => setActiveMatIdx(null), 200);
                   }}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                   className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none bg-white text-black"
                   placeholder="Select/type"
                 />
@@ -1455,6 +1456,7 @@ const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTri
                     commitMaterialName(index, matIdx, mat.name);
                     setTimeout(() => setActiveMatIdx(null), 200);
                   }}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                   className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none bg-white text-black"
                   placeholder="Select/type"
                 />
