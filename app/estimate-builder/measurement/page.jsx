@@ -297,16 +297,14 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
           <>
             <td className="border p-1 bg-white hover:bg-yellow-50">
               <div className="flex items-center gap-1">
-                {itemIdx > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => copyAboveMeasurement(itemIdx, 0)}
-                    className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-all shrink-0 font-extrabold text-xs"
-                    title="Copy measurements from last row of item above"
-                  >
-                    ↓
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => copyAboveMeasurement(itemIdx, 0)}
+                  className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-all shrink-0 font-extrabold text-xs"
+                  title={itemIdx > 0 ? "Copy measurements from last row of item above" : "Duplicate this row below"}
+                >
+                  ↓
+                </button>
                 <input
                   type="text"
                   value={measurements[0]?.description || ""}
