@@ -45,7 +45,17 @@ export default function Navbar() {
           </div>
         ) : (
           <button 
-            onClick={() => signIn("google", { callbackUrl: "http://localhost:3000/estimate-builder" })} 
+            onClick={() => {
+              let callbackUrl = "/estimate-builder";
+              if (typeof window !== "undefined") {
+                const params = new URLSearchParams(window.location.search);
+                const cb = params.get("callbackUrl");
+                if (cb) {
+                  callbackUrl = cb;
+                }
+              }
+              signIn("google", { callbackUrl });
+            }} 
             className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 animate-fade-in"
           >
             Login

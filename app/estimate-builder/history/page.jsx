@@ -18,7 +18,16 @@ export default function HistoryPage() {
       credentials: "include",
       cache: "no-store",
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(
+            res.status === 401
+              ? "Unauthorized: Please log in to view estimates."
+              : `Request failed with status ${res.status}`
+          );
+        }
+        return res.json();
+      })
       .then((data) => {
         if (Array.isArray(data)) {
           setEstimates(data);
