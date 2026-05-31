@@ -132,6 +132,46 @@ function waitForPort(port, timeoutMs = 90000) {
 async function startNextServer() {
   const nextScript = path.join(__dirname, 'node_modules', 'next', 'dist', 'bin', 'next');
 
+  // Debug log which env vars are available before spawning
+  const logDir = path.join(os.homedir(), 'NitechEstimatesLogs');
+  try {
+    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+    const debugLog = path.join(logDir, 'startup.log');
+    const envDebug = [
+      `[${new Date().toISOString()}] Starting Next.js server`,
+      `  __dirname: ${__dirname}`,
+      `  MONGODB_URI set: ${!!process.env.MONGODB_URI}`,
+      `  MONGODB_URI starts: ${(process.env.MONGODB_URI || '').slice(0, 30)}`,
+      `  NEXTAUTH_SECRET set: ${!!process.env.NEXTAUTH_SECRET}`,
+      `  NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`,
+      `  GOOGLE_CLIENT_ID set: ${!!process.env.GOOGLE_CLIENT_ID}`,
+    ].join('\n');
+    fs.appendFileSync(debugLog, envDebug + '\n\n');
+  } catch (e) {}
+
+  // Write env vars as a .env file directly at __dirname so Next.js built-in
+  // dotenv loader ALWAYS finds them, regardless of installation directory.
+  try {
+    const envLines = [];
+    const keysToWrite = [
+      'MONGODB_URI', 'NEXTAUTH_SECRET', 'NEXTAUTH_URL',
+      'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'
+    ];
+    keysToWrite.forEach(key => {
+      if (process.env[key]) {
+        // Escape any backslashes or quotes in the value
+        envLines.push(`${key}=${process.env[key]}`);
+      }
+    });
+    if (envLines.length > 0) {
+      const envFilePath = path.join(__dirname, '.env.runtime');
+      fs.writeFileSync(envFilePath, envLines.join('\n') + '\n', 'utf8');
+      console.log('✓ Wrote .env.runtime with', envLines.length, 'variables');
+    }
+  } catch (e) {
+    console.error('Failed to write .env.runtime:', e);
+  }
+
   nextProcess = spawn(
     process.execPath,
     [nextScript, 'start', '--port', String(PORT)],
@@ -139,13 +179,25 @@ async function startNextServer() {
       cwd: __dirname,
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
+      // Pass all env vars explicitly so Next.js inherits them
+      env: {
+        ...process.env,
+        ELECTRON_RUN_AS_NODE: '1',
+        // Explicitly set each key in case process.env spread misses any
+        MONGODB_URI: process.env.MONGODB_URI || '',
+        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || '',
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+        GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
+      }
     }
   );
 
-  nextProcess.stdout.on('data', d => console.log('[Next]', d.toString().trim()));
-  nextProcess.stderr.on('data', d => console.error('[Next]', d.toString().trim()));
-  nextProcess.on('error', err => console.error('Next spawn error:', err));
+  const logFile = path.join(os.homedir(), 'NitechEstimatesLogs', 'server.log');
+  const logStream = fs.createWriteStream(logFile, { flags: 'a' });
+  nextProcess.stdout.on('data', d => { const s = d.toString().trim(); console.log('[Next]', s); logStream.write(`[STDOUT] ${s}\n`); });
+  nextProcess.stderr.on('data', d => { const s = d.toString().trim(); console.error('[Next]', s); logStream.write(`[STDERR] ${s}\n`); });
+  nextProcess.on('error', err => { console.error('Next spawn error:', err); logStream.write(`[SPAWN ERROR] ${err}\n`); });
 
   await waitForPort(PORT);
   console.log('✓ Next.js ready on port', PORT);
@@ -265,8 +317,8 @@ async function createWindow() {
     backgroundColor: '#f9fafb',
   });
 
-  // 🔥 FORCE DEVTOOLS TO OPEN – REMOVE THIS LINE AFTER DEBUGGING 🔥
-  // mainWindow.webContents.openDevTools();
+  // DevTools for debugging – open with Ctrl+Shift+I or uncomment:
+  mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', () => { mainWindow = null; });
 
