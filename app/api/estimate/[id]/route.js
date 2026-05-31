@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // ✅ Fixed path using absolute alias
+import { authOptions } from "@/lib/auth"; // ✅ Fixed path using absolute alias
 
 export async function GET(request, context) {
   try {

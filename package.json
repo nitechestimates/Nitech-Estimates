@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:webpack": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "desktop:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "desktop:build": "npm run build && electron-builder build --win --x64"
+    "desktop:build": "npm run build:webpack && electron-builder build --win --x64"
   },
   "build": {
     "appId": "com.nitechestimates.app",

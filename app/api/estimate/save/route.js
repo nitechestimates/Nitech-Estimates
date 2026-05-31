@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import clientPromise from "@/lib/mongodb";
 import { z } from "zod";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { ObjectId } from "mongodb"; // ← Add this import
 
 // Validation schema
