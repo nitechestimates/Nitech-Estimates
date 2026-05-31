@@ -116,6 +116,43 @@ export default function MeasurementPage() {
     });
   }, [setMeasurementItems]);
 
+  const copyAboveMeasurement = useCallback((itemIndex, measIndex) => {
+    setMeasurementItems(prev => {
+      const updated = [...prev];
+      const item = { ...updated[itemIndex] };
+      const measurements = Array.isArray(item.measurements) ? item.measurements : [];
+      
+      let sourceMeas = null;
+      if (measIndex > 0) {
+        sourceMeas = measurements[measIndex - 1];
+      } else if (itemIndex > 0) {
+        const prevItem = updated[itemIndex - 1];
+        const prevMeasurements = Array.isArray(prevItem?.measurements) ? prevItem.measurements : [];
+        if (prevMeasurements.length > 0) {
+          sourceMeas = prevMeasurements[prevMeasurements.length - 1];
+        }
+      }
+      
+      if (!sourceMeas || !measurements[measIndex]) return prev;
+      
+      item.measurements = [...measurements];
+      const targetMeas = {
+        ...item.measurements[measIndex],
+        description: sourceMeas.description || "",
+        no: sourceMeas.no !== undefined && sourceMeas.no !== null ? sourceMeas.no : "",
+        l: sourceMeas.l !== undefined && sourceMeas.l !== null ? sourceMeas.l : "",
+        b: sourceMeas.b !== undefined && sourceMeas.b !== null ? sourceMeas.b : "",
+        h: sourceMeas.h !== undefined && sourceMeas.h !== null ? sourceMeas.h : "",
+        total: sourceMeas.total || 0
+      };
+      
+      item.measurements[measIndex] = targetMeas;
+      item.totalQty = recalcItemTotal(item);
+      updated[itemIndex] = item;
+      return updated;
+    });
+  }, [setMeasurementItems]);
+
   const updateMeasurement = useCallback((itemIndex, measIndex, field, value) => {
     setMeasurementItems(prev => {
       const updated = [...prev];
@@ -216,6 +253,7 @@ export default function MeasurementPage() {
                 item={item}
                 itemIdx={itemIdx}
                 addMeasurement={addMeasurement}
+                copyAboveMeasurement={copyAboveMeasurement}
                 updateMeasurement={updateMeasurement}
                 removeMeasurement={removeMeasurement}
                 updateDescription={updateDescription}
@@ -230,7 +268,7 @@ export default function MeasurementPage() {
   );
 }
 
-const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMeasurement, updateMeasurement, removeMeasurement, updateDescription, updateItemPercent }) {
+const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMeasurement, copyAboveMeasurement, updateMeasurement, removeMeasurement, updateDescription, updateItemPercent }) {
   const measurements = Array.isArray(item?.measurements) ? item.measurements : [];
   const measCount = measurements.length;
   const rowSpan = measCount > 0 ? measCount + 1 : 2;
@@ -247,13 +285,25 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
         {measCount > 0 ? (
           <>
             <td className="border p-1 bg-white hover:bg-yellow-50">
-              <input
-                type="text"
-                value={measurements[0]?.description || ""}
-                onChange={(e) => updateMeasurement(itemIdx, 0, "description", e.target.value)}
-                className="w-full bg-transparent px-2 py-1 text-left border rounded text-xs focus:bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors text-black"
-                placeholder="e.g. below soling"
-              />
+              <div className="flex items-center gap-1">
+                {itemIdx > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => copyAboveMeasurement(itemIdx, 0)}
+                    className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-all shrink-0 font-extrabold text-xs"
+                    title="Copy measurements from last row of item above"
+                  >
+                    ↓
+                  </button>
+                )}
+                <input
+                  type="text"
+                  value={measurements[0]?.description || ""}
+                  onChange={(e) => updateMeasurement(itemIdx, 0, "description", e.target.value)}
+                  className="w-full bg-transparent px-2 py-1 text-left border rounded text-xs focus:bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors text-black"
+                  placeholder="e.g. below soling"
+                />
+              </div>
             </td>
             <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={measurements[0]?.no} onChange={(val) => updateMeasurement(itemIdx, 0, "no", val)} /></td>
             <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={measurements[0]?.l} onChange={(val) => updateMeasurement(itemIdx, 0, "l", val)} /></td>
@@ -276,13 +326,23 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
         return (
           <tr key={meas?.id || measIdx} className="bg-white hover:bg-yellow-50 transition-colors">
             <td className="border p-1 bg-white">
-              <input
-                type="text"
-                value={meas?.description || ""}
-                onChange={(e) => updateMeasurement(itemIdx, measIdx, "description", e.target.value)}
-                className="w-full bg-transparent px-2 py-1 text-left border rounded text-xs focus:bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors text-black"
-                placeholder="e.g. left side"
-              />
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => copyAboveMeasurement(itemIdx, measIdx)}
+                  className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-all shrink-0 font-extrabold text-xs"
+                  title="Copy measurements from row above"
+                >
+                  ↓
+                </button>
+                <input
+                  type="text"
+                  value={meas?.description || ""}
+                  onChange={(e) => updateMeasurement(itemIdx, measIdx, "description", e.target.value)}
+                  className="w-full bg-transparent px-2 py-1 text-left border rounded text-xs focus:bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors text-black"
+                  placeholder="e.g. left side"
+                />
+              </div>
             </td>
             <td className="border p-1 bg-white"><NumericInput value={meas?.no} onChange={(val) => updateMeasurement(itemIdx, measIdx, "no", val)} /></td>
             <td className="border p-1 bg-white"><NumericInput value={meas?.l} onChange={(val) => updateMeasurement(itemIdx, measIdx, "l", val)} /></td>

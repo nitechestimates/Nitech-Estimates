@@ -25,6 +25,7 @@ const estimateSchema = z.object({
   deputyEngineer: z.string().optional(),
   jrEngineer: z.string().optional(),
   adminApprovalNo: z.string().optional(),
+  abstractCustomData: z.record(z.any()).optional().default({}),
 });
 
 export async function POST(request) {
@@ -89,6 +90,7 @@ export async function POST(request) {
             deputyEngineer: body.deputyEngineer || "",
             jrEngineer: body.jrEngineer || "",
             adminApprovalNo: body.adminApprovalNo || "",
+            abstractCustomData: data.abstractCustomData,
             updatedAt: new Date(),
           },
         }
@@ -123,6 +125,7 @@ export async function POST(request) {
       deputyEngineer: body.deputyEngineer || "",
       jrEngineer: body.jrEngineer || "",
       adminApprovalNo: body.adminApprovalNo || "",
+      abstractCustomData: data.abstractCustomData,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

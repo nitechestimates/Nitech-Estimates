@@ -299,6 +299,7 @@ function RateAnalysisContent() {
   const yojanaList = useStore((state) => state.yojanaList);
   const addYojana = useStore((state) => state.addYojana);
   const setMeasurementItems = useStore((state) => state.setMeasurementItems);
+  const setAbstractCustomData = useStore((state) => state.setAbstractCustomData);
 
   // Local UI state
   const [itemCode, setItemCode] = useState("");
@@ -406,6 +407,7 @@ function RateAnalysisContent() {
             currentEstimateId: data.data._id,
           });
           setMeasurementItems(data.data.measurementItems || []);
+          setAbstractCustomData(data.data.abstractCustomData || {});
           syncMeasurementFromRA();
         }
         setLoadingEstimate(false);
@@ -848,6 +850,7 @@ function RateAnalysisContent() {
           measurementItems: s.measurementItems,
           estimateId: s.currentEstimateId,
           leadSettings: s.leadSettings, leadOrder: s.leadOrder,
+          abstractCustomData: s.abstractCustomData,
         }),
       });
       const data = await response.json();

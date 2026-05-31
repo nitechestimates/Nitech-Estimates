@@ -35,12 +35,21 @@ export async function POST(req) {
     // Map measurementItems for lookup
     const msMap = new Map((Array.isArray(measurementItems) ? measurementItems : []).map(item => [item.id, item]));
 
+    const abstractCustomData = data.abstractCustomData || {};
+
     // Calculate abstract rows exactly as in standard frontend page
     const abstractRows = rows.map((raItem, idx) => {
       const msItem = msMap.get(raItem.id);
       const totalQty = msItem?.totalQty || 0;
+      
+      const custom = abstractCustomData[raItem.id] || {};
+      const useReducedRate = custom.useReducedRate || false;
+      const reducedRateVal = custom.reducedRate !== undefined && custom.reducedRate !== "" ? parseFloat(custom.reducedRate) : null;
+      
       const rate = raItem.netTotal || raItem.netAfterDeduct || 0;
-      const amount = totalQty * rate;
+      const activeRate = useReducedRate && reducedRateVal !== null ? reducedRateVal : rate;
+      const amount = totalQty * activeRate;
+      
       return {
         id: raItem.id,
         srNo: idx + 1,
@@ -48,7 +57,7 @@ export async function POST(req) {
         specs: raItem.specs || "",
         qty: totalQty,
         unit: raItem.unit,
-        rate,
+        rate: activeRate,
         amount,
         isRoyalty: raItem.isRoyalty
       };

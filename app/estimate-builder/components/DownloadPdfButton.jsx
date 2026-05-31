@@ -41,6 +41,7 @@ export default function DownloadPdfButton({
           adminApprovalNo: s.adminApprovalNo,
           estAmount: s.estAmount,
           yojana: s.yojana,
+          abstractCustomData: s.abstractCustomData, // ✅ include custom abstract data (reduced rates)
         }
       };
 
