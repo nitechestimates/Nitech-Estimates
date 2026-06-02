@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
+import type { ProjectDetailsProfile, StoreState } from "@/lib/store";
 
 const inputCls = "w-full border border-gray-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 text-sm";
 const labelCls = "block text-sm font-semibold text-gray-700 mb-2";
@@ -33,11 +34,11 @@ export default function CreateEstimate() {
     setCustomAlert({ message, title });
   };
 
-  const yojanaList = useStore((state: any) => state.yojanaList) as string[];
-  const addYojana = useStore((state: any) => state.addYojana) as (item: string) => void;
-  const resetEstimate = useStore((state: any) => state.resetEstimate) as () => void;
-  const projectDetailsProfiles = useStore((state: any) => state.projectDetailsProfiles) as any[] || [];
-  const addProjectDetailsProfile = useStore((state: any) => state.addProjectDetailsProfile) as (profile: any) => void;
+  const yojanaList = useStore((state: StoreState) => state.yojanaList);
+  const addYojana = useStore((state: StoreState) => state.addYojana);
+  const resetEstimate = useStore((state: StoreState) => state.resetEstimate);
+  const projectDetailsProfiles: ProjectDetailsProfile[] = useStore((state: StoreState) => state.projectDetailsProfiles) ?? [];
+  const addProjectDetailsProfile = useStore((state: StoreState) => state.addProjectDetailsProfile);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -139,7 +140,7 @@ export default function CreateEstimate() {
               className="w-full border border-blue-200 bg-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-blue-900"
             >
               <option value="">-- Choose a Profile to Autofill --</option>
-              {projectDetailsProfiles.map((p: any) => (
+              {projectDetailsProfiles.map((p: ProjectDetailsProfile) => (
                 <option key={p.id} value={p.id}>{p.profileName}</option>
               ))}
             </select>

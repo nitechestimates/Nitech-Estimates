@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function HistoryPage() {
+  // loading defaults to true so the spinner shows immediately on first mount;
+  // we don't toggle it back to true on every refetch — that would re-trigger
+  // the spinner and feel jarring when the user is just refreshing the list.
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -11,8 +14,7 @@ export default function HistoryPage() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ estimateName: "", nameOfWork: "" });
 
-  const fetchEstimates = () => {
-    setLoading(true);
+  const fetchEstimates = useCallback(() => {
     setError("");
     fetch("/api/estimate/get", {
       credentials: "include",
@@ -41,21 +43,27 @@ export default function HistoryPage() {
         setError(err.message || "Network error");
         setLoading(false);
       });
-  };
+  }, []);
 
   useEffect(() => {
-    fetchEstimates();
-  }, []);
+    Promise.resolve().then(() => {
+      fetchEstimates();
+    });
+  }, [fetchEstimates]);
 
   const deleteEstimate = async (id) => {
     if (!confirm("Are you sure you want to delete this estimate? This action cannot be undone.")) return;
 
-    const res = await fetch(`/api/estimate/${id}`, { method: "DELETE" });
-    const data = await res.json();
-    if (res.ok) {
-      setEstimates(estimates.filter((e) => e._id !== id));
-    } else {
-      alert(data.error || "Delete failed");
+    try {
+      const res = await fetch(`/api/estimate/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        setEstimates(estimates.filter((e) => e._id !== id));
+      } else {
+        alert(data.error || "Delete failed");
+      }
+    } catch {
+      alert("Network error: Could not delete the estimate.");
     }
   };
 
@@ -74,7 +82,7 @@ export default function HistoryPage() {
         alert(data.error || "Duplicate failed");
         setLoading(false);
       }
-    } catch (err) {
+    } catch {
       alert("Network error while duplicating");
       setLoading(false);
     }
@@ -93,7 +101,7 @@ export default function HistoryPage() {
       } else {
         alert("Failed to update estimate details");
       }
-    } catch (err) {
+    } catch {
       alert("Network error");
     }
   };

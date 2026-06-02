@@ -99,21 +99,21 @@ function getDefaultMaterialsForDescription(description, leadSettings) {
 
 // ========== Numeric Input — fires onChange only on blur to avoid store thrashing ==========
 function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
-  const [displayValue, setDisplayValue] = useState(
-    value !== undefined && value !== null ? value.toString() : "0"
-  );
+  // While editing, show the raw text the user is typing; otherwise derive
+  // a formatted display directly from the value prop. No useEffect needed.
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
   const inputRef = useRef(null);
-  const isFocused = useRef(false);
 
-  useEffect(() => {
-    if (!isFocused.current) {
-      setDisplayValue(value !== undefined && value !== null ? (value || 0).toFixed(3) : "0.000");
-    }
-  }, [value]);
+  const formatted =
+    value !== undefined && value !== null
+      ? (value || 0).toFixed(3)
+      : "0.000";
+  const displayValue = editing ? editValue : formatted;
 
   const handleFocus = () => {
-    isFocused.current = true;
-    setDisplayValue((value || 0) === 0 ? "" : (value || 0).toString());
+    setEditing(true);
+    setEditValue((value || 0) === 0 ? "" : (value || 0).toString());
   };
 
   const handleChange = (e) => {
@@ -123,7 +123,7 @@ function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
     const parts = raw.split(".");
     if (parts.length > 2) raw = parts[0] + "." + parts.slice(1).join("");
     if (parts.length === 2 && parts[1].length > 3) raw = parts[0] + "." + parts[1].slice(0, 3);
-    setDisplayValue(raw);
+    setEditValue(raw);
     // Only call onChange for complete valid numbers (not trailing-dot partials)
     if (raw !== "" && !raw.endsWith(".")) {
       const num = parseFloat(raw);
@@ -134,11 +134,10 @@ function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
   };
 
   const handleBlur = () => {
-    isFocused.current = false;
-    let num = parseFloat(displayValue);
-    if (isNaN(num)) num = 0;
-    setDisplayValue(num.toFixed(3));
-    onChange(num);
+    setEditing(false);
+    const num = parseFloat(editValue);
+    const safe = isNaN(num) ? 0 : num;
+    onChange(safe);
   };
 
   const handleKeyDown = (e) => {
@@ -294,7 +293,6 @@ function RateAnalysisContent() {
   const adminApprovalNo = useStore((state) => state.adminApprovalNo);
   const currentEstimateId = useStore((state) => state.currentEstimateId);
   const setEstimateMeta = useStore((state) => state.setEstimateMeta);
-  const recalculateRARows = useStore((state) => state.recalculateRARowsWithLeadSettings);
   const syncMeasurementFromRA = useStore((state) => state.syncMeasurementFromRA);
   const yojanaList = useStore((state) => state.yojanaList);
   const addYojana = useStore((state) => state.addYojana);
@@ -419,29 +417,31 @@ function RateAnalysisContent() {
   // Apply URL params on mount — always overwrite for new estimates (no loadId)
   useEffect(() => {
     if (loadId) return; // DB load will set these
-    if (!useStore.getState().raBottomRows || useStore.getState().raBottomRows.length === 0) {
-      setRABottomRows(defaultBottomRows);
-    }
-    const updates = {};
-    // Always apply URL params when creating a new estimate — do NOT guard on !s.field
-    // because resetEstimate() may not have flushed to the persisted store yet
-    if (nameFromURL)             updates.nameOfWork        = nameFromURL;
-    if (searchParams.has("tribal"))       updates.isTribal          = tribalFromURL;
-    if (tribalPercentFromURL)    updates.tribalPercent     = tribalPercentFromURL;
-    if (estimateNameFromURL)     updates.estimateName      = estimateNameFromURL;
-    if (yojanaFromURL)           updates.yojana            = yojanaFromURL;
-    if (estAmountFromURL)        updates.estAmount         = estAmountFromURL;
-    if (labourInsuranceFromURL)  updates.labourInsurance   = labourInsuranceFromURL;
-    if (yearFromURL)             updates.year              = yearFromURL;
-    if (distFromURL)             updates.dist              = distFromURL;
-    if (talukaFromURL)           updates.taluka            = talukaFromURL;
-    if (villageFromURL)          updates.village           = villageFromURL;
-    if (headDivisionFromURL)     updates.headDivision      = headDivisionFromURL;
-    if (subDivisionFromURL)      updates.subDivision       = subDivisionFromURL;
-    if (deputyEngineerFromURL)   updates.deputyEngineer    = deputyEngineerFromURL;
-    if (jrEngineerFromURL)       updates.jrEngineer        = jrEngineerFromURL;
-    if (adminApprovalNoFromURL)  updates.adminApprovalNo   = adminApprovalNoFromURL;
-    if (Object.keys(updates).length > 0) setEstimateMeta(updates);
+    Promise.resolve().then(() => {
+      if (!useStore.getState().raBottomRows || useStore.getState().raBottomRows.length === 0) {
+        setRABottomRows(defaultBottomRows);
+      }
+      const updates = {};
+      // Always apply URL params when creating a new estimate — do NOT guard on !s.field
+      // because resetEstimate() may not have flushed to the persisted store yet
+      if (nameFromURL)             updates.nameOfWork        = nameFromURL;
+      if (searchParams.has("tribal"))       updates.isTribal          = tribalFromURL;
+      if (tribalPercentFromURL)    updates.tribalPercent     = tribalPercentFromURL;
+      if (estimateNameFromURL)     updates.estimateName      = estimateNameFromURL;
+      if (yojanaFromURL)           updates.yojana            = yojanaFromURL;
+      if (estAmountFromURL)        updates.estAmount         = estAmountFromURL;
+      if (labourInsuranceFromURL)  updates.labourInsurance   = labourInsuranceFromURL;
+      if (yearFromURL)             updates.year              = yearFromURL;
+      if (distFromURL)             updates.dist              = distFromURL;
+      if (talukaFromURL)           updates.taluka            = talukaFromURL;
+      if (villageFromURL)          updates.village           = villageFromURL;
+      if (headDivisionFromURL)     updates.headDivision      = headDivisionFromURL;
+      if (subDivisionFromURL)      updates.subDivision       = subDivisionFromURL;
+      if (deputyEngineerFromURL)   updates.deputyEngineer    = deputyEngineerFromURL;
+      if (jrEngineerFromURL)       updates.jrEngineer        = jrEngineerFromURL;
+      if (adminApprovalNoFromURL)  updates.adminApprovalNo   = adminApprovalNoFromURL;
+      if (Object.keys(updates).length > 0) setEstimateMeta(updates);
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1231,7 +1231,7 @@ function RateAnalysisContent() {
               ))}
             </ul>
           )}
-          {isDropdownOpen && searchQuery.length > 2 && searchResults.length === 0 && <div className="absolute z-50 w-full bg-white border border-gray-300 mt-1 p-3 shadow-lg rounded-md text-gray-500">No items found matching "{searchQuery}"</div>}
+          {isDropdownOpen && searchQuery.length > 2 && searchResults.length === 0 && <div className="absolute z-50 w-full bg-white border border-gray-300 mt-1 p-3 shadow-lg rounded-md text-gray-500">No items found matching &ldquo;{searchQuery}&rdquo;</div>}
         </div>
       </div>
 

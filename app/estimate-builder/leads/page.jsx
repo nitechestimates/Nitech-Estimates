@@ -169,7 +169,6 @@ export default function LeadsPage() {
   const setLeadOrder = useStore(s => s.setLeadOrder);
   const recalculate = useStore(s => s.recalculateRARowsWithLeadSettings);
   const leadsProfiles = useStore(s => s.leadsProfiles);
-  const estimateId = useStore(s => s.currentEstimateId);
 
   // Load lead rate data
   useEffect(() => {
@@ -503,7 +502,7 @@ export default function LeadsPage() {
                 <input type="text" value={customName} onChange={e => setCustomName(e.target.value)} placeholder="e.g. River Sand"
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm" />
                 {customName && STANDARD_MATERIALS.includes(customName.trim()) && (
-                  <p className="text-xs text-orange-500 mt-0.5 font-medium">Matches standard material — will be saved as "{customName.trim()} (Custom)"</p>
+                  <p className="text-xs text-orange-500 mt-0.5 font-medium">Matches standard material — will be saved as &ldquo;{customName.trim()} (Custom)&rdquo;</p>
                 )}
               </div>
               <div className="w-32">

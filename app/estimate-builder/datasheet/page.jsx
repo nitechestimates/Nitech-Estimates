@@ -81,8 +81,6 @@ export default function DatasheetPage() {
   const [customLeadName, setCustomLeadName]       = useState("");
   const [customLeadKm, setCustomLeadKm]           = useState("");
   const [customLeadRate, setCustomLeadRate]       = useState("");
-  const [renamingDetailId, setRenamingDetailId]   = useState(null);
-  const [renameDetailVal, setRenameDetailVal]     = useState("");
 
   // ── Rates & Allowances Workspace Tab State ──
   const [ratesTab, setRatesTab] = useState("surcharges"); // "surcharges" | "materials"

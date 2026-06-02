@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build artifacts (Electron packaged output) — not source
+    "dist-desktop/**",
+    // Standalone Node.js scripts (Electron main + Excel converters) — not part of the Next.js build
+    "main.js",
+    "convert.mjs",
+    "convert-leads.mjs",
   ]),
 ]);
 

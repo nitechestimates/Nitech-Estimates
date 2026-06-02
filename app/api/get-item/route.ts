@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import data from '@/app/lib/data.json';
 
+type DataRow = Record<string, unknown> & {
+  "SSR    Item No."?: unknown;
+};
+
+const ssrItemNo = (row: DataRow): string =>
+  String(row["SSR    Item No."] ?? "").trim().toLowerCase();
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
@@ -11,12 +18,7 @@ export async function GET(req: Request) {
 
   const cleanCode = String(code).trim().toLowerCase();
 
-  const item = data.find(
-    (row: any) =>
-      String(row["SSR    Item No."])
-        .trim()
-        .toLowerCase() === cleanCode
-  );
+  const item = (data as DataRow[]).find((row) => ssrItemNo(row) === cleanCode);
 
   if (!item) {
     console.log("❌ NOT FOUND:", cleanCode);

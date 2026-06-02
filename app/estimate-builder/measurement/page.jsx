@@ -17,34 +17,70 @@ function AutoTextarea({ value, onChange }) {
 }
 
 function NumericInput({ value, onChange, disabled = false }) {
-  const [displayValue, setDisplayValue] = useState(value !== undefined && value !== null && value !== "" ? Number(value).toFixed(3) : "");
+  // Track local edit text and an "editing" flag. While editing, show the
+  // raw text the user is typing; otherwise derive a formatted display
+  // directly from the value prop. No useEffect → no setState-in-effect.
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
   const inputRef = useRef(null);
-  useEffect(() => {
-    if (document.activeElement !== inputRef.current) {
-      if (value === "" || value === null || value === undefined) setDisplayValue("");
-      else setDisplayValue(Number(value).toFixed(3));
-    }
-  }, [value]);
-  const handleFocus = () => { if (value === "" || value === null || value === undefined) setDisplayValue(""); else setDisplayValue(Number(value).toString()); };
+
+  const formatted =
+    value === "" || value === null || value === undefined
+      ? ""
+      : Number(value).toFixed(3);
+  const displayValue = editing ? editValue : formatted;
+
+  const handleFocus = () => {
+    setEditing(true);
+    setEditValue(
+      value === "" || value === null || value === undefined
+        ? ""
+        : Number(value).toString()
+    );
+  };
+
   const handleChange = (e) => {
     let raw = e.target.value;
-    if (raw === "") { setDisplayValue(""); onChange(""); return; }
+    if (raw === "") {
+      setEditValue("");
+      onChange("");
+      return;
+    }
     raw = raw.replace(/[^0-9.]/g, "");
     const parts = raw.split(".");
     if (parts.length > 2) raw = parts[0] + "." + parts.slice(1).join("");
     if (parts.length === 2 && parts[1].length > 3) raw = parts[0] + "." + parts[1].slice(0, 3);
-    setDisplayValue(raw);
+    setEditValue(raw);
     const num = parseFloat(raw);
     if (!isNaN(num)) onChange(num);
   };
+
   const handleBlur = () => {
-    if (displayValue === "") { onChange(""); return; }
-    let num = parseFloat(displayValue);
-    if (isNaN(num)) { setDisplayValue(""); onChange(""); }
-    else { setDisplayValue(num.toFixed(3)); onChange(num); }
+    setEditing(false);
+    if (editValue === "") {
+      onChange("");
+      return;
+    }
+    const num = parseFloat(editValue);
+    if (isNaN(num)) onChange("");
+    else onChange(num);
   };
+
   const handleKeyDown = (e) => { if (e.key === "Enter") { e.preventDefault(); inputRef.current.blur(); } };
-  return <input ref={inputRef} type="text" value={displayValue} onFocus={handleFocus} onChange={handleChange} onBlur={handleBlur} onKeyDown={handleKeyDown} disabled={disabled} className={`text-center w-full border rounded px-1 py-0.5 focus:bg-white transition-colors ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-transparent hover:bg-white"}`} placeholder="-" />;
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      value={displayValue}
+      onFocus={handleFocus}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      disabled={disabled}
+      className={`text-center w-full border rounded px-1 py-0.5 focus:bg-white transition-colors ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-transparent hover:bg-white"}`}
+      placeholder="-"
+    />
+  );
 }
 
 export default function MeasurementPage() {
@@ -53,7 +89,6 @@ export default function MeasurementPage() {
   const syncMeasurementFromRA = useStore((state) => state.syncMeasurementFromRA);
   const raRows = useStore((state) => state.raRows);
   const raBottomRows = useStore((state) => state.raBottomRows);
-  const currentEstimateId = useStore((state) => state.currentEstimateId);
   const [loading, setLoading] = useState(true);
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimer = useRef(null);
@@ -76,11 +111,16 @@ export default function MeasurementPage() {
     return () => clearInterval(id);
   }, [handleSave]);
 
+  // Initial bootstrap: pull items from RA on first mount, then flip the loading flag.
+  // We intentionally fire only once on mount.
   useEffect(() => {
-    if (!Array.isArray(measurementItems) || (measurementItems.length === 0 && (raRows.length > 0 || raBottomRows.length > 0))) {
-      syncMeasurementFromRA();
-    }
-    setLoading(false);
+    Promise.resolve().then(() => {
+      if (!Array.isArray(measurementItems) || (measurementItems.length === 0 && (raRows.length > 0 || raBottomRows.length > 0))) {
+        syncMeasurementFromRA();
+      }
+      setLoading(false);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync measurement items when RA rows change — use a ref to avoid infinite loop
@@ -91,7 +131,9 @@ export default function MeasurementPage() {
     );
     if (raKey !== prevRARef.current) {
       prevRARef.current = raKey;
-      syncMeasurementFromRA();
+      Promise.resolve().then(() => {
+        syncMeasurementFromRA();
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [raRows, raBottomRows]);
@@ -325,7 +367,7 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
           </>
         ) : (
           <>
-            <td className="border p-4 text-center text-gray-400 italic bg-gray-50" colSpan={6}>Click "+ Add Meas" to enter measurements</td>
+            <td className="border p-4 text-center text-gray-400 italic bg-gray-50" colSpan={6}>Click &ldquo;+ Add Meas&rdquo; to enter measurements</td>
             <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-top bg-gray-50/50" rowSpan={rowSpan}><div className="mt-2">{item?.unit}</div></td>
             <td className="border p-2 bg-gray-50"></td>
           </>

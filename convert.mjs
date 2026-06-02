@@ -1,5 +1,5 @@
-const xlsx = require("xlsx");
-const fs = require("fs");
+import xlsx from "xlsx";
+import fs from "fs";
 
 const workbook = xlsx.readFile("data.xlsx");
 const sheet = workbook.Sheets[workbook.SheetNames[0]];

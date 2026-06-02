@@ -1,5 +1,5 @@
-const xlsx = require("xlsx");
-const fs = require("fs");
+import xlsx from "xlsx";
+import fs from "fs";
 
 // Read the leads Excel file
 const workbook = xlsx.readFile("leads.xlsx");

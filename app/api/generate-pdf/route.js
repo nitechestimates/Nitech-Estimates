@@ -8,7 +8,7 @@ export const maxDuration = 60;
 
 export async function POST(req) {
   try {
-    const { estimateId, estimateData } = await req.json();
+    const { estimateData } = await req.json();
     const data = estimateData || {};
     const nameOfWork = data.nameOfWork || "Unknown Work";
     const isTribal = data.isTribal || false;
