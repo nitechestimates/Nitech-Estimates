@@ -144,8 +144,11 @@ export async function POST(request) {
       );
     }
     console.error("SAVE ERROR:", error);
+    const errorMsg = error.name === "MongoServerSelectionError" || error.name === "MongoNetworkError" || error.message?.includes("ENOTFOUND")
+      ? "Database connection failed. Please check your internet connection."
+      : "Internal Server Error";
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: errorMsg },
       { status: 500 }
     );
   }
