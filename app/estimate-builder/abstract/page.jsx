@@ -9,8 +9,6 @@ export default function AbstractPage() {
   const raRows = useStore((state) => state.raRows);
   const raBottomRows = useStore((state) => state.raBottomRows);
   const measurementItems = useStore((state) => state.measurementItems);
-  const abstractCustomData = useStore((state) => state.abstractCustomData);
-  const updateAbstractCustomField = useStore((state) => state.updateAbstractCustomField);
   const labourInsurance = useStore((state) => state.labourInsurance);
 
   const allRaRows = [...raRows, ...raBottomRows];
@@ -20,14 +18,8 @@ export default function AbstractPage() {
     const msItem = msMap.get(raItem.id);
     const totalQty = msItem?.totalQty || 0;
     
-    // Reduced Rate calculations
-    const custom = abstractCustomData[raItem.id] || {};
-    const useReducedRate = custom.useReducedRate || false;
-    const reducedRateVal = custom.reducedRate !== undefined && custom.reducedRate !== "" ? parseFloat(custom.reducedRate) : null;
-    
     const rate = raItem.netTotal || raItem.netAfterDeduct || 0;
-    const activeRate = useReducedRate && reducedRateVal !== null ? reducedRateVal : rate;
-    const amount = totalQty * activeRate;
+    const amount = totalQty * rate;
     
     return {
       id: raItem.id,
@@ -37,9 +29,6 @@ export default function AbstractPage() {
       qty: totalQty,
       unit: raItem.unit,
       rate,
-      activeRate,
-      useReducedRate,
-      reducedRate: custom.reducedRate !== undefined ? custom.reducedRate : "",
       amount,
       isRoyalty: raItem.isRoyalty
     };
@@ -163,13 +152,7 @@ export default function AbstractPage() {
     return () => clearInterval(id);
   }, []);
 
-  const handleToggleReducedRate = (id, checked) => {
-    updateAbstractCustomField(id, "useReducedRate", checked);
-  };
 
-  const handleUpdateReducedRate = (id, value) => {
-    updateAbstractCustomField(id, "reducedRate", value);
-  };
 
   if (allRaRows.length === 0) {
     return (
@@ -258,36 +241,9 @@ export default function AbstractPage() {
                   <td className="border p-2.5 text-right font-medium">{row.qty.toFixed(3)}</td>
                   <td className="border p-2.5 text-center text-gray-600 text-xs">{row.unit}</td>
                   
-                  {/* Interactive Rate Column */}
-                  <td className="border p-2.5">
-                    <div className="flex flex-col items-end gap-1.5">
-                      <div className={`font-semibold text-sm ${row.useReducedRate ? "text-gray-400 line-through text-xs" : "text-gray-900"}`}>{formatMoney(row.rate)}</div>
-                      <div className="flex items-center gap-1.5 select-none cursor-pointer">
-                        <input
-                          type="checkbox"
-                          id={`rr-chk-${row.id}`}
-                          checked={row.useReducedRate}
-                          onChange={(e) => handleToggleReducedRate(row.id, e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer"
-                        />
-                        <label htmlFor={`rr-chk-${row.id}`} className="text-[10px] font-extrabold text-blue-600 cursor-pointer uppercase tracking-wider">Reduced Rate</label>
-                      </div>
-                      {row.useReducedRate && (
-                        <div className="flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-150 mt-1">
-                          <span className="text-[11px] text-blue-600 font-bold">₹</span>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={row.reducedRate}
-                            onChange={(e) => handleUpdateReducedRate(row.id, e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
-                            placeholder={row.rate.toFixed(2)}
-                            className="w-24 border border-blue-400 rounded px-1.5 py-0.5 text-right text-xs font-bold focus:ring-1 focus:ring-blue-500 focus:outline-none bg-blue-50/35 text-blue-950 shadow-sm"
-                          />
-                        </div>
-                      )}
-                    </div>
+                  {/* Rate Column */}
+                  <td className="border p-2.5 text-right font-semibold text-gray-900">
+                    {formatMoney(row.rate)}
                   </td>
                   
                   <td className="border p-2.5 text-right font-bold text-gray-900">{formatMoney(row.amount)}</td>
@@ -331,35 +287,9 @@ export default function AbstractPage() {
                   <td className="border p-2.5 text-right">{row.qty.toFixed(3)}</td>
                   <td className="border p-2.5 text-center text-gray-500 text-xs">{row.unit}</td>
                   
-                  {/* Royalty Interactive Rate */}
-                  <td className="border p-2.5 text-right">
-                    <div className="flex flex-col items-end gap-1">
-                      <div className={`font-semibold ${row.useReducedRate ? "text-gray-400 line-through text-xs" : "text-blue-950"}`}>{formatMoney(row.rate)}</div>
-                      <div className="flex items-center gap-1.5 select-none">
-                        <input
-                          type="checkbox"
-                          id={`rr-chk-${row.id}`}
-                          checked={row.useReducedRate}
-                          onChange={(e) => handleToggleReducedRate(row.id, e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3 h-3 cursor-pointer"
-                        />
-                        <label htmlFor={`rr-chk-${row.id}`} className="text-[9px] font-extrabold text-blue-600 cursor-pointer uppercase">Reduced</label>
-                      </div>
-                      {row.useReducedRate && (
-                        <div className="flex items-center gap-1 animate-in fade-in duration-100 mt-1">
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={row.reducedRate}
-                            onChange={(e) => handleUpdateReducedRate(row.id, e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
-                            placeholder={row.rate.toFixed(2)}
-                            className="w-20 border border-blue-400 rounded px-1.5 py-0.5 text-right text-xs font-bold focus:outline-none bg-blue-50/20 text-blue-950"
-                          />
-                        </div>
-                      )}
-                    </div>
+                  {/* Royalty Rate */}
+                  <td className="border p-2.5 text-right font-semibold text-blue-950">
+                    {formatMoney(row.rate)}
                   </td>
                   
                   <td className="border p-2.5 text-right font-bold text-blue-950">{formatMoney(row.amount)}</td>
