@@ -21,7 +21,6 @@ export async function GET(req: Request) {
   const item = (data as DataRow[]).find((row) => ssrItemNo(row) === cleanCode);
 
   if (!item) {
-    console.log("❌ NOT FOUND:", cleanCode);
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
