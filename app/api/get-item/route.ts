@@ -27,3 +27,31 @@ export async function GET(req: Request) {
 
   return NextResponse.json(item);
 }
+
+export async function POST(req: Request) {
+  try {
+    const { codes } = await req.json();
+    if (!Array.isArray(codes)) {
+      return NextResponse.json({ error: "codes must be an array" }, { status: 400 });
+    }
+
+    const cleanCodes = codes.map(c => String(c).trim().toLowerCase());
+    const codeSet = new Set(cleanCodes);
+
+    const matches: Record<string, DataRow> = {};
+    for (const row of (data as DataRow[])) {
+      const code = ssrItemNo(row);
+      if (codeSet.has(code)) {
+        // Find matching original casing/spacing from request codes
+        const originalCode = codes.find(c => String(c).trim().toLowerCase() === code);
+        if (originalCode) {
+          matches[originalCode] = row;
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, data: matches });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

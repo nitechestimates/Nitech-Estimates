@@ -313,6 +313,46 @@ function RateAnalysisContent() {
   const [editYojanaDropdown, setEditYojanaDropdown] = useState(false);
   const editYojanaRef = useRef(null);
 
+  const [hasOutdatedRates, setHasOutdatedRates] = useState(false);
+  const [outdatedRatesMap, setOutdatedRatesMap] = useState({});
+
+  const handleUpdateRatesToCurrentSSR = async () => {
+    const approved = await triggerConfirm(
+      "Are you sure you want to update all estimate items to the current SSR 2022-23 rates? This will overwrite your manual rate adjustments.",
+      "Update All Rates"
+    );
+    if (!approved) return;
+
+    const s = useStore.getState();
+    const updatedRows = localRows.map((row) => {
+      const newRate = outdatedRatesMap[row.ssr];
+      if (newRate !== undefined) {
+        return calculateRow(
+          {
+            ...row,
+            basicRate: newRate,
+          },
+          s.isTribal,
+          s.tribalPercent
+        );
+      }
+      return row;
+    });
+
+    setLocalRows(updatedRows);
+    setRARows(updatedRows);
+    setHasOutdatedRates(false);
+
+    setTimeout(() => {
+      useStore.getState().syncMeasurementFromRA();
+    }, 0);
+
+    await triggerAlert(
+      "All items have been updated to the current SSR 2022-23 rates. Please remember to click 'Save Estimate' to save these updates.",
+      "Rates Updated Successfully"
+    );
+  };
+
   const [localRows, setLocalRows] = useState(() => raRows);
   const [localBottomRows, setLocalBottomRows] = useState(() => raBottomRows && raBottomRows.length > 0 ? raBottomRows : defaultBottomRows);
 
@@ -368,6 +408,8 @@ function RateAnalysisContent() {
   useEffect(() => {
     if (!loadId) return;
     setLoadingEstimate(true);
+    setHasOutdatedRates(false);
+    setOutdatedRatesMap({});
     fetch(`/api/estimate/${loadId}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
@@ -407,6 +449,38 @@ function RateAnalysisContent() {
           setMeasurementItems(data.data.measurementItems || []);
           setAbstractCustomData(data.data.abstractCustomData || {});
           syncMeasurementFromRA();
+
+          // Check for outdated rates by querying batch API POST /api/get-item
+          const codes = Array.from(new Set(standardRows.map(r => r.ssr).filter(Boolean)));
+          if (codes.length > 0) {
+            fetch(`/api/get-item`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ codes })
+            })
+              .then(res => res.json())
+              .then(resData => {
+                if (resData.success && resData.data) {
+                  let outdated = false;
+                  const newRatesMap = {};
+                  for (const r of standardRows) {
+                    const match = resData.data[r.ssr];
+                    if (match) {
+                      const correctRate = parseFloat(match["Completed Rate for 2021-22 excluding GST In Rs."]) || 0;
+                      newRatesMap[r.ssr] = correctRate;
+                      if (Math.abs((r.basicRate || 0) - correctRate) > 0.01) {
+                        outdated = true;
+                      }
+                    }
+                  }
+                  if (outdated) {
+                    setOutdatedRatesMap(newRatesMap);
+                    setHasOutdatedRates(true);
+                  }
+                }
+              })
+              .catch(err => console.error("Error checking rates:", err));
+          }
         }
         setLoadingEstimate(false);
       })
@@ -943,6 +1017,25 @@ function RateAnalysisContent() {
   return (
     <div className="p-4 bg-yellow-50 min-h-screen text-black animate-fade-in-up">
       <Tabs />
+      {hasOutdatedRates && (
+        <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 flex items-center justify-between shadow-sm animate-pulse-once">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 font-bold text-lg">
+              ⚠️
+            </div>
+            <div>
+              <h4 className="font-semibold text-sm">Outdated SSR Rates Detected</h4>
+              <p className="text-xs text-amber-700">This estimate is using older baseline rates. Would you like to update all items to the current SSR 2022-23 rates?</p>
+            </div>
+          </div>
+          <button
+            onClick={handleUpdateRatesToCurrentSSR}
+            className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow transition-colors"
+          >
+            Update All Rates
+          </button>
+        </div>
+      )}
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <span className="font-bold">Name of Work: </span>
