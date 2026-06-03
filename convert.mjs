@@ -1,18 +1,46 @@
 import xlsx from "xlsx";
 import fs from "fs";
 
-const workbook = xlsx.readFile("data.xlsx");
-const sheet = workbook.Sheets[workbook.SheetNames[0]];
+const workbook = xlsx.readFile("SSR EDI - Final for permanent.xlsx");
+const sheet = workbook.Sheets["SSR 2022-23"];
 
-// 🔥 ADDED `raw: false` HERE
-// This prevents xlsx from turning "51.130" into the number 51.13
-const rows = xlsx.utils.sheet_to_json(sheet, { defval: "", raw: false });
+// 🔥 Skip the title row (Row 0) and use Row 1 as headers
+const rawRows = xlsx.utils.sheet_to_json(sheet, { range: 1, defval: "", raw: false });
 
-// 🔥 VERY IMPORTANT FIX
-rows.forEach(row => {
-  if (row["SSR    Item No."] !== undefined) {
-    row["SSR    Item No."] = String(row["SSR    Item No."]).trim();
+// 🔥 Normalize row keys & values for compatibility
+const rows = rawRows.map(row => {
+  const normalized = {};
+  for (const key in row) {
+    if (key.startsWith("__EMPTY")) continue;
+    // Collapse all whitespace sequences (including newlines and multiple spaces) into a single space
+    const cleanKey = key.replace(/\s+/g, " ").trim();
+    normalized[cleanKey] = row[key];
   }
+
+  // Standardize key names
+  const ssrItemNo = normalized["SSR Item No."] || normalized["SSR    Item No."];
+  if (ssrItemNo !== undefined) {
+    normalized["SSR    Item No."] = String(ssrItemNo).trim();
+  } else {
+    normalized["SSR    Item No."] = "";
+  }
+
+  normalized["Description of the item"] = normalized["Description of the item"] || "";
+  normalized["Unit"] = normalized["Unit"] || "";
+  normalized["Chapter"] = normalized["Chapter"] || "";
+  normalized["Additional Specification"] = normalized["Additional Specification"] || "";
+
+  // Map 2022-23 completed rate and labour rate to 2021-22 keys for full backward compatibility
+  const completedRate22 = normalized["Completed Rate for 2022-23 excluding GST In Rs."];
+  if (completedRate22 !== undefined) {
+    normalized["Completed Rate for 2021-22 excluding GST In Rs."] = completedRate22;
+  }
+  const labourRate22 = normalized["Labour Rate for 2022-23 excluding GST In Rs."];
+  if (labourRate22 !== undefined) {
+    normalized["Labour Rate for 2021-22 excluding GST In Rs."] = labourRate22;
+  }
+
+  return normalized;
 });
 
 function isNumericSSR(val) {
