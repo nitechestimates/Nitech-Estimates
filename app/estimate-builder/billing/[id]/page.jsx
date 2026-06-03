@@ -5,6 +5,41 @@ import { useParams, useRouter } from "next/navigation";
 // Helper for formatting currency
 const formatMoney = (num) => (num || 0).toFixed(2);
 
+// Focus-fix input wrapper to prevent losing focus during parent renders
+function LocalTextInput({ value, onChange, className = "", placeholder = "", type = "text", step }) {
+  const [localValue, setLocalValue] = useState(value ?? "");
+
+  useEffect(() => {
+    setLocalValue(value ?? "");
+  }, [value]);
+
+  const handleBlur = () => {
+    if (localValue !== value) {
+      onChange(localValue);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.target.blur();
+    }
+  };
+
+  return (
+    <input
+      type={type}
+      step={step}
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      className={className}
+      placeholder={placeholder}
+    />
+  );
+}
+
 export default function BillingDashboard() {
   const params = useParams();
   const router = useRouter();
@@ -477,10 +512,10 @@ export default function BillingDashboard() {
               {/* Agency Name */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Agency / Contractor Name</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.agencyName || ""}
-                  onChange={(e) => updateExtraField("agencyName", e.target.value)}
+                  onChange={(val) => updateExtraField("agencyName", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter Agency Name"
                 />
@@ -489,10 +524,10 @@ export default function BillingDashboard() {
               {/* Agreement Reference */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Agreement Reference No</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.agreementRef || ""}
-                  onChange={(e) => updateExtraField("agreementRef", e.target.value)}
+                  onChange={(val) => updateExtraField("agreementRef", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g. No. Z.P.N./W.D./B.&.C./3/2025"
                 />
@@ -501,10 +536,10 @@ export default function BillingDashboard() {
               {/* Serial No */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Serial No of this Bill</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.serialNo || ""}
-                  onChange={(e) => updateExtraField("serialNo", e.target.value)}
+                  onChange={(val) => updateExtraField("serialNo", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g. II ND Final Bill"
                 />
@@ -513,10 +548,10 @@ export default function BillingDashboard() {
               {/* Bill Date */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Bill Date</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.date || ""}
-                  onChange={(e) => updateExtraField("date", e.target.value)}
+                  onChange={(val) => updateExtraField("date", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="DD/MM/YYYY"
                 />
@@ -525,10 +560,10 @@ export default function BillingDashboard() {
               {/* Commencement Date */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Commence Date</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.commenceDate || ""}
-                  onChange={(e) => updateExtraField("commenceDate", e.target.value)}
+                  onChange={(val) => updateExtraField("commenceDate", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="DD/MM/YYYY"
                 />
@@ -537,10 +572,10 @@ export default function BillingDashboard() {
               {/* Due Date */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Due Date for Completion</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.dueDate || ""}
-                  onChange={(e) => updateExtraField("dueDate", e.target.value)}
+                  onChange={(val) => updateExtraField("dueDate", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="DD/MM/YYYY"
                 />
@@ -549,10 +584,10 @@ export default function BillingDashboard() {
               {/* Actual Completion */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Actual Date of Completion</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.completionDate || ""}
-                  onChange={(e) => updateExtraField("completionDate", e.target.value)}
+                  onChange={(val) => updateExtraField("completionDate", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="DD/MM/YYYY"
                 />
@@ -561,10 +596,10 @@ export default function BillingDashboard() {
               {/* Extensions */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Extensions Granted</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.extensions || ""}
-                  onChange={(e) => updateExtraField("extensions", e.target.value)}
+                  onChange={(val) => updateExtraField("extensions", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g. 3 Months / NIL"
                 />
@@ -573,10 +608,11 @@ export default function BillingDashboard() {
               {/* Deduct Previous Bill */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Deduct Previous Bill Amount (₹)</label>
-                <input
+                <LocalTextInput
                   type="number"
+                  step="any"
                   value={extra.deductPreviousBill || ""}
-                  onChange={(e) => updateExtraField("deductPreviousBill", e.target.value)}
+                  onChange={(val) => updateExtraField("deductPreviousBill", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                   placeholder="0.00"
                 />
@@ -587,37 +623,37 @@ export default function BillingDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">SD as per Agreement</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.sdAsPerAgreement || ""}
-                  onChange={(e) => updateExtraField("sdAsPerAgreement", e.target.value)}
+                  onChange={(val) => updateExtraField("sdAsPerAgreement", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">SD Previously recovered</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.sdPreviouslyRecovered || ""}
-                  onChange={(e) => updateExtraField("sdPreviouslyRecovered", e.target.value)}
+                  onChange={(val) => updateExtraField("sdPreviouslyRecovered", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">SD to be recovered from this bill</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.sdToBeRecovered || ""}
-                  onChange={(e) => updateExtraField("sdToBeRecovered", e.target.value)}
+                  onChange={(val) => updateExtraField("sdToBeRecovered", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">SD Balance to recover</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.sdBalanceToRecover || ""}
-                  onChange={(e) => updateExtraField("sdBalanceToRecover", e.target.value)}
+                  onChange={(val) => updateExtraField("sdBalanceToRecover", val)}
                   className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -634,19 +670,19 @@ export default function BillingDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Sectional Engineer Name (Z.P. Form 65)</label>
-                  <input
+                  <LocalTextInput
                     type="text"
                     value={extra.sectionalEngineerName || ""}
-                    onChange={(e) => updateExtraField("sectionalEngineerName", e.target.value)}
+                    onChange={(val) => updateExtraField("sectionalEngineerName", val)}
                     className="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-xl text-slate-900 font-semibold"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Deputy Engineer Name (Z.P. Form 65)</label>
-                  <input
+                  <LocalTextInput
                     type="text"
                     value={extra.deputyEngineerName || ""}
-                    onChange={(e) => updateExtraField("deputyEngineerName", e.target.value)}
+                    onChange={(val) => updateExtraField("deputyEngineerName", val)}
                     className="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-xl text-slate-900 font-semibold"
                   />
                 </div>
@@ -658,10 +694,10 @@ export default function BillingDashboard() {
               <h3 className="text-base font-black text-slate-800 mb-4 border-b pb-2">Work Photo Settings</h3>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Work Photo URL or Base64 String</label>
-                <input
+                <LocalTextInput
                   type="text"
                   value={extra.workPhoto || ""}
-                  onChange={(e) => updateExtraField("workPhoto", e.target.value)}
+                  onChange={(val) => updateExtraField("workPhoto", val)}
                   className="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-xl text-slate-900 font-mono text-xs mb-4"
                   placeholder="Paste URL or Base64 data:image/png;base64,... here"
                 />

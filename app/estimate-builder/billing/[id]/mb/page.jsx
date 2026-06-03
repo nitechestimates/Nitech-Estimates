@@ -77,6 +77,41 @@ function NumericInput({ value, onChange, placeholder = "-", className = "" }) {
   );
 }
 
+// Focus-fix input wrapper to prevent losing focus during parent renders (rates etc)
+function LocalTextInput({ value, onChange, className = "", placeholder = "", type = "text", step }) {
+  const [localValue, setLocalValue] = useState(value ?? "");
+
+  useEffect(() => {
+    setLocalValue(value ?? "");
+  }, [value]);
+
+  const handleBlur = () => {
+    if (localValue !== value) {
+      onChange(localValue);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.target.blur();
+    }
+  };
+
+  return (
+    <input
+      type={type}
+      step={step}
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      className={className}
+      placeholder={placeholder}
+    />
+  );
+}
+
 // Helper
 const formatMoney = (num) => (num || 0).toFixed(2);
 
@@ -781,11 +816,11 @@ export default function MeasurementBook() {
                           </span>
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs text-slate-400 font-bold">₹</span>
-                            <input
+                            <LocalTextInput
                               type="number"
                               step="any"
                               value={row.baseRate}
-                              onChange={(e) => updateBillingRate(row.id, e.target.value)}
+                              onChange={(val) => updateBillingRate(row.id, val)}
                               placeholder={row.baseCalculatedRate.toFixed(2)}
                               className="w-24 text-right font-bold text-xs border border-slate-300 rounded px-1.5 py-0.5 focus:border-blue-500 focus:outline-none"
                             />
@@ -806,11 +841,11 @@ export default function MeasurementBook() {
                             <span>Reduced</span>
                           </label>
                           {row.useReducedRate && (
-                            <input
+                            <LocalTextInput
                               type="number"
                               step="any"
                               value={row.reducedRate}
-                              onChange={(e) => updateReducedRateValue(row.id, e.target.value)}
+                              onChange={(val) => updateReducedRateValue(row.id, val)}
                               placeholder={parseFloat(row.baseRate || row.baseCalculatedRate).toFixed(2)}
                               className="w-20 text-right font-bold text-[10px] border border-blue-300 bg-blue-50/30 rounded px-1 py-0.5 focus:outline-none"
                             />
@@ -881,11 +916,11 @@ export default function MeasurementBook() {
                           <span className="text-[10px] text-slate-400">
                             Tender: ₹{row.baseCalculatedRate.toFixed(2)}
                           </span>
-                          <input
+                           <LocalTextInput
                             type="number"
                             step="any"
                             value={row.baseRate}
-                            onChange={(e) => updateBillingRate(row.id, e.target.value)}
+                            onChange={(val) => updateBillingRate(row.id, val)}
                             placeholder={row.baseCalculatedRate.toFixed(2)}
                             className="w-20 text-right font-bold text-xs border border-slate-300 rounded px-1 py-0.5 focus:outline-none"
                           />
