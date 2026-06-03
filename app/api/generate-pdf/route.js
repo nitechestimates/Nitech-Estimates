@@ -16,8 +16,6 @@ export async function POST(req) {
     const leadSettings = data.leadSettings || {};
     const leadCategories = Object.keys(leadSettings);
 
-    // Get measurement items (passed from frontend or fetch from store)
-    // For now, we assume estimateData includes measurementItems
     const measurementItems = data.measurementItems || [];
 
     // Convert public/zp-logo.png to Base64 for Puppeteer inline rendering
@@ -95,7 +93,7 @@ export async function POST(req) {
 
     const grandTotal = subTotalWithTax + totalRoyaltySand + totalRoyaltyOthers + totalLabCharges;
 
-    // HTML template
+    // Estimate metadata fields
     const year = data.year || "2024-25";
     const headDivision = data.headDivision || "";
     const subDivision = data.subDivision || "";
@@ -105,7 +103,7 @@ export async function POST(req) {
     const yojana = data.yojana || "";
     const estAmount = data.estAmount || grandTotal.toFixed(2);
     
-    // HTML template
+    // Build HTML template
     const htmlTemplate = `
       <!DOCTYPE html>
       <html lang="en">
@@ -509,7 +507,7 @@ export async function POST(req) {
                     <td class="left bold">${cat}</td>
                     <td class="center bold" style="color:red;">${distance === 0 ? '0.00' : distance.toFixed(2)}</td>
                     <td class="center bold">${charge === 0 ? '#N/A' : charge.toFixed(2)}</td>
-                    <td class="center bold" style="color:red;">${distance === 0 ? 'Local' : 'Local'}</td>
+                    <td class="center bold" style="color:red;">${distance === 0 ? 'Local' : `${distance.toFixed(2)} Km`}</td>
                   </tr>
                 `;
               }).join('')

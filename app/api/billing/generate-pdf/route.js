@@ -3,11 +3,19 @@ import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import fs from "fs";
 import path from "path";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const maxDuration = 60;
 
 export async function POST(req) {
   try {
+    // 🔐 Auth check – user must be logged in to generate billing PDFs
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { billingData, estimateData } = await req.json();
     const bData = billingData || {};
     const eData = estimateData || {};
@@ -328,7 +336,7 @@ export async function POST(req) {
             </tr>
             <tr class="bold bg-emerald-50" style="font-size:12px;">
               <td colSpan="5" class="right uppercase">NET VALUE WORK OR SUPPLIES SINCE PREVIOUS BILL (F):</td>
-              <td class="right font-black" style="color:emerald; font-size:13px;">
+              <td class="right font-black" style="color:#059669; font-size:13px;">
                 ${(executedGrandTotal - parseFloat(extra.deductPreviousBill || 0)).toFixed(2)}
               </td>
               <td></td>
@@ -492,7 +500,7 @@ export async function POST(req) {
                 ${(executedGrandTotal - tenderGrandTotal).toFixed(2)}
               </td>
               <td class="center">
-                ${(executedGrandTotal - tenderGrandTotal) < 0 ? "Saving" : "Excess"}
+                ${(executedGrandTotal - tenderGrandTotal) === 0 ? "No Change" : (executedGrandTotal - tenderGrandTotal) < 0 ? "Saving" : "Excess"}
               </td>
             </tr>
           </tbody>

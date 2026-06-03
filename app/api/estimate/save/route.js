@@ -67,9 +67,9 @@ export async function POST(request) {
         );
       }
 
-      // Perform update
+      // Perform update — include userId in filter to prevent TOCTOU race condition
       const updateResult = await db.collection("estimates").updateOne(
-        { _id: objectId },
+        { _id: objectId, userId: session.user.email },
         {
           $set: {
             estimateName: body.estimateName || "",
@@ -96,12 +96,7 @@ export async function POST(request) {
         }
       );
 
-      if (updateResult.modifiedCount === 0) {
-        // No changes made, but still success
-        return NextResponse.json({ success: true, updated: true });
-      }
-
-      return NextResponse.json({ success: true, updated: true });
+      return NextResponse.json({ success: true, updated: updateResult.modifiedCount > 0 });
     }
 
     // No estimateId → Insert new document
