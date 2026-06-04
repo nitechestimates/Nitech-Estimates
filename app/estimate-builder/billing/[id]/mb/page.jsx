@@ -523,6 +523,22 @@ export default function MeasurementBook() {
   // ── Render ────────────────────────────────────────────────────────
   return (
     <div className="p-4 bg-slate-50 min-h-screen text-slate-900 animate-fade-in-up">
+      <style dangerouslySetInnerHTML={{__html: `
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 4px;
+          height: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 2px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}} />
       {/* Toast */}
       <div
         className={`fixed bottom-6 right-6 z-50 transition-all duration-500 ${
@@ -638,16 +654,16 @@ export default function MeasurementBook() {
               <table className="w-full text-sm bg-white">
                 <thead className="bg-slate-100 border-b border-slate-200 text-slate-700">
                   <tr className="text-center font-bold">
-                    <th className="border p-2.5 w-[50px] min-w-[50px] whitespace-nowrap">Sr. No.</th>
-                    <th className="border p-2.5 w-[320px] min-w-[320px]">DESCRIPTION OF ITEM</th>
-                    <th className="border p-2.5 w-[200px] min-w-[200px]">PARTICULARS</th>
-                    <th className="border p-2.5 w-[70px] min-w-[70px] whitespace-nowrap">No.</th>
-                    <th className="border p-2.5 w-[90px] min-w-[90px] whitespace-nowrap">L.</th>
-                    <th className="border p-2.5 w-[90px] min-w-[90px] whitespace-nowrap">B/W</th>
-                    <th className="border p-2.5 w-[90px] min-w-[90px] whitespace-nowrap">H/D.</th>
-                    <th className="border p-2.5 w-[110px] min-w-[110px] whitespace-nowrap">TOTAL</th>
-                    <th className="border p-2.5 w-[70px] min-w-[70px] whitespace-nowrap">UNIT</th>
-                    <th className="border p-2.5 w-[120px] min-w-[120px] whitespace-nowrap">ACTIONS</th>
+                    <th className="border p-1 w-[45px] min-w-[40px] whitespace-nowrap text-xs">Sr. No.</th>
+                    <th className="border p-1 w-[260px] min-w-[160px] text-xs">DESCRIPTION OF ITEM</th>
+                    <th className="border p-1 w-[140px] min-w-[90px] text-xs">PARTICULARS</th>
+                    <th className="border p-1 w-[55px] min-w-[45px] whitespace-nowrap text-xs">No.</th>
+                    <th className="border p-1 w-[65px] min-w-[50px] whitespace-nowrap text-xs">L.</th>
+                    <th className="border p-1 w-[65px] min-w-[50px] whitespace-nowrap text-xs">B/W</th>
+                    <th className="border p-1 w-[65px] min-w-[50px] whitespace-nowrap text-xs">H/D.</th>
+                    <th className="border p-1 w-[85px] min-w-[70px] whitespace-nowrap text-xs">TOTAL</th>
+                    <th className="border p-1 w-[70px] min-w-[55px] whitespace-nowrap text-xs">UNIT</th>
+                    <th className="border p-1 w-[85px] min-w-[80px] whitespace-nowrap text-xs">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -664,11 +680,11 @@ export default function MeasurementBook() {
                           <td className="border p-2 text-center font-bold text-slate-700 align-top" rowSpan={rowSpan}>
                             {itemIdx + 1}
                           </td>
-                          <td className="border p-2.5 align-top font-semibold text-slate-800 leading-relaxed" rowSpan={rowSpan}>
+                          <td className="border p-2 align-top font-semibold text-slate-800 leading-relaxed" rowSpan={rowSpan}>
                             <LocalTextarea
                               value={item.description || ""}
                               onChange={(val) => updateItemDescription(itemIdx, val)}
-                              className="w-full resize-none overflow-hidden bg-transparent border-none p-1 focus:ring-0 focus:outline-none text-black"
+                              className="w-full h-[70px] min-h-[70px] max-h-[100px] resize-none overflow-y-auto bg-transparent border-none p-1 focus:ring-0 focus:outline-none text-black text-xs leading-normal scrollbar-thin"
                               rows={3}
                             />
                             <div className="mt-4 flex gap-2 flex-wrap">
@@ -744,7 +760,7 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center font-semibold text-slate-500 align-middle bg-slate-50/50" rowSpan={measCount}>
                                 {item.unit}
                               </td>
-                              <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[120px] w-[120px]">
+                              <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[80px] w-[85px]">
                                 <button
                                   onClick={() => removeMeasurementRow(itemIdx, 0)}
                                   className="text-red-400 hover:text-red-600 transition text-xs"
@@ -761,7 +777,7 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center font-semibold text-slate-500 align-middle bg-slate-50/50">
                                 {item.unit}
                               </td>
-                              <td className="border p-2 bg-slate-50 min-w-[120px] w-[120px]"></td>
+                              <td className="border p-2 bg-slate-50 min-w-[80px] w-[85px]"></td>
                             </>
                           )}
                         </tr>
@@ -817,7 +833,7 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center font-bold text-blue-900 bg-slate-50/50">
                                 {meas.total ? meas.total.toFixed(3) : "-"}
                               </td>
-                              <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[120px] w-[120px]">
+                              <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[80px] w-[85px]">
                                 <button
                                   onClick={() => removeMeasurementRow(itemIdx, actualIdx)}
                                   className="text-red-400 hover:text-red-600 transition text-xs"
@@ -842,7 +858,7 @@ export default function MeasurementBook() {
                           <td className="border p-2 text-center font-semibold text-slate-500 bg-slate-100/50 align-middle">
                             {item.unit}
                           </td>
-                          <td className="border p-2 min-w-[120px] w-[120px]"></td>
+                          <td className="border p-2 min-w-[80px] w-[85px]"></td>
                         </tr>
                       </React.Fragment>
                     );
