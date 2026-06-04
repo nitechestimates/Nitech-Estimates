@@ -302,7 +302,6 @@ export default function MeasurementPage() {
   }, [setMeasurementItems]);
 
   const removeMeasurement = useCallback((itemIndex, measIndex) => {
-    if (!confirm("Delete this measurement?")) return;
     setMeasurementItems(prev => {
       const updated = [...prev];
       const item = { ...updated[itemIndex] };
@@ -434,13 +433,13 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
             <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={measurements[0]?.b} onChange={(val) => updateMeasurement(itemIdx, 0, "b", val)} /></td>
             <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={measurements[0]?.h} onChange={(val) => updateMeasurement(itemIdx, 0, "h", val)} /></td>
             <td className="border p-2 text-center font-bold text-blue-900 bg-gray-50/50">{measurements[0]?.total === 0 || !measurements[0]?.total ? "-" : Number(measurements[0].total).toFixed(3)}</td>
-            <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-bottom bg-gray-50/50" rowSpan={rowSpan}><div className="mb-2">{item?.unit}</div></td>
+            <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-middle bg-gray-50/50" rowSpan={measCount}>{item?.unit}</td>
             <td className="border p-2 text-center bg-white"><button onClick={() => removeMeasurement(itemIdx, 0)} className="text-red-400 hover:text-red-600 hover:scale-125 transition-all" title="Delete">❌</button></td>
           </>
         ) : (
           <>
             <td className="border p-4 text-center text-gray-400 italic bg-gray-50" colSpan={6}>Click &ldquo;+ Add Meas&rdquo; to enter measurements</td>
-            <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-bottom bg-gray-50/50" rowSpan={rowSpan}><div className="mb-2">{item?.unit}</div></td>
+            <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-middle bg-gray-50/50">{item?.unit}</td>
             <td className="border p-2 bg-gray-50"></td>
           </>
         )}
@@ -514,13 +513,18 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
             <span className="uppercase text-xs tracking-wider font-bold">Total Qty:</span>
           </div>
         </td>
-        <td className="border p-2 text-center font-extrabold text-blue-900 text-[15px] align-middle">
+        <td className="border p-2 text-center align-middle bg-slate-50/10">
           {item?.usePercent && (
-            <div className="text-[11px] text-slate-400 font-normal leading-none mb-1" title="Raw sum before %">
+            <div className="text-[14px] text-amber-600 font-bold leading-none mb-1" title="Raw sum before %">
               {rawSum.toFixed(3)}
             </div>
           )}
-          {item?.totalQty === 0 || !item?.totalQty ? "-" : Number(item.totalQty).toFixed(3)}
+          <div className="font-extrabold text-blue-900 text-[16px]">
+            {item?.totalQty === 0 || !item?.totalQty ? "-" : Number(item.totalQty).toFixed(3)}
+          </div>
+        </td>
+        <td className="border p-2 text-center font-bold text-gray-700 bg-blue-100/50 align-middle">
+          {item?.unit}
         </td>
         <td className="border p-2"></td>
       </tr>

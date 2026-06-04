@@ -780,11 +780,11 @@ export default function DatasheetPage() {
                             </div>
                             <div className="w-20">
                               <label className="text-[10px] text-slate-400 font-semibold mb-1 block">km</label>
-                              <input type="number" min="0" step="0.1" value={customLeadKm} onChange={e => setCustomLeadKm(e.target.value)} placeholder="0" className="w-full border border-slate-300 bg-white rounded px-2.5 py-1.5 text-xs text-center focus:outline-none font-bold" />
+                              <input type="number" min="0" step="0.1" value={customLeadKm} onChange={e => setCustomLeadKm(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="0" className="w-full border border-slate-300 bg-white rounded px-2.5 py-1.5 text-xs text-center focus:outline-none font-bold" />
                             </div>
                             <div className="w-24">
                               <label className="text-[10px] text-slate-400 font-semibold mb-1 block">Custom Rate (₹)</label>
-                              <input type="number" min="0" step="0.01" value={customLeadRate} onChange={e => setCustomLeadRate(e.target.value)} placeholder="0.00" className="w-full border border-slate-300 bg-white rounded px-2.5 py-1.5 text-xs text-center focus:outline-none font-bold" />
+                              <input type="number" min="0" step="0.01" value={customLeadRate} onChange={e => setCustomLeadRate(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="0.00" className="w-full border border-slate-300 bg-white rounded px-2.5 py-1.5 text-xs text-center focus:outline-none font-bold" />
                             </div>
                             <button
                               onClick={handleAddCustomToProfile}
@@ -942,6 +942,7 @@ export default function DatasheetPage() {
                                       const val = parseFloat(e.target.value);
                                       updateAreaRateIncrease(item.key, isNaN(val) ? 0 : val);
                                     }}
+                                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                                     className="w-16 text-right focus:outline-none font-bold text-slate-900"
                                   />
                                   <span className="text-slate-400 font-bold">%</span>
@@ -1021,6 +1022,7 @@ export default function DatasheetPage() {
                                         const val = parseFloat(e.target.value);
                                         updateBasicMaterialRate(item.srNo, isNaN(val) ? 0 : val);
                                       }}
+                                      onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                                       className="w-24 text-right focus:outline-none font-bold text-slate-900"
                                     />
                                     <span className="text-slate-400 text-[10px] font-bold">/-</span>
@@ -1056,28 +1058,28 @@ export default function DatasheetPage() {
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold text-slate-600">1st Floor Lift Hike:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
-                              <input type="number" step="0.01" min="0" value={finalGeneralAllowances.floorFirst} onChange={e => updateGeneralAllowance("floorFirst", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.01" min="0" value={finalGeneralAllowances.floorFirst} onChange={e => updateGeneralAllowance("floorFirst", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 font-bold text-xs">%</span>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold text-slate-600">2nd Floor Lift Hike:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
-                              <input type="number" step="0.01" min="0" value={finalGeneralAllowances.floorSecond} onChange={e => updateGeneralAllowance("floorSecond", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.01" min="0" value={finalGeneralAllowances.floorSecond} onChange={e => updateGeneralAllowance("floorSecond", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 font-bold text-xs">%</span>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold text-slate-600">3rd Floor Lift Hike:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
-                              <input type="number" step="0.01" min="0" value={finalGeneralAllowances.floorThird} onChange={e => updateGeneralAllowance("floorThird", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.01" min="0" value={finalGeneralAllowances.floorThird} onChange={e => updateGeneralAllowance("floorThird", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 font-bold text-xs">%</span>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold text-slate-600">4th Floor Lift Hike:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
-                              <input type="number" step="0.01" min="0" value={finalGeneralAllowances.floorFourth} onChange={e => updateGeneralAllowance("floorFourth", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.01" min="0" value={finalGeneralAllowances.floorFourth} onChange={e => updateGeneralAllowance("floorFourth", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 font-bold text-xs">%</span>
                             </div>
                           </div>
@@ -1093,28 +1095,28 @@ export default function DatasheetPage() {
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold text-slate-600">Excavation Depth 3.0m - 4.5m Surcharge:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
-                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.excavation30to45} onChange={e => updateGeneralAllowance("excavation30to45", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.excavation30to45} onChange={e => updateGeneralAllowance("excavation30to45", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 font-bold text-xs">%</span>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold text-slate-600">Excavation Depth 4.5m - 6.0m Surcharge:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
-                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.excavation45to60} onChange={e => updateGeneralAllowance("excavation45to60", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.excavation45to60} onChange={e => updateGeneralAllowance("excavation45to60", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 font-bold text-xs">%</span>
                             </div>
                           </div>
                           <div className="flex items-center justify-between border-t pt-2 mt-2">
                             <label className="text-xs font-semibold text-slate-600">Foul Condition: Excavation Surcharge:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
-                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.foulExcavation} onChange={e => updateGeneralAllowance("foulExcavation", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.foulExcavation} onChange={e => updateGeneralAllowance("foulExcavation", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 font-bold text-xs">%</span>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold text-slate-600">Foul Condition: Other Items Surcharge:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
-                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.foulOther} onChange={e => updateGeneralAllowance("foulOther", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.foulOther} onChange={e => updateGeneralAllowance("foulOther", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 font-bold text-xs">%</span>
                             </div>
                           </div>
@@ -1131,7 +1133,7 @@ export default function DatasheetPage() {
                             <label className="text-xs font-semibold text-slate-600">SCADA Deduction: Concrete Items:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
                               <span className="text-slate-400 font-bold text-xs">₹</span>
-                              <input type="number" min="0" value={finalGeneralAllowances.scadaConcrete} onChange={e => updateGeneralAllowance("scadaConcrete", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" min="0" value={finalGeneralAllowances.scadaConcrete} onChange={e => updateGeneralAllowance("scadaConcrete", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 text-[10px] font-bold">/-</span>
                             </div>
                           </div>
@@ -1139,14 +1141,14 @@ export default function DatasheetPage() {
                             <label className="text-xs font-semibold text-slate-600">SCADA Deduction: Bituminous (BT) Items:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
                               <span className="text-slate-400 font-bold text-xs">₹</span>
-                              <input type="number" min="0" value={finalGeneralAllowances.scadaBT} onChange={e => updateGeneralAllowance("scadaBT", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" min="0" value={finalGeneralAllowances.scadaBT} onChange={e => updateGeneralAllowance("scadaBT", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 text-[10px] font-bold">/-</span>
                             </div>
                           </div>
                           <div className="flex items-center justify-between border-t pt-2 mt-2">
                             <label className="text-xs font-semibold text-slate-600">Modified Curing Compound Hike:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
-                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.curingCompound} onChange={e => updateGeneralAllowance("curingCompound", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.curingCompound} onChange={e => updateGeneralAllowance("curingCompound", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 font-bold text-xs">%</span>
                             </div>
                           </div>
@@ -1163,21 +1165,21 @@ export default function DatasheetPage() {
                             <label className="text-xs font-semibold text-slate-600">Base Mineral Royalty Rate:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
                               <span className="text-slate-400 font-bold text-xs">₹</span>
-                              <input type="number" step="0.01" min="0" value={finalGeneralAllowances.royaltyBase} onChange={e => updateGeneralAllowance("royaltyBase", parseFloat(e.target.value) || 0)} className="w-20 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.01" min="0" value={finalGeneralAllowances.royaltyBase} onChange={e => updateGeneralAllowance("royaltyBase", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-20 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 text-[10px] font-bold">/-</span>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold text-slate-600">Royalty Surcharge Rate:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
-                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.royaltySurcharge} onChange={e => updateGeneralAllowance("royaltySurcharge", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.royaltySurcharge} onChange={e => updateGeneralAllowance("royaltySurcharge", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 font-bold text-xs">%</span>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold text-slate-600">District Mineral Fund (DMF) Surcharge:</label>
                             <div className="flex items-center gap-1 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
-                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.royaltyDMF} onChange={e => updateGeneralAllowance("royaltyDMF", parseFloat(e.target.value) || 0)} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
+                              <input type="number" step="0.1" min="0" value={finalGeneralAllowances.royaltyDMF} onChange={e => updateGeneralAllowance("royaltyDMF", parseFloat(e.target.value) || 0)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} className="w-16 text-right focus:outline-none font-bold text-slate-900 text-xs" />
                               <span className="text-slate-400 font-bold text-xs">%</span>
                             </div>
                           </div>

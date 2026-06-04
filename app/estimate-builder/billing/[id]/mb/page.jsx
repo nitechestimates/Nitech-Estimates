@@ -304,7 +304,7 @@ export default function MeasurementBook() {
   };
 
   const removeMeasurementRow = (itemIdx, measIdx) => {
-    if (!billing || !confirm("Delete this measurement row?")) return;
+    if (!billing) return;
     const updatedItems = [...billing.measurementItems];
     const item = { ...updatedItems[itemIdx] };
     const measurements = [...(item.measurements || [])];
@@ -609,7 +609,8 @@ export default function MeasurementBook() {
                 <tbody>
                   {(billing.measurementItems || []).map((item, itemIdx) => {
                     const measurements = item.measurements || [];
-                    const rowSpan = measurements.length > 0 ? measurements.length + 1 : 2;
+                    const measCount = measurements.length;
+                    const rowSpan = measCount > 0 ? measCount + 1 : 2;
                     const rawSum = measurements.reduce((s, m) => s + (m.total || 0), 0);
 
                     return (
@@ -690,8 +691,8 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center font-bold text-blue-900 bg-slate-50/50">
                                 {measurements[0].total ? measurements[0].total.toFixed(3) : "-"}
                               </td>
-                              <td className="border p-2 text-center font-semibold text-slate-500 align-bottom bg-slate-50/50" rowSpan={rowSpan}>
-                                <div className="mb-2">{item.unit}</div>
+                              <td className="border p-2 text-center font-semibold text-slate-500 align-middle bg-slate-50/50" rowSpan={measCount}>
+                                {item.unit}
                               </td>
                               <td className="border p-2 text-center bg-white">
                                 <button
@@ -707,8 +708,8 @@ export default function MeasurementBook() {
                               <td className="border p-4 text-center text-slate-400 italic bg-slate-50" colSpan={6}>
                                 Click &ldquo;+ Add Meas&rdquo; to add billing quantities
                               </td>
-                              <td className="border p-2 text-center font-semibold text-slate-500 align-bottom bg-slate-50/50" rowSpan={rowSpan}>
-                                <div className="mb-2">{item.unit}</div>
+                              <td className="border p-2 text-center font-semibold text-slate-500 align-middle bg-slate-50/50">
+                                {item.unit}
                               </td>
                               <td className="border p-2 bg-slate-50"></td>
                             </>
@@ -778,42 +779,18 @@ export default function MeasurementBook() {
                           );
                         })}
 
-                        {/* Percentage and total row */}
-                        <tr className="bg-blue-50/50 font-bold">
-                          <td colSpan={5} className="border p-2.5 text-xs text-slate-700">
-                            <div className="flex items-center gap-3">
-                              <label className="flex items-center gap-1.5 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={item.usePercent || false}
-                                  onChange={(e) => updateItemPercentFlag(itemIdx, e.target.checked)}
-                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
-                                />
-                                <span>Apply % of total</span>
-                              </label>
-                              {item.usePercent && (
-                                <div className="flex items-center gap-1 animate-in fade-in">
-                                  <LocalPercentInput
-                                    value={item.percentValue !== undefined ? item.percentValue : 100}
-                                    onChange={(val) =>
-                                      updateItemPercentFlag(itemIdx, true, val)
-                                    }
-                                  />
-                                  <span>
-                                    % (i.e. {rawSum.toFixed(3)} × {item.percentValue || 100}%)
-                                  </span>
-                                </div>
-                              )}
+                        {/* Total row */}
+                        <tr className="bg-slate-50 font-bold">
+                          <td colSpan={5} className="border p-2.5 text-xs text-slate-700 align-middle">
+                            <div className="flex items-center justify-end px-2">
+                              <span className="uppercase text-xs tracking-wider font-bold">Total Qty:</span>
                             </div>
                           </td>
-                          <td className="border p-2 text-right text-xs uppercase tracking-wide">Total Qty:</td>
-                          <td className="border p-2 text-center font-black text-blue-950 text-sm bg-blue-100/50">
-                            {item.usePercent && (
-                              <div className="text-[11px] text-slate-400 font-normal leading-none mb-1" title="Raw sum before %">
-                                {rawSum.toFixed(3)}
-                              </div>
-                            )}
+                          <td className="border p-2 text-center font-black text-blue-950 text-[16px] bg-slate-100/50 align-middle">
                             {item.totalQty ? item.totalQty.toFixed(3) : "-"}
+                          </td>
+                          <td className="border p-2 text-center font-semibold text-slate-500 bg-slate-100/50 align-middle">
+                            {item.unit}
                           </td>
                           <td className="border p-2"></td>
                         </tr>

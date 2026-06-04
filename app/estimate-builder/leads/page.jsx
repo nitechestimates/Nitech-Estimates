@@ -110,6 +110,7 @@ function SortableLeadRow({ entry, idx, onUpdateKm, onUpdateRate, onDelete }) {
             type="number" min="0" step="0.5"
             value={entry.distance || ""}
             onChange={e => onUpdateKm(entry.name, e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
             className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 pr-8"
           />
           <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">km</span>
@@ -128,6 +129,7 @@ function SortableLeadRow({ entry, idx, onUpdateKm, onUpdateRate, onDelete }) {
                 type="number" min="0" step="0.01"
                 value={entry.leadCharge || ""}
                 onChange={e => onUpdateRate(entry.name, e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                 className="w-full border border-purple-200 rounded-lg pl-6 pr-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
             </div>
@@ -471,7 +473,7 @@ export default function LeadsPage() {
               <div className="w-32">
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Distance (km)</label>
                 <div className="relative">
-                  <input type="number" min="0" step="0.5" value={regularKm} onChange={e => setRegularKm(e.target.value)} placeholder="km"
+                  <input type="number" min="0" step="0.5" value={regularKm} onChange={e => setRegularKm(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="km"
                     className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm pr-8" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">km</span>
                 </div>
@@ -508,7 +510,7 @@ export default function LeadsPage() {
               <div className="w-32">
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Distance (km)</label>
                 <div className="relative">
-                  <input type="number" min="0" step="0.5" value={customKm} onChange={e => setCustomKm(e.target.value)} placeholder="km"
+                  <input type="number" min="0" step="0.5" value={customKm} onChange={e => setCustomKm(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="km"
                     className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm pr-8" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">km</span>
                 </div>
@@ -517,7 +519,7 @@ export default function LeadsPage() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Rate (₹)</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">₹</span>
-                  <input type="number" min="0" step="0.01" value={customRate} onChange={e => setCustomRate(e.target.value)} placeholder="0.00"
+                  <input type="number" min="0" step="0.01" value={customRate} onChange={e => setCustomRate(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="0.00"
                     className="w-full border border-gray-300 pl-7 pr-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm" />
                 </div>
               </div>

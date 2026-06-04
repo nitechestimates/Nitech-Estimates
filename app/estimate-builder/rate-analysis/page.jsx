@@ -124,13 +124,6 @@ function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
     if (parts.length > 2) raw = parts[0] + "." + parts.slice(1).join("");
     if (parts.length === 2 && parts[1].length > 3) raw = parts[0] + "." + parts[1].slice(0, 3);
     setEditValue(raw);
-    // Only call onChange for complete valid numbers (not trailing-dot partials)
-    if (raw !== "" && !raw.endsWith(".")) {
-      const num = parseFloat(raw);
-      if (!isNaN(num)) onChange(num);
-    } else if (raw === "") {
-      onChange(0);
-    }
   };
 
   const handleBlur = () => {
