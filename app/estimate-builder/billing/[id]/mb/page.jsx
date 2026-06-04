@@ -570,7 +570,7 @@ export default function MeasurementBook() {
       </div>
 
       {/* Header */}
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm mb-6">
+      <div className="max-w-[96%] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm mb-6">
         <div>
           <div className="flex items-center gap-2">
             <span className="bg-indigo-100 text-indigo-700 text-xs font-black uppercase px-2.5 py-1 rounded-md border border-indigo-200">
@@ -603,7 +603,7 @@ export default function MeasurementBook() {
       </div>
 
       {/* Sub-nav Tabs */}
-      <div className="max-w-7xl mx-auto flex gap-2 overflow-x-auto border-b border-slate-300 mb-6 pb-2">
+      <div className="max-w-[96%] mx-auto flex gap-2 overflow-x-auto border-b border-slate-300 mb-6 pb-2">
         {[
           { key: "measurements", label: "📐 MB Measurements" },
           { key: "abstract", label: "📋 MB Abstract" },
@@ -625,7 +625,7 @@ export default function MeasurementBook() {
         ))}
       </div>
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[96%] mx-auto">
         {/* ── TAB 1: MEASUREMENTS ───────────────────────────────────── */}
         {activeTab === "measurements" && (
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm animate-fade-in-up">
@@ -657,10 +657,10 @@ export default function MeasurementBook() {
                     <th className="border p-1 w-[45px] min-w-[40px] whitespace-nowrap text-xs">Sr. No.</th>
                     <th className="border p-1 w-[260px] min-w-[160px] text-xs">DESCRIPTION OF ITEM</th>
                     <th className="border p-1 w-[140px] min-w-[90px] text-xs">PARTICULARS</th>
-                    <th className="border p-1 w-[55px] min-w-[45px] whitespace-nowrap text-xs">No.</th>
-                    <th className="border p-1 w-[65px] min-w-[50px] whitespace-nowrap text-xs">L.</th>
-                    <th className="border p-1 w-[65px] min-w-[50px] whitespace-nowrap text-xs">B/W</th>
-                    <th className="border p-1 w-[65px] min-w-[50px] whitespace-nowrap text-xs">H/D.</th>
+                    <th className="border p-1 w-[40px] min-w-[35px] whitespace-nowrap text-xs">No.</th>
+                    <th className="border p-1 w-[50px] min-w-[40px] whitespace-nowrap text-xs">L.</th>
+                    <th className="border p-1 w-[50px] min-w-[40px] whitespace-nowrap text-xs">B/W</th>
+                    <th className="border p-1 w-[50px] min-w-[40px] whitespace-nowrap text-xs">H/D.</th>
                     <th className="border p-1 w-[85px] min-w-[70px] whitespace-nowrap text-xs">TOTAL</th>
                     <th className="border p-1 w-[70px] min-w-[55px] whitespace-nowrap text-xs">UNIT</th>
                     <th className="border p-1 w-[85px] min-w-[80px] whitespace-nowrap text-xs">ACTIONS</th>
@@ -763,7 +763,7 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[80px] w-[85px]">
                                 <button
                                   onClick={() => removeMeasurementRow(itemIdx, 0)}
-                                  className="text-red-400 hover:text-red-600 transition text-xs"
+                                  className="text-red-400 hover:text-red-600 transition-all duration-200 hover:scale-110 active:scale-95 inline-block text-xs font-semibold"
                                 >
                                   ❌ Delete
                                 </button>
@@ -836,7 +836,7 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[80px] w-[85px]">
                                 <button
                                   onClick={() => removeMeasurementRow(itemIdx, actualIdx)}
-                                  className="text-red-400 hover:text-red-600 transition text-xs"
+                                  className="text-red-400 hover:text-red-600 transition-all duration-200 hover:scale-110 active:scale-95 inline-block text-xs font-semibold"
                                 >
                                   ❌ Delete
                                 </button>
