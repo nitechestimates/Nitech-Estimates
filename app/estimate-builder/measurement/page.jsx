@@ -4,16 +4,33 @@ import Tabs from "../components/Tabs";
 import { useStore } from "@/lib/store";
 
 function AutoTextarea({ value, onChange }) {
+  const [localValue, setLocalValue] = useState(value ?? "");
   const ref = useRef(null);
+
+  useEffect(() => {
+    setLocalValue(value ?? "");
+  }, [value]);
+
   const adjustHeight = () => {
     if (ref.current) {
       ref.current.style.height = "auto";
       ref.current.style.height = ref.current.scrollHeight + "px";
     }
   };
-  useEffect(() => { adjustHeight(); }, [value]);
-  const handleChange = (e) => { onChange(e); adjustHeight(); };
-  return <textarea ref={ref} value={value} onChange={handleChange} className="w-full resize-none overflow-hidden bg-transparent p-1 text-left" />;
+
+  useEffect(() => { adjustHeight(); }, [localValue]);
+
+  const handleChange = (e) => { 
+    setLocalValue(e.target.value);
+  };
+
+  const handleBlur = () => {
+    if (localValue !== value) {
+      onChange(localValue);
+    }
+  };
+
+  return <textarea ref={ref} value={localValue} onChange={handleChange} onBlur={handleBlur} className="w-full resize-none overflow-hidden bg-transparent p-1 text-left" />;
 }
 
 function NumericInput({ value, onChange, disabled = false }) {
@@ -43,7 +60,6 @@ function NumericInput({ value, onChange, disabled = false }) {
     let raw = e.target.value;
     if (raw === "") {
       setEditValue("");
-      onChange("");
       return;
     }
     raw = raw.replace(/[^0-9.]/g, "");
@@ -51,8 +67,6 @@ function NumericInput({ value, onChange, disabled = false }) {
     if (parts.length > 2) raw = parts[0] + "." + parts.slice(1).join("");
     if (parts.length === 2 && parts[1].length > 3) raw = parts[0] + "." + parts[1].slice(0, 3);
     setEditValue(raw);
-    const num = parseFloat(raw);
-    if (!isNaN(num)) onChange(num);
   };
 
   const handleBlur = () => {
@@ -79,6 +93,66 @@ function NumericInput({ value, onChange, disabled = false }) {
       disabled={disabled}
       className={`text-center w-full border rounded px-1 py-0.5 focus:bg-white transition-colors ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-transparent hover:bg-white"}`}
       placeholder="-"
+    />
+  );
+}
+
+function LocalTextInput({ value, onChange, className = "", placeholder = "" }) {
+  const [localValue, setLocalValue] = useState(value ?? "");
+
+  useEffect(() => {
+    setLocalValue(value ?? "");
+  }, [value]);
+
+  const handleBlur = () => {
+    if (localValue !== value) {
+      onChange(localValue);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.target.blur();
+    }
+  };
+
+  return (
+    <input
+      type="text"
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      className={className}
+      placeholder={placeholder}
+    />
+  );
+}
+
+function LocalPercentInput({ value, onChange, onBlur }) {
+  const [localVal, setLocalVal] = useState(value ?? 100);
+  useEffect(() => {
+    setLocalVal(value ?? 100);
+  }, [value]);
+  return (
+    <input
+      type="number"
+      min="0"
+      max="100"
+      step="1"
+      value={localVal}
+      onChange={(e) => setLocalVal(e.target.value === "" ? "" : parseFloat(e.target.value))}
+      onBlur={() => {
+        if (localVal === "" || isNaN(localVal)) {
+          onChange(100);
+          onBlur && onBlur(100);
+        } else {
+          onChange(localVal);
+          onBlur && onBlur(localVal);
+        }
+      }}
+      className="w-12 border border-gray-300 rounded px-1.5 py-0.5 text-center text-xs font-bold focus:ring-1 focus:ring-blue-400 focus:outline-none bg-white text-black"
     />
   );
 }
@@ -332,7 +406,7 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
       <tr className="bg-white border-t-4 border-gray-400 group">
         <td className="border p-2 text-center font-bold text-gray-700 align-top bg-gray-50/50" rowSpan={rowSpan}><div className="mt-2">{item?.srNo}</div></td>
         <td className="border p-2 align-top bg-gray-50/20" rowSpan={rowSpan}>
-          <AutoTextarea value={item?.description || ""} onChange={(e) => updateDescription(itemIdx, e.target.value)} />
+          <AutoTextarea value={item?.description || ""} onChange={(val) => updateDescription(itemIdx, val)} />
           <div className="mt-4 mb-2 flex justify-start"><button onClick={() => addMeasurement(itemIdx)} className="text-green-700 bg-green-100 hover:bg-green-200 border border-green-300 rounded px-3 py-1 text-xs font-bold transition-colors shadow-sm">+ Add Meas</button></div>
         </td>
         {measCount > 0 ? (
@@ -347,11 +421,9 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
                 >
                   ↓
                 </button>
-                <input
-                  type="text"
+                <LocalTextInput
                   value={measurements[0]?.description || ""}
-                  onChange={(e) => updateMeasurement(itemIdx, 0, "description", e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
+                  onChange={(val) => updateMeasurement(itemIdx, 0, "description", val)}
                   className="w-full bg-transparent px-2 py-1 text-left border rounded text-xs focus:bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors text-black"
                   placeholder="e.g. below soling"
                 />
@@ -362,13 +434,13 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
             <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={measurements[0]?.b} onChange={(val) => updateMeasurement(itemIdx, 0, "b", val)} /></td>
             <td className="border p-1 bg-white hover:bg-yellow-50"><NumericInput value={measurements[0]?.h} onChange={(val) => updateMeasurement(itemIdx, 0, "h", val)} /></td>
             <td className="border p-2 text-center font-bold text-blue-900 bg-gray-50/50">{measurements[0]?.total === 0 || !measurements[0]?.total ? "-" : Number(measurements[0].total).toFixed(3)}</td>
-            <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-top bg-gray-50/50" rowSpan={rowSpan}><div className="mt-2">{item?.unit}</div></td>
+            <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-bottom bg-gray-50/50" rowSpan={rowSpan}><div className="mb-2">{item?.unit}</div></td>
             <td className="border p-2 text-center bg-white"><button onClick={() => removeMeasurement(itemIdx, 0)} className="text-red-400 hover:text-red-600 hover:scale-125 transition-all" title="Delete">❌</button></td>
           </>
         ) : (
           <>
             <td className="border p-4 text-center text-gray-400 italic bg-gray-50" colSpan={6}>Click &ldquo;+ Add Meas&rdquo; to enter measurements</td>
-            <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-top bg-gray-50/50" rowSpan={rowSpan}><div className="mt-2">{item?.unit}</div></td>
+            <td className="border p-2 text-center font-semibold text-gray-500 whitespace-pre-line align-bottom bg-gray-50/50" rowSpan={rowSpan}><div className="mb-2">{item?.unit}</div></td>
             <td className="border p-2 bg-gray-50"></td>
           </>
         )}
@@ -387,11 +459,9 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
                 >
                   ↓
                 </button>
-                <input
-                  type="text"
+                <LocalTextInput
                   value={meas?.description || ""}
-                  onChange={(e) => updateMeasurement(itemIdx, measIdx, "description", e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
+                  onChange={(val) => updateMeasurement(itemIdx, measIdx, "description", val)}
                   className="w-full bg-transparent px-2 py-1 text-left border rounded text-xs focus:bg-white focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors text-black"
                   placeholder="e.g. left side"
                 />
@@ -422,22 +492,16 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
 
               {item?.usePercent && (
                 <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-left-2 duration-150">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="1"
+                  <LocalPercentInput
                     value={item?.percentValue !== undefined ? item.percentValue : 100}
-                    onChange={(e) => {
-                      const val = e.target.value === "" ? "" : parseFloat(e.target.value);
+                    onChange={(val) => {
                       updateItemPercent(itemIdx, true, val);
                     }}
-                    onBlur={() => {
-                      if (item?.percentValue === "" || item?.percentValue === undefined || isNaN(item?.percentValue)) {
+                    onBlur={(val) => {
+                      if (val === "" || val === undefined || isNaN(val)) {
                         updateItemPercent(itemIdx, true, 100);
                       }
                     }}
-                    className="w-12 border border-gray-300 rounded px-1.5 py-0.5 text-center text-xs font-bold focus:ring-1 focus:ring-blue-400 focus:outline-none bg-white text-black"
                   />
                   <span className="text-gray-600 font-bold text-xs">%</span>
                   <span className="text-gray-400 text-[10px] italic font-normal">
@@ -451,6 +515,11 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
           </div>
         </td>
         <td className="border p-2 text-center font-extrabold text-blue-900 text-[15px] align-middle">
+          {item?.usePercent && (
+            <div className="text-[11px] text-slate-400 font-normal leading-none mb-1" title="Raw sum before %">
+              {rawSum.toFixed(3)}
+            </div>
+          )}
           {item?.totalQty === 0 || !item?.totalQty ? "-" : Number(item.totalQty).toFixed(3)}
         </td>
         <td className="border p-2"></td>

@@ -31,7 +31,6 @@ function NumericInput({ value, onChange, placeholder = "-", className = "" }) {
     let raw = e.target.value;
     if (raw === "") {
       setEditValue("");
-      onChange("");
       return;
     }
     raw = raw.replace(/[^0-9.\-]/g, "");
@@ -40,8 +39,6 @@ function NumericInput({ value, onChange, placeholder = "-", className = "" }) {
     if (parts.length === 2 && parts[1].length > 3)
       raw = parts[0] + "." + parts[1].slice(0, 3);
     setEditValue(raw);
-    const num = parseFloat(raw);
-    if (!isNaN(num)) onChange(num);
   };
 
   const handleBlur = () => {
@@ -71,13 +68,12 @@ function NumericInput({ value, onChange, placeholder = "-", className = "" }) {
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
+      className={className}
       placeholder={placeholder}
-      className={`text-center w-full border rounded px-1 py-0.5 focus:bg-white focus:outline-none transition-colors bg-transparent hover:bg-white ${className}`}
     />
   );
 }
 
-// Focus-fix input wrapper to prevent losing focus during parent renders (rates etc)
 function LocalTextInput({ value, onChange, className = "", placeholder = "", type = "text", step }) {
   const [localValue, setLocalValue] = useState(value ?? "");
 
@@ -108,6 +104,57 @@ function LocalTextInput({ value, onChange, className = "", placeholder = "", typ
       onKeyDown={handleKeyDown}
       className={className}
       placeholder={placeholder}
+    />
+  );
+}
+
+function LocalTextarea({ value, onChange, className = "", rows }) {
+  const [localValue, setLocalValue] = useState(value ?? "");
+
+  useEffect(() => {
+    setLocalValue(value ?? "");
+  }, [value]);
+
+  const handleBlur = () => {
+    if (localValue !== value) {
+      onChange(localValue);
+    }
+  };
+
+  return (
+    <textarea
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={handleBlur}
+      className={className}
+      rows={rows}
+    />
+  );
+}
+
+function LocalPercentInput({ value, onChange, onBlur }) {
+  const [localVal, setLocalVal] = useState(value ?? 100);
+  useEffect(() => {
+    setLocalVal(value ?? 100);
+  }, [value]);
+  return (
+    <input
+      type="number"
+      min="0"
+      max="100"
+      step="1"
+      value={localVal}
+      onChange={(e) => setLocalVal(e.target.value === "" ? "" : parseFloat(e.target.value))}
+      onBlur={() => {
+        if (localVal === "" || isNaN(localVal)) {
+          onChange(100);
+          onBlur && onBlur(100);
+        } else {
+          onChange(localVal);
+          onBlur && onBlur(localVal);
+        }
+      }}
+      className="w-12 border border-slate-300 rounded text-center px-1 py-0.5 text-xs bg-white text-black"
     />
   );
 }
@@ -573,10 +620,10 @@ export default function MeasurementBook() {
                             {itemIdx + 1}
                           </td>
                           <td className="border p-2.5 align-top font-semibold text-slate-800 leading-relaxed" rowSpan={rowSpan}>
-                            <textarea
+                            <LocalTextarea
                               value={item.description || ""}
-                              onChange={(e) => updateItemDescription(itemIdx, e.target.value)}
-                              className="w-full resize-none overflow-hidden bg-transparent border-none p-1 focus:ring-0 focus:outline-none"
+                              onChange={(val) => updateItemDescription(itemIdx, val)}
+                              className="w-full resize-none overflow-hidden bg-transparent border-none p-1 focus:ring-0 focus:outline-none text-black"
                               rows={3}
                             />
                             <div className="mt-4 flex gap-2">
@@ -606,11 +653,10 @@ export default function MeasurementBook() {
                                   >
                                     ↓
                                   </button>
-                                  <input
-                                    type="text"
+                                  <LocalTextInput
                                     value={measurements[0].description || ""}
-                                    onChange={(e) =>
-                                      updateMeasurementField(itemIdx, 0, "description", e.target.value)
+                                    onChange={(val) =>
+                                      updateMeasurementField(itemIdx, 0, "description", val)
                                     }
                                     className="w-full bg-transparent px-1.5 py-0.5 text-xs border border-transparent hover:border-slate-300 rounded focus:outline-none focus:border-blue-400"
                                     placeholder="Particulars"
@@ -644,8 +690,8 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center font-bold text-blue-900 bg-slate-50/50">
                                 {measurements[0].total ? measurements[0].total.toFixed(3) : "-"}
                               </td>
-                              <td className="border p-2 text-center font-semibold text-slate-500 align-top bg-slate-50/50" rowSpan={rowSpan}>
-                                {item.unit}
+                              <td className="border p-2 text-center font-semibold text-slate-500 align-bottom bg-slate-50/50" rowSpan={rowSpan}>
+                                <div className="mb-2">{item.unit}</div>
                               </td>
                               <td className="border p-2 text-center bg-white">
                                 <button
@@ -661,8 +707,8 @@ export default function MeasurementBook() {
                               <td className="border p-4 text-center text-slate-400 italic bg-slate-50" colSpan={6}>
                                 Click &ldquo;+ Add Meas&rdquo; to add billing quantities
                               </td>
-                              <td className="border p-2 text-center font-semibold text-slate-500 align-top bg-slate-50/50" rowSpan={rowSpan}>
-                                {item.unit}
+                              <td className="border p-2 text-center font-semibold text-slate-500 align-bottom bg-slate-50/50" rowSpan={rowSpan}>
+                                <div className="mb-2">{item.unit}</div>
                               </td>
                               <td className="border p-2 bg-slate-50"></td>
                             </>
@@ -683,11 +729,10 @@ export default function MeasurementBook() {
                                   >
                                     ↓
                                   </button>
-                                  <input
-                                    type="text"
+                                  <LocalTextInput
                                     value={meas.description || ""}
-                                    onChange={(e) =>
-                                      updateMeasurementField(itemIdx, actualIdx, "description", e.target.value)
+                                    onChange={(val) =>
+                                      updateMeasurementField(itemIdx, actualIdx, "description", val)
                                     }
                                     className="w-full bg-transparent px-1.5 py-0.5 text-xs border border-transparent hover:border-slate-300 rounded focus:outline-none focus:border-blue-400"
                                     placeholder="Particulars"
@@ -748,13 +793,11 @@ export default function MeasurementBook() {
                               </label>
                               {item.usePercent && (
                                 <div className="flex items-center gap-1 animate-in fade-in">
-                                  <input
-                                    type="number"
+                                  <LocalPercentInput
                                     value={item.percentValue !== undefined ? item.percentValue : 100}
-                                    onChange={(e) =>
-                                      updateItemPercentFlag(itemIdx, true, parseFloat(e.target.value) || 0)
+                                    onChange={(val) =>
+                                      updateItemPercentFlag(itemIdx, true, val)
                                     }
-                                    className="w-12 border border-slate-300 rounded text-center px-1 py-0.5 text-xs"
                                   />
                                   <span>
                                     % (i.e. {rawSum.toFixed(3)} × {item.percentValue || 100}%)
@@ -765,6 +808,11 @@ export default function MeasurementBook() {
                           </td>
                           <td className="border p-2 text-right text-xs uppercase tracking-wide">Total Qty:</td>
                           <td className="border p-2 text-center font-black text-blue-950 text-sm bg-blue-100/50">
+                            {item.usePercent && (
+                              <div className="text-[11px] text-slate-400 font-normal leading-none mb-1" title="Raw sum before %">
+                                {rawSum.toFixed(3)}
+                              </div>
+                            )}
                             {item.totalQty ? item.totalQty.toFixed(3) : "-"}
                           </td>
                           <td className="border p-2"></td>

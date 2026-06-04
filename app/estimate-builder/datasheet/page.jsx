@@ -844,12 +844,21 @@ export default function DatasheetPage() {
 
               {/* Sub-navigation tabs */}
               <div 
-                className="flex border-b border-slate-200 bg-slate-50 px-6 py-3 gap-4 overflow-x-auto no-scrollbar"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 pb-2 gap-4 overflow-x-auto scrollbar-thin"
               >
                 <style dangerouslySetInnerHTML={{__html: `
-                  .no-scrollbar::-webkit-scrollbar {
-                    display: none !important;
+                  .scrollbar-thin::-webkit-scrollbar {
+                    height: 5px;
+                  }
+                  .scrollbar-thin::-webkit-scrollbar-track {
+                    background: #f1f5f9;
+                  }
+                  .scrollbar-thin::-webkit-scrollbar-thumb {
+                    background: #cbd5e1;
+                    border-radius: 4px;
+                  }
+                  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+                    background: #94a3b8;
                   }
                 `}} />
                 <button
