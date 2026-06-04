@@ -358,19 +358,63 @@ export default function MeasurementBook() {
   };
 
   const handleClearAllRows = () => {
-    if (
-      !billing ||
-      !confirm("WARNING: This will clear all measurements and make them blank (Dashes). Are you sure?")
-    )
-      return;
-    const cleared = billing.measurementItems.map((item) => ({
-      ...item,
-      measurements: [],
-      totalQty: 0,
-      usePercent: false,
-    }));
+    if (!billing) return;
+    const cleared = (billing.measurementItems || []).map((item) => {
+      const original = (billing.originalMeasurementItems || []).find((x) => x.id === item.id);
+      let baseMeasurements = [];
+      if (original && Array.isArray(original.measurements)) {
+        baseMeasurements = original.measurements;
+      } else if (Array.isArray(item.measurements)) {
+        baseMeasurements = item.measurements;
+      }
+      
+      const clearedMeas = baseMeasurements.map((m) => ({
+        ...m,
+        no: "",
+        l: "",
+        b: "",
+        h: "",
+        total: 0,
+      }));
+
+      const updatedItem = {
+        ...item,
+        measurements: clearedMeas,
+        usePercent: false,
+      };
+      updatedItem.totalQty = recalcItemTotal(updatedItem);
+      return updatedItem;
+    });
     setBilling({ ...billing, measurementItems: cleared });
   };
+
+  const handleClearItem = (itemIdx) => {
+    if (!billing) return;
+    const updatedItems = [...billing.measurementItems];
+    const item = { ...updatedItems[itemIdx] };
+    const original = (billing.originalMeasurementItems || []).find((x) => x.id === item.id);
+    
+    let baseMeasurements = [];
+    if (original && Array.isArray(original.measurements)) {
+      baseMeasurements = original.measurements;
+    } else if (Array.isArray(item.measurements)) {
+      baseMeasurements = item.measurements;
+    }
+    
+    item.measurements = baseMeasurements.map((m) => ({
+      ...m,
+      no: "",
+      l: "",
+      b: "",
+      h: "",
+      total: 0,
+    }));
+    
+    item.totalQty = recalcItemTotal(item);
+    updatedItems[itemIdx] = item;
+    setBilling({ ...billing, measurementItems: updatedItems });
+  };
+
 
   // ── Abstract helpers ──────────────────────────────────────────────
   const updateBillingRate = (itemId, val) => {
@@ -594,16 +638,16 @@ export default function MeasurementBook() {
               <table className="w-full text-sm bg-white">
                 <thead className="bg-slate-100 border-b border-slate-200 text-slate-700">
                   <tr className="text-center font-bold">
-                    <th className="border p-2.5 w-[50px]">Sr. No.</th>
-                    <th className="border p-2.5 w-[320px]">DESCRIPTION OF ITEM</th>
-                    <th className="border p-2.5 w-[200px]">PARTICULARS</th>
-                    <th className="border p-2.5 w-[70px]">No.</th>
-                    <th className="border p-2.5 w-[90px]">L.</th>
-                    <th className="border p-2.5 w-[90px]">B/W</th>
-                    <th className="border p-2.5 w-[90px]">H/D.</th>
-                    <th className="border p-2.5 w-[110px]">TOTAL</th>
-                    <th className="border p-2.5 w-[70px]">UNIT</th>
-                    <th className="border p-2.5 w-[120px]">ACTIONS</th>
+                    <th className="border p-2.5 w-[50px] min-w-[50px] whitespace-nowrap">Sr. No.</th>
+                    <th className="border p-2.5 w-[320px] min-w-[320px]">DESCRIPTION OF ITEM</th>
+                    <th className="border p-2.5 w-[200px] min-w-[200px]">PARTICULARS</th>
+                    <th className="border p-2.5 w-[70px] min-w-[70px] whitespace-nowrap">No.</th>
+                    <th className="border p-2.5 w-[90px] min-w-[90px] whitespace-nowrap">L.</th>
+                    <th className="border p-2.5 w-[90px] min-w-[90px] whitespace-nowrap">B/W</th>
+                    <th className="border p-2.5 w-[90px] min-w-[90px] whitespace-nowrap">H/D.</th>
+                    <th className="border p-2.5 w-[110px] min-w-[110px] whitespace-nowrap">TOTAL</th>
+                    <th className="border p-2.5 w-[70px] min-w-[70px] whitespace-nowrap">UNIT</th>
+                    <th className="border p-2.5 w-[120px] min-w-[120px] whitespace-nowrap">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -627,7 +671,7 @@ export default function MeasurementBook() {
                               className="w-full resize-none overflow-hidden bg-transparent border-none p-1 focus:ring-0 focus:outline-none text-black"
                               rows={3}
                             />
-                            <div className="mt-4 flex gap-2">
+                            <div className="mt-4 flex gap-2 flex-wrap">
                               <button
                                 onClick={() => addMeasurementRow(itemIdx)}
                                 className="text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-sm"
@@ -639,6 +683,12 @@ export default function MeasurementBook() {
                                 className="text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-sm"
                               >
                                 Reset to Original
+                              </button>
+                              <button
+                                onClick={() => handleClearItem(itemIdx)}
+                                className="text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-sm"
+                              >
+                                Clear to Dashes
                               </button>
                             </div>
                           </td>
@@ -694,7 +744,7 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center font-semibold text-slate-500 align-middle bg-slate-50/50" rowSpan={measCount}>
                                 {item.unit}
                               </td>
-                              <td className="border p-2 text-center bg-white">
+                              <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[120px] w-[120px]">
                                 <button
                                   onClick={() => removeMeasurementRow(itemIdx, 0)}
                                   className="text-red-400 hover:text-red-600 transition text-xs"
@@ -711,7 +761,7 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center font-semibold text-slate-500 align-middle bg-slate-50/50">
                                 {item.unit}
                               </td>
-                              <td className="border p-2 bg-slate-50"></td>
+                              <td className="border p-2 bg-slate-50 min-w-[120px] w-[120px]"></td>
                             </>
                           )}
                         </tr>
@@ -767,7 +817,7 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center font-bold text-blue-900 bg-slate-50/50">
                                 {meas.total ? meas.total.toFixed(3) : "-"}
                               </td>
-                              <td className="border p-2 text-center bg-white">
+                              <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[120px] w-[120px]">
                                 <button
                                   onClick={() => removeMeasurementRow(itemIdx, actualIdx)}
                                   className="text-red-400 hover:text-red-600 transition text-xs"
@@ -792,7 +842,7 @@ export default function MeasurementBook() {
                           <td className="border p-2 text-center font-semibold text-slate-500 bg-slate-100/50 align-middle">
                             {item.unit}
                           </td>
-                          <td className="border p-2"></td>
+                          <td className="border p-2 min-w-[120px] w-[120px]"></td>
                         </tr>
                       </React.Fragment>
                     );
