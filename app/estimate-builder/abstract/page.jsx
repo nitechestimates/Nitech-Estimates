@@ -166,7 +166,7 @@ export default function AbstractPage() {
   }
 
   return (
-    <div className="p-4 bg-yellow-50 min-h-screen text-black">
+    <div className="p-4 bg-slate-50 min-h-screen text-black">
       <Tabs />
       
       {/* Save Toast */}
@@ -186,7 +186,7 @@ export default function AbstractPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto bg-white border border-gray-200 rounded-2xl shadow-xl p-6 mt-6">
+      <div className="max-w-5xl mx-auto bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl p-6 shadow-[0_4px_30px_rgba(0,0,0,0.03)] mt-6">
         <div className="mb-6 flex justify-between items-center border-b pb-4">
           <div>
             <h1 className="text-2xl font-black text-gray-800 tracking-tight">Abstract of Estimate</h1>
@@ -201,7 +201,7 @@ export default function AbstractPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-sm transition-all"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all cursor-pointer"
             >
               {saving ? (
                 <>
@@ -221,87 +221,87 @@ export default function AbstractPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-gray-200">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-150 border-b border-gray-250">
-              <tr className="text-center font-bold text-gray-700 bg-gray-100">
-                <th className="border p-2.5 w-[60px]">Sr. No.</th>
-                <th className="border p-2.5 w-[380px]">DESCRIPTION OF ITEM</th>
-                <th className="border p-2.5 w-[200px]">SPECIFICATIONS</th>
-                <th className="border p-2.5 w-[80px]">QTY</th>
-                <th className="border p-2.5 w-[80px]">UNIT</th>
-                <th className="border p-2.5 w-[140px]">RATE (Rs.)</th>
-                <th className="border p-2.5 w-[120px]">AMOUNT (Rs.)</th>
+        <div className="overflow-x-auto rounded-2xl shadow-sm border border-slate-200">
+          <table className="w-full text-sm border-collapse">
+            <thead className="sticky top-0 bg-slate-50/90 backdrop-blur-md text-slate-600 text-xs uppercase tracking-wider z-10 border-b border-slate-200">
+              <tr className="text-center font-bold">
+                <th className="p-3 w-[60px] border-b border-slate-200">Sr. No.</th>
+                <th className="p-3 w-[380px] border-b border-slate-200">DESCRIPTION OF ITEM</th>
+                <th className="p-3 w-[200px] border-b border-slate-200">SPECIFICATIONS</th>
+                <th className="p-3 w-[80px] border-b border-slate-200">QTY</th>
+                <th className="p-3 w-[80px] border-b border-slate-200">UNIT</th>
+                <th className="p-3 w-[140px] border-b border-slate-200">RATE (Rs.)</th>
+                <th className="p-3 w-[120px] border-b border-slate-200">AMOUNT (Rs.)</th>
               </tr>
             </thead>
             <tbody>
               {standardRows.map((row) => (
-                <tr key={row.id} className="hover:bg-yellow-50/30 transition-colors">
-                  <td className="border p-2.5 text-center font-semibold text-gray-700">{row.srNo}</td>
-                  <td className="border p-2.5 text-left leading-relaxed">{row.description}</td>
-                  <td className="border p-2.5 text-left text-xs text-gray-500 italic">{row.specs}</td>
-                  <td className="border p-2.5 text-right font-medium">{row.qty.toFixed(3)}</td>
-                  <td className="border p-2.5 text-center text-gray-600 text-xs">{row.unit}</td>
+                <tr key={row.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="border-b border-slate-100 p-3 text-center font-semibold text-slate-700">{row.srNo}</td>
+                  <td className="border-b border-slate-100 p-3 text-left leading-relaxed">{row.description}</td>
+                  <td className="border-b border-slate-100 p-3 text-left text-xs text-slate-500 italic">{row.specs}</td>
+                  <td className="border-b border-slate-100 p-3 text-right font-medium">{row.qty.toFixed(3)}</td>
+                  <td className="border-b border-slate-100 p-3 text-center text-slate-600 text-xs">{row.unit}</td>
                   
                   {/* Rate Column */}
-                  <td className="border p-2.5 text-right font-semibold text-gray-900">
+                  <td className="border-b border-slate-100 p-3 text-right font-semibold text-slate-900">
                     {formatMoney(row.rate)}
                   </td>
                   
-                  <td className="border p-2.5 text-right font-bold text-gray-900">{formatMoney(row.amount)}</td>
+                  <td className="border-b border-slate-100 p-3 text-right font-bold text-slate-900">{formatMoney(row.amount)}</td>
                 </tr>
               ))}
 
               {/* Standard Items subtotal */}
-              <tr className="bg-gray-50/80 font-bold text-gray-800 border-t-2 border-gray-300">
-                <td colSpan="6" className="border p-2.5 text-right uppercase tracking-wider text-[11px] text-gray-500">TOTAL (Cost of work proper):</td>
-                <td className="border p-2.5 text-right font-extrabold text-gray-900">{formatMoney(standardTotal)}</td>
+              <tr className="bg-slate-50 font-bold text-slate-800 border-b border-slate-200">
+                <td colSpan="6" className="p-3 text-right uppercase tracking-wider text-[11px] text-slate-500">TOTAL (Cost of work proper):</td>
+                <td className="p-3 text-right font-extrabold text-slate-900">{formatMoney(standardTotal)}</td>
               </tr>
 
               {/* Add For GST */}
-              <tr className="bg-blue-50/5 text-blue-950 font-bold text-[13px]">
-                <td colSpan="3" className="border p-2.5 text-right">Add For GST</td>
-                <td className="border p-2.5 text-center bg-gray-50/20">18.00 %</td>
-                <td colSpan="2" className="border"></td>
-                <td className="border p-2.5 text-right text-blue-900">{formatMoney(gstAmount)}</td>
+              <tr className="bg-white hover:bg-slate-50 transition-colors text-slate-800 font-bold text-[13px] border-b border-slate-100">
+                <td colSpan="3" className="p-3 text-right">Add For GST</td>
+                <td className="p-3 text-center text-slate-500">18.00 %</td>
+                <td colSpan="2" className="p-3"></td>
+                <td className="p-3 text-right text-slate-900">{formatMoney(gstAmount)}</td>
               </tr>
 
               {/* Add Labour Insurance */}
-              <tr className="bg-blue-50/5 text-blue-950 font-bold text-[13px]">
-                <td colSpan="3" className="border p-2.5 text-right">Add Labour Insurance</td>
-                <td className="border p-2.5 text-center bg-gray-50/20">{insuranceRate.toFixed(2)} %</td>
-                <td colSpan="2" className="border"></td>
-                <td className="border p-2.5 text-right text-blue-900">{formatMoney(insuranceAmount)}</td>
+              <tr className="bg-white hover:bg-slate-50 transition-colors text-slate-800 font-bold text-[13px] border-b border-slate-100">
+                <td colSpan="3" className="p-3 text-right">Add Labour Insurance</td>
+                <td className="p-3 text-center text-slate-500">{insuranceRate.toFixed(2)} %</td>
+                <td colSpan="2" className="p-3"></td>
+                <td className="p-3 text-right text-slate-900">{formatMoney(insuranceAmount)}</td>
               </tr>
 
               {/* Subtotal with taxes */}
-              <tr className="bg-gray-100/70 font-bold text-gray-800 border-t border-b border-gray-300">
-                <td colSpan="6" className="border p-2.5 text-right uppercase tracking-wider text-[11px] text-gray-500">TOTAL:</td>
-                <td className="border p-2.5 text-right font-extrabold text-gray-900">{formatMoney(subTotalWithTax)}</td>
+              <tr className="bg-slate-50 font-bold text-slate-800 border-b border-slate-200">
+                <td colSpan="6" className="p-3 text-right uppercase tracking-wider text-[11px] text-slate-500">TOTAL:</td>
+                <td className="p-3 text-right font-extrabold text-slate-900">{formatMoney(subTotalWithTax)}</td>
               </tr>
 
               {/* Royalty & Lab charges rows */}
               {royaltyRows.map((row) => (
-                <tr key={row.id} className="bg-blue-50/10 hover:bg-yellow-50/20 font-semibold text-blue-950 transition-colors">
-                  <td className="border p-2.5 text-center font-bold text-blue-900">{row.srNo}</td>
-                  <td className="border p-2.5 text-left">{row.description}</td>
-                  <td className="border p-2.5 text-left text-xs text-gray-400 italic">{row.specs}</td>
-                  <td className="border p-2.5 text-right">{row.qty.toFixed(3)}</td>
-                  <td className="border p-2.5 text-center text-gray-500 text-xs">{row.unit}</td>
+                <tr key={row.id} className="bg-white hover:bg-slate-50 font-semibold text-slate-800 transition-colors border-b border-slate-100">
+                  <td className="p-3 text-center font-bold text-slate-700">{row.srNo}</td>
+                  <td className="p-3 text-left">{row.description}</td>
+                  <td className="p-3 text-left text-xs text-slate-500 italic">{row.specs}</td>
+                  <td className="p-3 text-right">{row.qty.toFixed(3)}</td>
+                  <td className="p-3 text-center text-slate-500 text-xs">{row.unit}</td>
                   
                   {/* Royalty Rate */}
-                  <td className="border p-2.5 text-right font-semibold text-blue-950">
+                  <td className="p-3 text-right font-semibold text-slate-900">
                     {formatMoney(row.rate)}
                   </td>
                   
-                  <td className="border p-2.5 text-right font-bold text-blue-950">{formatMoney(row.amount)}</td>
+                  <td className="p-3 text-right font-bold text-slate-900">{formatMoney(row.amount)}</td>
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-gray-150 border-t-2 border-gray-300">
-              <tr className="bg-gray-100 text-[14px]">
-                <td colSpan="6" className="border p-3 text-right uppercase tracking-wider font-black text-gray-800">TOTAL RS. (Grand Total):</td>
-                <td className="border p-3 text-right font-black text-blue-950 bg-blue-50/30 text-base">{formatMoney(grandTotal)}</td>
+            <tfoot className="bg-slate-50/80 border-t border-slate-200">
+              <tr className="text-[14px]">
+                <td colSpan="6" className="p-4 text-right uppercase tracking-wider font-black text-slate-700">TOTAL RS. (Grand Total):</td>
+                <td className="p-4 text-right font-black text-slate-900 text-base">{formatMoney(grandTotal)}</td>
               </tr>
             </tfoot>
           </table>

@@ -107,18 +107,18 @@ export default function Tabs() {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-300 mb-6 pb-2">
-      <div className="flex flex-wrap gap-4">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-wrap gap-1.5 bg-white/60 backdrop-blur-xl p-1.5 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] border border-white/60 ring-1 ring-slate-900/5">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`px-4 py-2 text-lg font-medium transition-all duration-200 ${
+              className={`relative px-5 py-2 text-sm font-bold transition-all duration-300 rounded-xl ${
                 isActive
-                  ? "text-blue-600 border-b-2 border-blue-600 -mb-[2px]"
-                  : "text-gray-600 hover:text-blue-500"
+                  ? "text-blue-700 bg-white shadow-sm ring-1 ring-slate-900/5"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-white/50"
               }`}
             >
               {tab.name}

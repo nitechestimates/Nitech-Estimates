@@ -434,7 +434,7 @@ export default function BillingDashboard() {
       </div>
 
       {/* Header Panel */}
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm mb-6">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl p-6 shadow-[0_4px_30px_rgba(0,0,0,0.03)] mb-6">
         <div>
           <div className="flex items-center gap-2">
             <span className="bg-blue-100 text-blue-700 text-xs font-black uppercase px-2.5 py-1 rounded-md border border-blue-200">
@@ -465,14 +465,14 @@ export default function BillingDashboard() {
           <button
             onClick={() => handleSave(true)}
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2 bg-green-600 hover:bg-green-700 text-white font-bold text-xs rounded-xl shadow-sm transition active:scale-95 cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50"
           >
             Save Bill Changes
           </button>
           <button
             onClick={handleDownloadPDF}
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition active:scale-95 cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50"
           >
             🖨️ Generate Billing PDF
           </button>
@@ -508,7 +508,7 @@ export default function BillingDashboard() {
         
         {/* TAB 1: FRONT PAGE FORM */}
         {activeTab === "front" && (
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm animate-fade-in-up">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl p-6 shadow-[0_4px_30px_rgba(0,0,0,0.03)] animate-fade-in-up">
             <h2 className="text-lg font-black text-slate-800 border-b pb-2 mb-4">Z.P. Form No. 58 (A) Cover details</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Agency Name */}
@@ -518,7 +518,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.agencyName || ""}
                   onChange={(val) => updateExtraField("agencyName", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   placeholder="Enter Agency Name"
                 />
               </div>
@@ -530,7 +530,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.agreementRef || ""}
                   onChange={(val) => updateExtraField("agreementRef", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   placeholder="e.g. No. Z.P.N./W.D./B.&.C./3/2025"
                 />
               </div>
@@ -542,7 +542,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.serialNo || ""}
                   onChange={(val) => updateExtraField("serialNo", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   placeholder="e.g. II ND Final Bill"
                 />
               </div>
@@ -554,7 +554,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.date || ""}
                   onChange={(val) => updateExtraField("date", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   placeholder="DD/MM/YYYY"
                 />
               </div>
@@ -566,7 +566,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.commenceDate || ""}
                   onChange={(val) => updateExtraField("commenceDate", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   placeholder="DD/MM/YYYY"
                 />
               </div>
@@ -578,7 +578,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.dueDate || ""}
                   onChange={(val) => updateExtraField("dueDate", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   placeholder="DD/MM/YYYY"
                 />
               </div>
@@ -590,7 +590,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.completionDate || ""}
                   onChange={(val) => updateExtraField("completionDate", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   placeholder="DD/MM/YYYY"
                 />
               </div>
@@ -602,7 +602,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.extensions || ""}
                   onChange={(val) => updateExtraField("extensions", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   placeholder="e.g. 3 Months / NIL"
                 />
               </div>
@@ -615,7 +615,7 @@ export default function BillingDashboard() {
                   step="any"
                   value={extra.deductPreviousBill || ""}
                   onChange={(val) => updateExtraField("deductPreviousBill", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-mono"
                   placeholder="0.00"
                 />
               </div>
@@ -629,7 +629,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.sdAsPerAgreement || ""}
                   onChange={(val) => updateExtraField("sdAsPerAgreement", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
               <div>
@@ -638,7 +638,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.sdPreviouslyRecovered || ""}
                   onChange={(val) => updateExtraField("sdPreviouslyRecovered", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
               <div>
@@ -647,7 +647,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.sdToBeRecovered || ""}
                   onChange={(val) => updateExtraField("sdToBeRecovered", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
               <div>
@@ -656,7 +656,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.sdBalanceToRecover || ""}
                   onChange={(val) => updateExtraField("sdBalanceToRecover", val)}
-                  className="w-full border border-slate-300 bg-slate-50/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
             </div>
@@ -665,7 +665,7 @@ export default function BillingDashboard() {
 
         {/* TAB: CERTIFICATES */}
         {activeTab === "certs" && (
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm animate-fade-in-up flex flex-col gap-8">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl p-6 shadow-[0_4px_30px_rgba(0,0,0,0.03)] animate-fade-in-up flex flex-col gap-8">
             {/* Form 65 Completion Cert */}
             <div className="border border-slate-200 p-6 rounded-2xl bg-slate-50/50">
               <h3 className="text-base font-black text-slate-800 mb-4 border-b pb-2">FORM NO. 65 Completion Certificate</h3>
@@ -676,7 +676,7 @@ export default function BillingDashboard() {
                     type="text"
                     value={extra.sectionalEngineerName || ""}
                     onChange={(val) => updateExtraField("sectionalEngineerName", val)}
-                    className="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-xl text-slate-900 font-semibold"
+                    className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
                 <div>
@@ -685,7 +685,7 @@ export default function BillingDashboard() {
                     type="text"
                     value={extra.deputyEngineerName || ""}
                     onChange={(val) => updateExtraField("deputyEngineerName", val)}
-                    className="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-xl text-slate-900 font-semibold"
+                    className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-semibold shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
               </div>
@@ -700,7 +700,7 @@ export default function BillingDashboard() {
                   type="text"
                   value={extra.workPhoto || ""}
                   onChange={(val) => updateExtraField("workPhoto", val)}
-                  className="w-full border border-slate-300 bg-white px-4 py-2.5 rounded-xl text-slate-900 font-mono text-xs mb-4"
+                  className="w-full border border-slate-200 bg-white/50 px-4 py-2.5 rounded-xl text-slate-900 font-mono text-xs mb-4 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   placeholder="Paste URL or Base64 data:image/png;base64,... here"
                 />
                 {extra.workPhoto && (
@@ -716,30 +716,30 @@ export default function BillingDashboard() {
 
         {/* TAB 5: EXCESS & SAVING STATEMENT */}
         {activeTab === "excess" && (
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm animate-fade-in-up">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl p-6 shadow-[0_4px_30px_rgba(0,0,0,0.03)] animate-fade-in-up">
             <div className="border-b pb-4 mb-4">
               <h2 className="text-lg font-black text-slate-800">Excess & Saving Statement</h2>
               <p className="text-xs text-slate-500">Live dynamic comparison of original Tender (Estimate) vs. Executed (Billing).</p>
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="w-full text-xs bg-white">
-                <thead className="bg-slate-100 border-b border-slate-300 text-slate-700 text-center font-bold">
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+              <table className="w-full text-xs border-collapse">
+                <thead className="sticky top-0 bg-slate-50/90 backdrop-blur-sm text-slate-600 text-xs uppercase tracking-wider text-center font-bold z-10 border-b border-slate-200">
                   <tr>
-                    <th className="border p-2" rowSpan={2}>Item No</th>
-                    <th className="border p-2" rowSpan={2}>Description</th>
-                    <th className="border p-2" colSpan={3}>TENDER (Estimate original)</th>
-                    <th className="border p-2" colSpan={3}>EXECUTED (Billing current)</th>
-                    <th className="border p-2" rowSpan={2}>Excess / Saving Amount (₹)</th>
-                    <th className="border p-2" rowSpan={2}>Remarks</th>
+                    <th className="p-3 border-b border-slate-200" rowSpan={2}>Item No</th>
+                    <th className="p-3 border-b border-slate-200" rowSpan={2}>Description</th>
+                    <th className="p-3 border-b border-slate-200" colSpan={3}>TENDER (Estimate original)</th>
+                    <th className="p-3 border-b border-slate-200" colSpan={3}>EXECUTED (Billing current)</th>
+                    <th className="p-3 border-b border-slate-200" rowSpan={2}>Excess / Saving Amount (₹)</th>
+                    <th className="p-3 border-b border-slate-200" rowSpan={2}>Remarks</th>
                   </tr>
                   <tr>
-                    <th className="border p-1.5">Qty</th>
-                    <th className="border p-1.5">Rate</th>
-                    <th className="border p-1.5">Amount</th>
-                    <th className="border p-1.5">Qty</th>
-                    <th className="border p-1.5">Rate</th>
-                    <th className="border p-1.5">Amount</th>
+                    <th className="p-2 border-b border-slate-200">Qty</th>
+                    <th className="p-2 border-b border-slate-200">Rate</th>
+                    <th className="p-2 border-b border-slate-200">Amount</th>
+                    <th className="p-2 border-b border-slate-200">Qty</th>
+                    <th className="p-2 border-b border-slate-200">Rate</th>
+                    <th className="p-2 border-b border-slate-200">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -747,34 +747,34 @@ export default function BillingDashboard() {
                     const diff = row.executedAmount - row.tenderAmount;
                     const color = diff < 0 ? "text-green-700 bg-green-50/30" : diff > 0 ? "text-red-700 bg-red-50/30" : "text-slate-800";
                     return (
-                      <tr key={row.id} className="hover:bg-slate-50/50">
-                        <td className="border p-2 text-center font-bold text-slate-700">{row.srNo}</td>
-                        <td className="border p-2 text-left leading-relaxed">{row.description}</td>
-                        <td className="border p-2 text-right">{row.tenderQty.toFixed(3)}</td>
-                        <td className="border p-2 text-right">₹{row.tenderRate.toFixed(2)}</td>
-                        <td className="border p-2 text-right font-semibold">₹{row.tenderAmount.toFixed(2)}</td>
-                        <td className="border p-2 text-right font-semibold">{row.executedQty.toFixed(3)}</td>
-                        <td className="border p-2 text-right">₹{row.executedRate.toFixed(2)}</td>
-                        <td className="border p-2 text-right font-black">₹{row.executedAmount.toFixed(2)}</td>
-                        <td className={`border p-2 text-right font-black ${color}`}>
+                      <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="border-b border-slate-100 p-3 text-center font-bold text-slate-700">{row.srNo}</td>
+                        <td className="border-b border-slate-100 p-3 text-left leading-relaxed">{row.description}</td>
+                        <td className="border-b border-slate-100 p-3 text-right">{row.tenderQty.toFixed(3)}</td>
+                        <td className="border-b border-slate-100 p-3 text-right">₹{row.tenderRate.toFixed(2)}</td>
+                        <td className="border-b border-slate-100 p-3 text-right font-semibold">₹{row.tenderAmount.toFixed(2)}</td>
+                        <td className="border-b border-slate-100 p-3 text-right font-semibold">{row.executedQty.toFixed(3)}</td>
+                        <td className="border-b border-slate-100 p-3 text-right">₹{row.executedRate.toFixed(2)}</td>
+                        <td className="border-b border-slate-100 p-3 text-right font-black">₹{row.executedAmount.toFixed(2)}</td>
+                        <td className={`border-b border-slate-100 p-3 text-right font-black ${color}`}>
                           {diff === 0 ? "₹0.00" : (diff > 0 ? "+ " : "- ") + "₹" + Math.abs(diff).toFixed(2)}
                         </td>
-                        <td className={`border p-2 text-center font-extrabold uppercase tracking-wider text-[9px] ${color}`}>
+                        <td className={`border-b border-slate-100 p-3 text-center font-extrabold uppercase tracking-wider text-[9px] ${color}`}>
                           {diff === 0 ? "No Change" : diff < 0 ? "Saving" : "Excess"}
                         </td>
                       </tr>
                     );
                   })}
                   <tr className="bg-slate-900 text-white font-bold text-xs">
-                    <td colSpan={2} className="border p-3 text-right">GRAND TOTAL VALUE COMPARISON:</td>
+                    <td colSpan={2} className="p-4 text-right">GRAND TOTAL VALUE COMPARISON:</td>
                     <td colSpan={2}></td>
-                    <td className="border p-3 text-right font-black text-blue-300">₹{tenderGrandTotal.toFixed(2)}</td>
+                    <td className="p-4 text-right font-black text-blue-300">₹{tenderGrandTotal.toFixed(2)}</td>
                     <td colSpan={2}></td>
-                    <td className="border p-3 text-right font-black text-emerald-300 font-mono">₹{executedGrandTotal.toFixed(2)}</td>
-                    <td className={`border p-3 text-right font-black text-sm ${executedGrandTotal - tenderGrandTotal < 0 ? "text-green-400" : "text-red-400"}`}>
+                    <td className="p-4 text-right font-black text-emerald-300 font-mono">₹{executedGrandTotal.toFixed(2)}</td>
+                    <td className={`p-4 text-right font-black text-sm ${executedGrandTotal - tenderGrandTotal < 0 ? "text-green-400" : "text-red-400"}`}>
                       {(executedGrandTotal - tenderGrandTotal < 0 ? "- " : "+ ") + "₹" + Math.abs(executedGrandTotal - tenderGrandTotal).toFixed(2)}
                     </td>
-                    <td className="border p-3 text-center uppercase font-black text-[10px]">
+                    <td className="p-4 text-center uppercase font-black text-[10px]">
                       {executedGrandTotal - tenderGrandTotal < 0 ? "Net Saving" : "Net Excess"}
                     </td>
                   </tr>

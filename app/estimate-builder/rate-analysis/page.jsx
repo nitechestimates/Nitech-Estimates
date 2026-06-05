@@ -150,7 +150,7 @@ function NumericInput({ value, onChange, disabled = false, placeholder = "" }) {
       onKeyDown={handleKeyDown}
       disabled={disabled}
       placeholder={placeholder}
-      className={`text-center w-full border rounded px-1 py-0.5 h-[26px] ${disabled ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-white"}`}
+      className={`text-center w-full border-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-2 py-1 h-[26px] transition-all ${disabled ? "bg-slate-100/50 text-slate-500 cursor-not-allowed" : "bg-transparent hover:bg-white/80 focus:bg-white"}`}
     />
   );
 }
@@ -1013,7 +1013,7 @@ function RateAnalysisContent() {
                 Last saved at {lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             )}
-            <button onClick={() => saveEstimate(false)} disabled={saving} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 shadow-md transition-all">{saving ? "Saving..." : "Save Estimate"}</button>
+            <button onClick={() => saveEstimate(false)} disabled={saving} className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 shadow-md active:scale-95 transition-all font-bold">{saving ? "Saving..." : "Save Estimate"}</button>
           </div>
         </div>
       </div>
@@ -1253,8 +1253,8 @@ function RateAnalysisContent() {
       {/* Search Bar */}
       <div className="flex gap-4 mb-4 items-center">
         <div className="flex gap-2">
-          <input value={itemCode} onChange={e => setItemCode(e.target.value)} onKeyDown={e => e.key === "Enter" && addItem()} className="border p-2 w-[150px] shadow-sm rounded-md" placeholder="SSR Item No" />
-          <button onClick={() => addItem()} className="bg-black text-white px-4 py-2 hover:bg-gray-800 transition-colors rounded-md shadow-md">Add Item</button>
+          <input value={itemCode} onChange={e => setItemCode(e.target.value)} onKeyDown={e => e.key === "Enter" && addItem()} className="border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 px-3 py-2 w-[150px] shadow-sm rounded-xl outline-none transition-all" placeholder="SSR Item No" />
+          <button onClick={() => addItem()} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 transition-all rounded-xl shadow-md font-bold active:scale-95">Add Item</button>
         </div>
         <div className="text-gray-400 font-bold">OR</div>
         <div className="relative flex-1 max-w-3xl" ref={searchRef}>
@@ -1275,14 +1275,14 @@ function RateAnalysisContent() {
 
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={localRows.map(r => r.id)} strategy={verticalListSortingStrategy}>
-          <div className="overflow-x-auto relative shadow-sm border rounded min-h-[450px]">
-            <table className="w-full border text-xs bg-white relative" style={{ minWidth: "1400px" }}>
-              <thead className="bg-gray-200 border-b-2 border-gray-300">
-                <tr className="text-center font-bold text-gray-700">
-                  <th className="border p-2">☰</th><th className="border p-2 w-[40px]">Sr</th><th className="border p-2 w-[80px]">SSR</th><th className="border p-2 min-w-[350px]">Description</th><th className="border p-2 w-[120px]">Unit</th><th className="border p-2 w-[90px]">Basic Rate</th><th className="border p-2 w-[100px]">Deduct (SCADA)</th><th className="border p-2 w-[90px]">Net (5-6)</th><th className="border p-2 w-[140px]">Material</th><th className="border p-2 w-[70px]">Qty</th><th className="border p-2 w-[90px]">Lead (Rs.)</th><th className="border p-2 w-[90px]">Total Lead</th><th className="border p-2 w-[100px]">Total (7+11)</th><th className="border p-2 w-[70px]">Tribal</th><th className="border p-2 w-[100px]">Net Total</th><th className="border p-2 w-[150px]">Specs</th><th className="border p-2 sticky right-0 bg-gray-200 z-10 shadow-[-3px_0_5px_rgba(0,0,0,0.1)] w-[80px]">Actions</th>
+          <div className="overflow-x-auto relative rounded-2xl border border-slate-200 shadow-sm bg-white/60 backdrop-blur-xl min-h-[450px]">
+            <table className="w-full border-collapse text-xs relative" style={{ minWidth: "1400px" }}>
+              <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider sticky top-0 z-20">
+                <tr className="text-center font-bold">
+                  <th className="border-b border-slate-200 p-3">☰</th><th className="border-b border-slate-200 p-3 w-[40px]">Sr</th><th className="border-b border-slate-200 p-3 w-[80px]">SSR</th><th className="border-b border-slate-200 p-3 min-w-[350px]">Description</th><th className="border-b border-slate-200 p-3 w-[120px]">Unit</th><th className="border-b border-slate-200 p-3 w-[90px]">Basic Rate</th><th className="border-b border-slate-200 p-3 w-[100px]">Deduct (SCADA)</th><th className="border-b border-slate-200 p-3 w-[90px]">Net (5-6)</th><th className="border-b border-slate-200 p-3 w-[140px]">Material</th><th className="border-b border-slate-200 p-3 w-[70px]">Qty</th><th className="border-b border-slate-200 p-3 w-[90px]">Lead (Rs.)</th><th className="border-b border-slate-200 p-3 w-[90px]">Total Lead</th><th className="border-b border-slate-200 p-3 w-[100px]">Total (7+11)</th><th className="border-b border-slate-200 p-3 w-[70px]">Tribal</th><th className="border-b border-slate-200 p-3 w-[100px]">Net Total</th><th className="border-b border-slate-200 p-3 w-[150px]">Specs</th><th className="border-b border-slate-200 p-3 sticky right-0 bg-slate-50/90 z-10 w-[80px] shadow-[-4px_0_15px_rgba(0,0,0,0.03)] backdrop-blur-xl">Actions</th>
                 </tr>
-                <tr className="bg-gray-100 text-[11px] font-bold text-gray-500 text-center">
-                  <td className="border p-1"></td><td className="border p-1">1</td><td className="border p-1">2</td><td className="border p-1">3</td><td className="border p-1">4</td><td className="border p-1">5</td><td className="border p-1">6</td><td className="border p-1">7</td><td className="border p-1">8</td><td className="border p-1">9</td><td className="border p-1">10</td><td className="border p-1">11</td><td className="border p-1">12</td><td className="border p-1">13</td><td className="border p-1">14</td><td className="border p-1">15</td><td className="border p-1 sticky right-0 bg-gray-100 z-10"></td>
+                <tr className="bg-slate-50/50 text-[10px] font-bold text-slate-400 text-center">
+                  <td className="border-b border-slate-200 p-1"></td><td className="border-b border-slate-200 p-1">1</td><td className="border-b border-slate-200 p-1">2</td><td className="border-b border-slate-200 p-1">3</td><td className="border-b border-slate-200 p-1">4</td><td className="border-b border-slate-200 p-1">5</td><td className="border-b border-slate-200 p-1">6</td><td className="border-b border-slate-200 p-1">7</td><td className="border-b border-slate-200 p-1">8</td><td className="border-b border-slate-200 p-1">9</td><td className="border-b border-slate-200 p-1">10</td><td className="border-b border-slate-200 p-1">11</td><td className="border-b border-slate-200 p-1">12</td><td className="border-b border-slate-200 p-1">13</td><td className="border-b border-slate-200 p-1">14</td><td className="border-b border-slate-200 p-1">15</td><td className="border-b border-slate-200 p-1 sticky right-0 bg-slate-50/90 z-10 shadow-[-4px_0_15px_rgba(0,0,0,0.03)] backdrop-blur-xl"></td>
                 </tr>
               </thead>
               <tbody>
@@ -1330,16 +1330,16 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
   }, [filterText, materialList]);
 
   return (
-    <tr ref={setNodeRef} style={style} className="hover:bg-yellow-50 group transition-colors">
-      <td {...attributes} {...listeners} className="border p-2 text-center cursor-grab text-gray-400 hover:text-black">☰</td>
-      <td className="border p-2 text-center font-semibold">{row.srNo}</td>
-      <td className="border p-2 text-center font-medium">{row.ssr}</td>
-      <td className="border p-2"><AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} /></td>
-      <td className="border p-2"><AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center text-xs whitespace-pre-wrap" /></td>
-      <td className="border p-2"><NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} /></td>
-      <td className="border p-2"><NumericInput value={row.deduct} onChange={(val) => updateRow(index, "deduct", val)} /></td>
-      <td className="border p-2 text-center text-gray-700">{formatNumber(row.netAfterDeduct)}</td>
-      <td className="border py-1 px-1 align-top">
+    <tr ref={setNodeRef} style={style} className="bg-white/40 hover:bg-slate-50/50 group transition-colors border-b border-slate-200 last:border-b-0">
+      <td {...attributes} {...listeners} className="border-b border-slate-200 p-2 text-center cursor-grab text-slate-400 hover:text-slate-700">☰</td>
+      <td className="border-b border-slate-200 p-2 text-center font-semibold text-slate-700">{row.srNo}</td>
+      <td className="border-b border-slate-200 p-2 text-center font-medium">{row.ssr}</td>
+      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} /></td>
+      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center text-xs whitespace-pre-wrap" /></td>
+      <td className="border-b border-slate-200 p-2"><NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} /></td>
+      <td className="border-b border-slate-200 p-2"><NumericInput value={row.deduct} onChange={(val) => updateRow(index, "deduct", val)} /></td>
+      <td className="border-b border-slate-200 p-2 text-center text-slate-700 font-medium">{formatNumber(row.netAfterDeduct)}</td>
+      <td className="border-b border-slate-200 py-1 px-1 align-top">
         {row.materials.length === 0 ? (
           <button onClick={() => addMaterial(index)} className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold" title="Add material">+ Add Material</button>
         ) : (
@@ -1362,13 +1362,13 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
                     setTimeout(() => setActiveMatIdx(null), 200);
                   }}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
-                  className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none bg-white text-black"
+                  className="w-full h-[26px] bg-transparent border-transparent text-xs px-2 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-black hover:border-slate-200 hover:bg-white/50"
                   placeholder="Select/type"
                 />
                 {activeMatIdx === matIdx && filteredMaterials.length > 0 && (
                   <ul 
                     onMouseDown={(e) => e.preventDefault()}
-                    className="absolute left-0 top-[28px] w-full max-h-40 overflow-y-auto bg-white border border-gray-300 rounded-md shadow-lg z-[100] text-black"
+                    className="absolute left-0 top-[28px] w-full max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-[100] text-black overflow-hidden"
                   >
                     {filteredMaterials.map((matName) => (
                       <li
@@ -1379,7 +1379,7 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
                           commitMaterialName(index, matIdx, matName);
                           setActiveMatIdx(null);
                         }}
-                        className="px-2 py-1.5 hover:bg-blue-50 cursor-pointer text-left text-[11px] border-b border-gray-100 last:border-b-0 font-medium"
+                        className="px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-left text-[11px] border-b border-slate-100 last:border-b-0 font-medium"
                       >
                         {matName}
                       </li>
@@ -1393,19 +1393,19 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
           ))
         )}
       </td>
-      <td className="border py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" /></div>)}</td>
-      <td className="border py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" /></div>)}</td>
-      <td className="border p-2 text-center text-gray-700">
+      <td className="border-b border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" /></div>)}</td>
+      <td className="border-b border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" /></div>)}</td>
+      <td className="border-b border-slate-200 p-2 text-center text-slate-700">
         {row.materials.length > 0 && row.totalLead === 0
           ? <span className="text-xs text-amber-500 font-medium italic">Add leads first</span>
           : formatNumber(row.totalLead)
         }
       </td>
-      <td className="border p-2 text-center font-medium">{formatNumber(row.total)}</td>
-      <td className="border p-2 text-center font-semibold text-gray-700">{isTribal ? formatNumber(row.tribal) : "-"}</td>
-      <td className="border p-2 text-center font-bold text-blue-800 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
-      <td className="border p-2"><AutoTextarea value={row.specs} onChange={(e) => updateRow(index, "specs", e.target.value)} /></td>
-      <td className="border p-2 text-center sticky right-0 bg-white group-hover:bg-yellow-50 z-10 shadow-[-3px_0_5px_rgba(0,0,0,0.1)]">
+      <td className="border-b border-slate-200 p-2 text-center font-bold text-slate-800">{formatNumber(row.total)}</td>
+      <td className="border-b border-slate-200 p-2 text-center font-semibold text-slate-500">{isTribal ? formatNumber(row.tribal) : "-"}</td>
+      <td className="border-b border-slate-200 p-2 text-center font-bold text-blue-700 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
+      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.specs} onChange={(e) => updateRow(index, "specs", e.target.value)} /></td>
+      <td className="border-b border-slate-200 p-2 text-center sticky right-0 bg-white/60 group-hover:bg-slate-50/50 backdrop-blur-xl z-10 shadow-[-4px_0_15px_rgba(0,0,0,0.03)]">
         <div className="flex justify-center gap-3">
           <button onClick={() => refreshRow(index)} title="Refresh" className="transition-all duration-200 hover:scale-125 hover:rotate-180 active:scale-90 opacity-60 hover:opacity-100">🔄</button>
           <button onClick={() => deleteRow(row.id)} title="Delete" className="transition-all duration-200 hover:scale-125 hover:text-red-600 active:scale-90 opacity-60 hover:opacity-100">❌</button>
@@ -1425,16 +1425,16 @@ const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTri
   }, [filterText, materialList]);
 
   return (
-    <tr className="bg-gray-50 hover:bg-yellow-50 group transition-colors border-t-2 border-gray-200">
-      <td className="border p-2 text-center text-gray-300">📌</td>
-      <td className="border p-2 text-center font-semibold">{globalIndex}</td>
-      <td className="border p-2"><AutoTextarea value={row.ssr} onChange={(e) => updateRow(index, "ssr", e.target.value)} className="text-center font-medium" /></td>
-      <td className="border p-2"><AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} /></td>
-      <td className="border p-2"><AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center text-xs whitespace-pre-wrap" /></td>
-      <td className="border p-2"><NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} /></td>
-      <td className="border p-2"><NumericInput value={row.deduct} onChange={(val) => updateRow(index, "deduct", val)} /></td>
-      <td className="border p-2 text-center text-gray-700">{formatNumber(row.netAfterDeduct)}</td>
-      <td className="border py-1 px-1 align-top">
+    <tr className="bg-slate-50/80 hover:bg-slate-50 group transition-colors border-t-2 border-slate-300">
+      <td className="border-b border-slate-200 p-2 text-center text-slate-300">📌</td>
+      <td className="border-b border-slate-200 p-2 text-center font-semibold text-slate-700">{globalIndex}</td>
+      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.ssr} onChange={(e) => updateRow(index, "ssr", e.target.value)} className="text-center font-medium" /></td>
+      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} /></td>
+      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center text-xs whitespace-pre-wrap" /></td>
+      <td className="border-b border-slate-200 p-2"><NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} /></td>
+      <td className="border-b border-slate-200 p-2"><NumericInput value={row.deduct} onChange={(val) => updateRow(index, "deduct", val)} /></td>
+      <td className="border-b border-slate-200 p-2 text-center text-slate-700 font-medium">{formatNumber(row.netAfterDeduct)}</td>
+      <td className="border-b border-slate-200 py-1 px-1 align-top">
         {row.materials.length === 0 ? (
           <button onClick={() => addMaterial(index)} className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold" title="Add material">+ Add Material</button>
         ) : (
@@ -1457,13 +1457,13 @@ const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTri
                     setTimeout(() => setActiveMatIdx(null), 200);
                   }}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
-                  className="w-full h-[26px] border text-xs px-1 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none bg-white text-black"
+                  className="w-full h-[26px] bg-transparent border-transparent text-xs px-2 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-black hover:border-slate-200 hover:bg-white/50"
                   placeholder="Select/type"
                 />
                 {activeMatIdx === matIdx && filteredMaterials.length > 0 && (
                   <ul 
                     onMouseDown={(e) => e.preventDefault()}
-                    className="absolute left-0 top-[28px] w-full max-h-40 overflow-y-auto bg-white border border-gray-300 rounded-md shadow-lg z-[100] text-black"
+                    className="absolute left-0 top-[28px] w-full max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-[100] text-black overflow-hidden"
                   >
                     {filteredMaterials.map((matName) => (
                       <li
@@ -1474,7 +1474,7 @@ const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTri
                           commitMaterialName(index, matIdx, matName);
                           setActiveMatIdx(null);
                         }}
-                        className="px-2 py-1.5 hover:bg-blue-50 cursor-pointer text-left text-[11px] border-b border-gray-100 last:border-b-0 font-medium"
+                        className="px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-left text-[11px] border-b border-slate-100 last:border-b-0 font-medium"
                       >
                         {matName}
                       </li>
@@ -1488,20 +1488,22 @@ const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTri
           ))
         )}
       </td>
-      <td className="border py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" /></div>)}</td>
-      <td className="border py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" /></div>)}</td>
-      <td className="border p-2 text-center text-gray-700">
+      <td className="border-b border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" /></div>)}</td>
+      <td className="border-b border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" /></div>)}</td>
+      <td className="border-b border-slate-200 p-2 text-center text-slate-700">
         {row.materials.length > 0 && row.totalLead === 0
           ? <span className="text-xs text-amber-500 font-medium italic">Add leads first</span>
           : formatNumber(row.totalLead)
         }
       </td>
-      <td className="border p-2 text-center font-medium">{formatNumber(row.total)}</td>
-      <td className="border p-2 text-center font-semibold text-gray-700">{isTribal ? formatNumber(row.tribal) : "-"}</td>
-      <td className="border p-2 text-center font-bold text-blue-800 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
-      <td className="border p-2"><AutoTextarea value={row.specs} onChange={(e) => updateRow(index, "specs", e.target.value)} /></td>
-      <td className="border p-2 text-center sticky right-0 bg-gray-50 group-hover:bg-yellow-50 z-10 shadow-[-3px_0_5px_rgba(0,0,0,0.1)]">
-        <div className="flex justify-center gap-3"><button onClick={clearRow} title="Clear values" className="transition-all duration-200 hover:scale-125 hover:text-red-600 active:scale-90 opacity-60 hover:opacity-100">🧹</button></div>
+      <td className="border-b border-slate-200 p-2 text-center font-bold text-slate-800">{formatNumber(row.total)}</td>
+      <td className="border-b border-slate-200 p-2 text-center font-semibold text-slate-500">{isTribal ? formatNumber(row.tribal) : "-"}</td>
+      <td className="border-b border-slate-200 p-2 text-center font-bold text-blue-700 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
+      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.specs} onChange={(e) => updateRow(index, "specs", e.target.value)} /></td>
+      <td className="border-b border-slate-200 p-2 text-center sticky right-0 bg-slate-50/90 z-10 shadow-[-4px_0_15px_rgba(0,0,0,0.03)] backdrop-blur-xl">
+        <div className="flex justify-center gap-3">
+          <button onClick={() => clearRow()} title="Clear Row" className="transition-all duration-200 hover:scale-125 hover:text-red-600 active:scale-90 opacity-60 hover:opacity-100 text-xs">🧹</button>
+        </div>
       </td>
     </tr>
   );

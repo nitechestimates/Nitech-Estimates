@@ -89,7 +89,7 @@ function SortableLeadRow({ entry, idx, onUpdateKm, onUpdateRate, onDelete }) {
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 50 : "auto" };
 
   return (
-    <tr ref={setNodeRef} style={style} className="hover:bg-gray-50 transition-colors group">
+    <tr ref={setNodeRef} style={style} className="hover:bg-slate-50 transition-colors group">
       <td className="px-3 py-3 text-gray-400 text-xs font-mono">{idx + 1}</td>
       <td className="px-2 py-2">
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors inline-flex items-center justify-center w-5 h-5">
@@ -111,7 +111,7 @@ function SortableLeadRow({ entry, idx, onUpdateKm, onUpdateRate, onDelete }) {
             value={entry.distance || ""}
             onChange={e => onUpdateKm(entry.name, e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
-            className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 pr-8"
+            className="w-full border border-slate-200 shadow-sm rounded-xl px-3 py-1.5 text-center text-sm font-semibold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-8"
           />
           <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">km</span>
         </div>
@@ -130,7 +130,7 @@ function SortableLeadRow({ entry, idx, onUpdateKm, onUpdateRate, onDelete }) {
                 value={entry.leadCharge || ""}
                 onChange={e => onUpdateRate(entry.name, e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
-                className="w-full border border-purple-200 rounded-lg pl-6 pr-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-purple-400"
+                className="w-full border border-purple-200 shadow-sm rounded-xl pl-6 pr-3 py-1.5 text-sm font-semibold focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
               />
             </div>
           )}
@@ -345,7 +345,7 @@ export default function LeadsPage() {
           </div>
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-gray-700 text-white font-bold text-sm rounded-xl shadow-sm transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
@@ -386,7 +386,7 @@ export default function LeadsPage() {
             const profiles = leadsProfiles[activeCategoryPanel] || [];
             const cat = CATEGORIES.find(c => c.key === activeCategoryPanel);
             return (
-              <div className="mt-3 bg-white border border-gray-200 rounded-2xl shadow-lg p-4 animate-fade-in">
+              <div className="mt-3 bg-white/60 backdrop-blur-xl border border-white/60 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] p-4 animate-fade-in">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-bold text-gray-800">{cat.icon} {cat.label} Profiles</h3>
                   <button onClick={() => setActiveCategoryPanel(null)} className="text-gray-400 hover:text-gray-600 text-lg font-bold">✕</button>
@@ -437,7 +437,7 @@ export default function LeadsPage() {
 
         {/* ─── Regular Lead Form ───────────────────────────────────────────── */}
         {mode === "regular" && (
-          <div className="bg-white border border-blue-200 rounded-2xl shadow-md p-5 mb-5">
+          <div className="bg-white/60 backdrop-blur-xl border border-blue-200/50 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] p-5 mb-5">
             <h2 className="text-base font-bold text-blue-800 mb-4 flex items-center gap-2">
               <span className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xs font-bold">R</span>
               Add Regular Lead
@@ -452,7 +452,7 @@ export default function LeadsPage() {
                     placeholder="Search or select material…"
                     onChange={e => { setSearchQuery(e.target.value); setSelectedMaterial(""); setShowDropdown(true); }}
                     onFocus={() => setShowDropdown(true)}
-                    className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                    className="w-full border border-slate-200 shadow-sm px-3 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm"
                   />
                   {selectedMaterial && !searchQuery && (
                     <button onClick={() => { setSelectedMaterial(""); setSearchQuery(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
@@ -474,7 +474,7 @@ export default function LeadsPage() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Distance (km)</label>
                 <div className="relative">
                   <input type="number" min="0" step="0.5" value={regularKm} onChange={e => setRegularKm(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="km"
-                    className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm pr-8" />
+                    className="w-full border border-slate-200 shadow-sm px-3 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm pr-8" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">km</span>
                 </div>
               </div>
@@ -486,14 +486,14 @@ export default function LeadsPage() {
                 {leadsData && selectedMaterial && <p className="text-xs text-gray-400 mt-0.5 text-center">per {getUnitForMaterial(leadsData, selectedMaterial)}</p>}
               </div>
               <button onClick={handleAddRegular} disabled={!selectedMaterial || !regularKm || parseFloat(regularKm) <= 0}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold rounded-xl transition-all text-sm shadow-sm">Add</button>
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 text-white font-bold rounded-xl shadow-md active:scale-95 transition-all text-sm">Add</button>
             </div>
           </div>
         )}
 
         {/* ─── Custom Lead Form ────────────────────────────────────────────── */}
         {mode === "custom" && (
-          <div className="bg-white border border-purple-200 rounded-2xl shadow-md p-5 mb-5">
+          <div className="bg-white/60 backdrop-blur-xl border border-purple-200/50 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] p-5 mb-5">
             <h2 className="text-base font-bold text-purple-800 mb-4 flex items-center gap-2">
               <span className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 text-xs font-bold">C</span>
               Add Custom Lead
@@ -502,7 +502,7 @@ export default function LeadsPage() {
               <div className="flex-1 min-w-[200px]">
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Material Name</label>
                 <input type="text" value={customName} onChange={e => setCustomName(e.target.value)} placeholder="e.g. River Sand"
-                  className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm" />
+                  className="w-full border border-slate-200 shadow-sm px-3 py-2.5 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-sm" />
                 {customName && STANDARD_MATERIALS.includes(customName.trim()) && (
                   <p className="text-xs text-orange-500 mt-0.5 font-medium">Matches standard material — will be saved as &ldquo;{customName.trim()} (Custom)&rdquo;</p>
                 )}
@@ -511,7 +511,7 @@ export default function LeadsPage() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Distance (km)</label>
                 <div className="relative">
                   <input type="number" min="0" step="0.5" value={customKm} onChange={e => setCustomKm(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="km"
-                    className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm pr-8" />
+                    className="w-full border border-slate-200 shadow-sm px-3 py-2.5 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-sm pr-8" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">km</span>
                 </div>
               </div>
@@ -520,11 +520,11 @@ export default function LeadsPage() {
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">₹</span>
                   <input type="number" min="0" step="0.01" value={customRate} onChange={e => setCustomRate(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="0.00"
-                    className="w-full border border-gray-300 pl-7 pr-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm" />
+                    className="w-full border border-slate-200 shadow-sm pl-7 pr-3 py-2.5 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-sm" />
                 </div>
               </div>
               <button onClick={handleAddCustom} disabled={!customName.trim() || !customRate || parseFloat(customRate) < 0}
-                className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold rounded-xl transition-all text-sm shadow-sm">Add</button>
+                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-fuchsia-600 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 text-white font-bold rounded-xl shadow-md active:scale-95 transition-all text-sm">Add</button>
             </div>
           </div>
         )}
@@ -539,12 +539,12 @@ export default function LeadsPage() {
             <p className="text-sm mt-1">Apply a profile above, or use the Add buttons to add leads.</p>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={leadsArray.map(e => e.name)} strategy={verticalListSortingStrategy}>
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b border-gray-200">
+                  <table className="w-full text-sm text-left border-collapse">
+                    <thead className="bg-slate-50/80 text-slate-600 uppercase tracking-wider text-xs font-bold border-b border-slate-200">
                       <tr>
                         <th className="px-3 py-3 w-8">#</th>
                         <th className="px-2 py-3 w-8"></th>

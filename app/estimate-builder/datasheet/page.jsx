@@ -290,7 +290,7 @@ export default function DatasheetPage() {
         </div>
 
         {/* ── HEADER ── */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/60 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-black text-slate-950 tracking-tight">District Configuration Hub</h1>
@@ -312,7 +312,7 @@ export default function DatasheetPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           
           {/* Card 1: Yojana Manager */}
-          <div className="group bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between hover:border-blue-400 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+          <div className="group bg-white/60 backdrop-blur-xl rounded-2xl border border-white/60 p-6 flex flex-col justify-between hover:border-blue-400 hover:shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110 duration-300"></div>
             <div>
               <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-2xl mb-4 text-blue-600 relative z-10">
@@ -329,7 +329,7 @@ export default function DatasheetPage() {
               </div>
               <button 
                 onClick={() => setYojanaModalOpen(true)}
-                className="w-full py-3 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 active:scale-95 shadow-md shadow-blue-100 transition-all cursor-pointer block text-center"
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all cursor-pointer block text-center"
               >
                 Configure Yojanas →
               </button>
@@ -337,7 +337,7 @@ export default function DatasheetPage() {
           </div>
 
           {/* Card 2: Lead Profiles */}
-          <div className="group bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between hover:border-amber-400 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+          <div className="group bg-white/60 backdrop-blur-xl rounded-2xl border border-white/60 p-6 flex flex-col justify-between hover:border-amber-400 hover:shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110 duration-300"></div>
             <div>
               <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-2xl mb-4 text-amber-600 relative z-10">
@@ -354,7 +354,7 @@ export default function DatasheetPage() {
               </div>
               <button 
                 onClick={() => setProfileModalOpen(true)}
-                className="w-full py-3 bg-amber-500 text-white font-bold text-sm rounded-xl hover:bg-amber-600 active:scale-95 shadow-md shadow-amber-100 transition-all cursor-pointer block text-center"
+                className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all cursor-pointer block text-center"
               >
                 Configure Profiles →
               </button>
@@ -362,7 +362,7 @@ export default function DatasheetPage() {
           </div>
 
           {/* Card 3: Rates & Allowances */}
-          <div className="group bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between hover:border-emerald-400 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+          <div className="group bg-white/60 backdrop-blur-xl rounded-2xl border border-white/60 p-6 flex flex-col justify-between hover:border-emerald-400 hover:shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110 duration-300"></div>
             <div>
               <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-2xl mb-4 text-emerald-600 relative z-10">
@@ -379,7 +379,7 @@ export default function DatasheetPage() {
               </div>
               <button 
                 onClick={() => setRatesModalOpen(true)}
-                className="w-full py-3 bg-emerald-600 text-white font-bold text-sm rounded-xl hover:bg-emerald-700 active:scale-95 shadow-md shadow-emerald-100 transition-all cursor-pointer block text-center"
+                className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all cursor-pointer block text-center"
               >
                 Configure Rates &amp; Allowances →
               </button>
@@ -387,7 +387,7 @@ export default function DatasheetPage() {
           </div>
 
           {/* Card 4: Estimate Details Profiles */}
-          <div className="group bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between hover:border-purple-400 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+          <div className="group bg-white/60 backdrop-blur-xl rounded-2xl border border-white/60 p-6 flex flex-col justify-between hover:border-purple-400 hover:shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110 duration-300"></div>
             <div>
               <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-2xl mb-4 text-purple-600 relative z-10">
@@ -404,7 +404,7 @@ export default function DatasheetPage() {
               </div>
               <button 
                 onClick={() => setDetailsModalOpen(true)}
-                className="w-full py-3 bg-purple-600 text-white font-bold text-sm rounded-xl hover:bg-purple-700 active:scale-95 shadow-md shadow-purple-100 transition-all cursor-pointer block text-center"
+                className="w-full py-3 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all cursor-pointer block text-center"
               >
                 Configure Details Profiles →
               </button>
@@ -414,7 +414,7 @@ export default function DatasheetPage() {
         </div>
 
         {/* ── INFO INSIGHT CARD ── */}
-        <div className="bg-slate-100 border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
+        <div className="bg-white/60 backdrop-blur-xl border border-white/60 shadow-[0_4px_30px_rgba(0,0,0,0.03)] rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
           <div className="text-3xl">💡</div>
           <div className="text-sm text-slate-600 leading-relaxed">
             <strong className="text-slate-800">What are these settings?</strong> The data modified here represents global district constraints. Adding a Yojana allows users to quickly bind projects to a fund source, and Lead Profiles automatically pre-populate lead tables in new estimates. District Rates define raw material baselines that drive individual item formulas.
@@ -426,7 +426,7 @@ export default function DatasheetPage() {
         {/* ========================================================================= */}
         {yojanaModalOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col my-8 max-h-[85vh] animate-in fade-in zoom-in duration-200">
+            <div className="bg-white/90 backdrop-blur-2xl rounded-3xl w-full max-w-2xl shadow-[0_4px_30px_rgba(0,0,0,0.1)] border border-white/60 overflow-hidden flex flex-col my-8 max-h-[85vh] animate-in fade-in zoom-in duration-200">
               
               {/* Header */}
               <div className="bg-slate-950 text-white p-6 flex items-center justify-between border-b border-slate-800">
@@ -449,7 +449,7 @@ export default function DatasheetPage() {
               <div className="p-6 overflow-y-auto flex-1 space-y-6">
                 
                 {/* Inputs */}
-                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                <div className="bg-white/60 backdrop-blur-xl p-5 rounded-2xl border border-white/60 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Register New Yojana Name</label>
                   <div className="flex gap-2">
                     <input
@@ -462,7 +462,7 @@ export default function DatasheetPage() {
                         }
                       }}
                       placeholder="e.g. DPDC Scheme 2022-23..."
-                      className="flex-1 border border-slate-300 bg-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                      className="flex-1 border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium"
                     />
                     <button
                       onClick={() => {
@@ -470,7 +470,7 @@ export default function DatasheetPage() {
                         addYojana(newYojana);
                         setNewYojana("");
                       }}
-                      className="px-5 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 active:scale-95 shadow-md shadow-blue-100 transition cursor-pointer"
+                      className="px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition cursor-pointer"
                     >
                       Add Yojana
                     </button>
@@ -487,13 +487,13 @@ export default function DatasheetPage() {
                   ) : (
                     <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
                       {yojanaList.map(item => (
-                        <div key={item} className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm hover:border-slate-300 transition">
+                        <div key={item} className="flex items-center gap-3 bg-white/60 backdrop-blur-md border border-white/60 rounded-xl px-4 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.03)] hover:bg-slate-50 transition">
                           {editingYojana === item ? (
                             <>
                               <input 
                                 value={editYojanaVal} 
                                 onChange={e => setEditYojanaVal(e.target.value)} 
-                                className="flex-1 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium" 
+                                className="flex-1 border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium" 
                               />
                               <button 
                                 onClick={() => {
@@ -542,10 +542,10 @@ export default function DatasheetPage() {
               </div>
 
               {/* Footer */}
-              <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end">
+              <div className="bg-slate-50/80 backdrop-blur-md p-4 border-t border-slate-200 flex justify-end">
                 <button
                   onClick={() => setYojanaModalOpen(false)}
-                  className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition active:scale-95 cursor-pointer"
+                  className="px-6 py-2.5 bg-gradient-to-r from-slate-800 to-slate-900 text-white text-sm font-bold rounded-xl shadow-md transition active:scale-95 cursor-pointer"
                 >
                   Save &amp; Close
                 </button>
@@ -560,7 +560,7 @@ export default function DatasheetPage() {
         {/* ========================================================================= */}
         {profileModalOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl w-full max-w-6xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col my-4 max-h-[92vh] animate-in fade-in zoom-in duration-200">
+            <div className="bg-white/90 backdrop-blur-2xl rounded-3xl w-full max-w-6xl shadow-[0_4px_30px_rgba(0,0,0,0.1)] border border-white/60 overflow-hidden flex flex-col my-4 max-h-[92vh] animate-in fade-in zoom-in duration-200">
               
               {/* Header */}
               <div className="bg-slate-950 text-white p-6 flex items-center justify-between border-b border-slate-800">
@@ -617,7 +617,7 @@ export default function DatasheetPage() {
                           onChange={e => setNewProfileName(e.target.value)}
                           onKeyDown={e => e.key === "Enter" && handleAddProfile()}
                           placeholder="e.g. Standard Nashik Roads..."
-                          className="flex-1 border border-slate-300 bg-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-slate-400 font-medium"
+                          className="flex-1 border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium"
                         />
                         <button
                           onClick={handleAddProfile}
@@ -647,7 +647,7 @@ export default function DatasheetPage() {
                                   <input
                                     value={renameVal}
                                     onChange={e => setRenameVal(e.target.value)}
-                                    className="flex-1 border rounded px-2 py-0.5 text-xs text-slate-800 focus:outline-none font-medium bg-white"
+                                    className="flex-1 border border-slate-200 rounded-lg px-2 py-0.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium bg-white/60 shadow-sm"
                                     autoFocus
                                   />
                                   <button onClick={() => { if (renameVal.trim()) renameLeadsProfile(activeCategory, p.id, renameVal); setRenamingId(null); }} className="text-xs px-2 py-0.5 bg-white text-green-700 rounded font-bold">✓</button>
@@ -778,20 +778,20 @@ export default function DatasheetPage() {
                           <div className="flex flex-wrap gap-2 items-end">
                             <div className="flex-1 min-w-[140px]">
                               <label className="text-[10px] text-slate-400 font-semibold mb-1 block">Material Name</label>
-                              <input value={customLeadName} onChange={e => setCustomLeadName(e.target.value)} placeholder="e.g. Geotechnical Geotextile..." className="w-full border border-slate-300 bg-white rounded px-2.5 py-1.5 text-xs focus:outline-none font-medium" />
+                              <input value={customLeadName} onChange={e => setCustomLeadName(e.target.value)} placeholder="e.g. Geotechnical Geotextile..." className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium" />
                             </div>
                             <div className="w-20">
                               <label className="text-[10px] text-slate-400 font-semibold mb-1 block">km</label>
-                              <input type="number" min="0" step="0.1" value={customLeadKm} onChange={e => setCustomLeadKm(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="0" className="w-full border border-slate-300 bg-white rounded px-2.5 py-1.5 text-xs text-center focus:outline-none font-bold" />
+                              <input type="number" min="0" step="0.1" value={customLeadKm} onChange={e => setCustomLeadKm(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="0" className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-lg px-2.5 py-1.5 text-xs text-center focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-bold" />
                             </div>
                             <div className="w-24">
                               <label className="text-[10px] text-slate-400 font-semibold mb-1 block">Custom Rate (₹)</label>
-                              <input type="number" min="0" step="0.01" value={customLeadRate} onChange={e => setCustomLeadRate(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="0.00" className="w-full border border-slate-300 bg-white rounded px-2.5 py-1.5 text-xs text-center focus:outline-none font-bold" />
+                              <input type="number" min="0" step="0.01" value={customLeadRate} onChange={e => setCustomLeadRate(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }} placeholder="0.00" className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-lg px-2.5 py-1.5 text-xs text-center focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-bold" />
                             </div>
                             <button
                               onClick={handleAddCustomToProfile}
                               disabled={!customLeadName.trim() || !customLeadRate}
-                              className="px-4 py-1.5 bg-purple-600 text-white rounded font-bold text-xs hover:bg-purple-700 disabled:opacity-40 transition cursor-pointer shrink-0"
+                              className="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white rounded shadow-sm font-bold text-xs disabled:opacity-40 transition cursor-pointer shrink-0"
                             >
                               Add Lead
                             </button>
@@ -807,10 +807,10 @@ export default function DatasheetPage() {
               </div>
 
               {/* Footer */}
-              <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end">
+              <div className="bg-slate-50/80 backdrop-blur-md p-4 border-t border-slate-200 flex justify-end">
                 <button
                   onClick={() => { setProfileModalOpen(false); setSelectedProfileId(null); }}
-                  className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition active:scale-95 cursor-pointer"
+                  className="px-6 py-2.5 bg-gradient-to-r from-slate-800 to-slate-900 text-white text-sm font-bold rounded-xl shadow-md active:scale-95 transition cursor-pointer"
                 >
                   Save &amp; Close Template
                 </button>
@@ -825,7 +825,7 @@ export default function DatasheetPage() {
         {/* ========================================================================= */}
         {ratesModalOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl w-full max-w-5xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col my-4 max-h-[92vh] animate-in fade-in zoom-in duration-200">
+            <div className="bg-white/90 backdrop-blur-2xl rounded-3xl w-full max-w-5xl shadow-[0_4px_30px_rgba(0,0,0,0.1)] border border-white/60 overflow-hidden flex flex-col my-4 max-h-[92vh] animate-in fade-in zoom-in duration-200">
               
               {/* Header */}
               <div className="bg-slate-950 text-white p-6 flex items-center justify-between border-b border-slate-800">
@@ -918,10 +918,10 @@ export default function DatasheetPage() {
                       </p>
                     </div>
 
-                    <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-white">
+                    <div className="border border-white/60 rounded-2xl overflow-hidden shadow-sm bg-white/60 backdrop-blur-xl">
                       <table className="w-full text-left border-collapse text-xs">
                         <thead>
-                          <tr className="bg-slate-950 text-white font-bold uppercase tracking-wider">
+                          <tr className="bg-slate-50/80 text-slate-600 font-bold uppercase tracking-wider">
                             <th className="p-3.5 w-16 text-center">Ref</th>
                             <th className="p-3.5">Specific Regional Area Name</th>
                             <th className="p-3.5 w-44 text-right">Percentage Increase (%)</th>
@@ -933,7 +933,7 @@ export default function DatasheetPage() {
                               <td className="p-3 text-center font-bold text-slate-400">{item.key.toUpperCase()}</td>
                               <td className="p-3 text-slate-800 font-semibold">{item.name}</td>
                               <td className="p-3 text-right">
-                                <div className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
+                                <div className="inline-flex items-center gap-1 bg-white/60 shadow-sm border border-slate-200 rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition">
                                   <input
                                     type="number"
                                     min="0"
@@ -976,7 +976,7 @@ export default function DatasheetPage() {
                           placeholder="Search materials (e.g. Bitumen, Steel)..."
                           value={materialSearch}
                           onChange={e => setMaterialSearch(e.target.value)}
-                          className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
+                          className="w-full border border-slate-200 shadow-sm rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/60 font-medium"
                         />
                         {materialSearch && (
                           <button 
@@ -989,10 +989,10 @@ export default function DatasheetPage() {
                       </div>
                     </div>
 
-                    <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-white">
+                    <div className="border border-white/60 rounded-2xl overflow-hidden shadow-sm bg-white/60 backdrop-blur-xl">
                       <table className="w-full text-left border-collapse text-xs">
                         <thead>
-                          <tr className="bg-slate-950 text-white font-bold uppercase tracking-wider">
+                          <tr className="bg-slate-50/80 text-slate-600 font-bold uppercase tracking-wider">
                             <th className="p-3.5 w-16 text-center">Sr. No.</th>
                             <th className="p-3.5">Material Name</th>
                             <th className="p-3.5">Standard Designation / Metric Unit</th>
@@ -1013,7 +1013,7 @@ export default function DatasheetPage() {
                                 <td className="p-3 text-slate-800 font-bold">{item.name}</td>
                                 <td className="p-3 text-slate-500 font-medium">{item.unit}</td>
                                 <td className="p-3 text-right">
-                                  <div className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white focus-within:border-transparent transition">
+                                  <div className="inline-flex items-center gap-1 bg-white/60 shadow-sm border border-slate-200 rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition">
                                     <span className="text-slate-400 font-bold">₹</span>
                                     <input
                                       type="number"
@@ -1225,7 +1225,7 @@ export default function DatasheetPage() {
                       </div>
 
                       {/* Box 2: Deep Excavation Lift */}
-                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+                      <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-2xl p-5 shadow-sm space-y-3">
                         <div className="flex items-center gap-2 text-amber-700 font-bold text-sm">
                           <span>⛏️</span> Deep Excavation Surcharges
                         </div>
@@ -1243,7 +1243,7 @@ export default function DatasheetPage() {
                       </div>
 
                       {/* Box 3: Foul & Water Conditions */}
-                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+                      <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-2xl p-5 shadow-sm space-y-3">
                         <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
                           <span>🌊</span> Work in Severe / Foul Conditions
                         </div>
@@ -1260,7 +1260,7 @@ export default function DatasheetPage() {
                       </div>
 
                       {/* Box 4: SCADA & Curing Compounds */}
-                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+                      <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-2xl p-5 shadow-sm space-y-3">
                         <div className="flex items-center gap-2 text-rose-700 font-bold text-sm">
                           <span>⚙️</span> SCADA &amp; Curing Deductions/Hikes
                         </div>
@@ -1277,7 +1277,7 @@ export default function DatasheetPage() {
                       </div>
 
                       {/* Box 5: Royalty Baselines */}
-                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3 md:col-span-2">
+                      <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-2xl p-5 shadow-sm space-y-3 md:col-span-2">
                         <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
                           <span>💎</span> Royalty baseline charges (Nashik Circle PWD SSR)
                         </div>
@@ -1314,7 +1314,7 @@ export default function DatasheetPage() {
               </div>
 
               {/* Footer */}
-              <div className="bg-slate-50 p-4 border-t border-slate-200 flex items-center justify-between">
+              <div className="bg-slate-50/80 backdrop-blur-md p-4 border-t border-slate-200 flex items-center justify-between">
                 {ratesTab !== "reference" ? (
                   <button
                     onClick={async () => {
@@ -1353,7 +1353,7 @@ export default function DatasheetPage() {
                   </button>
                   <button
                     onClick={() => setRatesModalOpen(false)}
-                    className="px-6 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition active:scale-95 cursor-pointer"
+                    className="px-6 py-2.5 bg-gradient-to-r from-slate-800 to-slate-900 text-white text-xs font-bold rounded-xl shadow-md active:scale-95 transition cursor-pointer"
                   >
                     Save &amp; Close Sheet
                   </button>
@@ -1369,7 +1369,7 @@ export default function DatasheetPage() {
         {/* ========================================================================= */}
         {detailsModalOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col my-4 max-h-[90vh] animate-in fade-in zoom-in duration-200">
+            <div className="bg-white/90 backdrop-blur-2xl rounded-3xl w-full max-w-4xl shadow-[0_4px_30px_rgba(0,0,0,0.1)] border border-white/60 overflow-hidden flex flex-col my-4 max-h-[90vh] animate-in fade-in zoom-in duration-200">
               
               {/* Header */}
               <div className="bg-slate-950 text-white p-6 flex items-center justify-between border-b border-slate-800">
@@ -1422,7 +1422,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Igatpuri Roads Standard Template..."
                           value={formProfileName}
                           onChange={(e) => setFormProfileName(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1434,7 +1434,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Igatpuri Road Repair Work"
                           value={formEstimateName}
                           onChange={(e) => setFormEstimateName(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1446,7 +1446,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Metalling and Tarring of Road"
                           value={formNameOfWork}
                           onChange={(e) => setFormNameOfWork(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1458,7 +1458,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. DPDC Scheme 2024-25"
                           value={formYojana}
                           onChange={(e) => setFormYojana(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1509,7 +1509,7 @@ export default function DatasheetPage() {
                           placeholder="Estimated cost"
                           value={formEstAmount}
                           onChange={(e) => setFormEstAmount(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1522,7 +1522,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. 1.00"
                           value={formLabourInsurance}
                           onChange={(e) => setFormLabourInsurance(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1534,7 +1534,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. 2024-25"
                           value={formYear}
                           onChange={(e) => setFormYear(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1547,7 +1547,7 @@ export default function DatasheetPage() {
                             placeholder="District"
                             value={formDist}
                             onChange={(e) => setFormDist(e.target.value)}
-                            className="w-full border border-slate-300 bg-white rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                           />
                         </div>
                         <div>
@@ -1557,7 +1557,7 @@ export default function DatasheetPage() {
                             placeholder="Taluka"
                             value={formTaluka}
                             onChange={(e) => setFormTaluka(e.target.value)}
-                            className="w-full border border-slate-300 bg-white rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                           />
                         </div>
                         <div>
@@ -1567,7 +1567,7 @@ export default function DatasheetPage() {
                             placeholder="Village"
                             value={formVillage}
                             onChange={(e) => setFormVillage(e.target.value)}
-                            className="w-full border border-slate-300 bg-white rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                           />
                         </div>
                       </div>
@@ -1580,7 +1580,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Nashik Division"
                           value={formHeadDivision}
                           onChange={(e) => setFormHeadDivision(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1592,7 +1592,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Igatpuri Sub-Division"
                           value={formSubDivision}
                           onChange={(e) => setFormSubDivision(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1604,7 +1604,7 @@ export default function DatasheetPage() {
                           placeholder="Name of Deputy Engineer"
                           value={formDeputyEngineer}
                           onChange={(e) => setFormDeputyEngineer(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1616,7 +1616,7 @@ export default function DatasheetPage() {
                           placeholder="Name of Jr. Engineer"
                           value={formJrEngineer}
                           onChange={(e) => setFormJrEngineer(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1628,7 +1628,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. AA/2024/XYZ/123"
                           value={formAdminApprovalNo}
                           onChange={(e) => setFormAdminApprovalNo(e.target.value)}
-                          className="w-full border border-slate-300 bg-white rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
@@ -1676,7 +1676,7 @@ export default function DatasheetPage() {
                           }
                           setActiveProfileIdToEdit(null);
                         }}
-                        className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs active:scale-95 transition cursor-pointer"
+                        className="px-5 py-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-bold rounded-xl text-xs shadow-md active:scale-95 transition cursor-pointer"
                       >
                         💾 Save Profile Details
                       </button>
@@ -1689,7 +1689,7 @@ export default function DatasheetPage() {
                       <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Saved Details Profiles ({projectDetailsProfiles.length}/50)</h3>
                       <button
                         onClick={handleStartCreateNew}
-                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition active:scale-95 cursor-pointer flex items-center gap-1 shadow-md shadow-purple-100"
+                        className="px-4 py-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white text-xs font-bold rounded-xl transition active:scale-95 cursor-pointer flex items-center gap-1 shadow-md"
                       >
                         ➕ Create New Details Profile
                       </button>
@@ -1753,10 +1753,10 @@ export default function DatasheetPage() {
               </div>
 
               {/* Footer */}
-              <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end">
+              <div className="bg-slate-50/80 backdrop-blur-md p-4 border-t border-slate-200 flex justify-end">
                 <button
                   onClick={() => setDetailsModalOpen(false)}
-                  className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition active:scale-95 cursor-pointer"
+                  className="px-6 py-2.5 bg-gradient-to-r from-slate-800 to-slate-900 text-white text-sm font-bold rounded-xl shadow-md active:scale-95 transition cursor-pointer"
                 >
                   Close Hub
                 </button>
