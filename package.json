@@ -15,7 +15,7 @@
   "build": {
     "appId": "com.nitechestimates.app",
     "productName": "Nitech Estimates",
-    "asar": true,
+    "asar": false,
     "directories": {
       "output": "dist-desktop"
     },
