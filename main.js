@@ -68,7 +68,7 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
-const { app, BrowserWindow, session, shell } = require('electron');
+const { app, BrowserWindow, session } = require('electron');
 const { spawn } = require('child_process');
 const net = require('net');
 
@@ -141,7 +141,6 @@ async function startNextServer() {
       `[${new Date().toISOString()}] Starting Next.js server`,
       `  __dirname: ${__dirname}`,
       `  MONGODB_URI set: ${!!process.env.MONGODB_URI}`,
-      `  MONGODB_URI starts: ${(process.env.MONGODB_URI || '').slice(0, 30)}`,
       `  NEXTAUTH_SECRET set: ${!!process.env.NEXTAUTH_SECRET}`,
       `  NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`,
       `  GOOGLE_CLIENT_ID set: ${!!process.env.GOOGLE_CLIENT_ID}`,
@@ -334,7 +333,19 @@ async function createWindow() {
 }
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
-app.whenReady().then(createWindow);
+// Prevent multiple instances — second launch focuses existing window
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+  app.whenReady().then(createWindow);
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

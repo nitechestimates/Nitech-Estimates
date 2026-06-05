@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import AlertDialog, { useAlertDialog } from '@/components/AlertDialog';
 
 export default function HistoryPage() {
   // loading defaults to true so the spinner shows immediately on first mount;
@@ -13,6 +14,7 @@ export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ estimateName: "", nameOfWork: "" });
+  const { dialog, triggerAlert, triggerConfirm } = useAlertDialog();
 
   const fetchEstimates = useCallback(() => {
     setError("");
@@ -52,7 +54,7 @@ export default function HistoryPage() {
   }, [fetchEstimates]);
 
   const deleteEstimate = async (id) => {
-    if (!confirm("Are you sure you want to delete this estimate? This action cannot be undone.")) return;
+    if (!await triggerConfirm("Are you sure you want to delete this estimate? This action cannot be undone.")) return;
 
     try {
       const res = await fetch(`/api/estimate/${id}`, { method: "DELETE" });
@@ -60,10 +62,10 @@ export default function HistoryPage() {
       if (res.ok) {
         setEstimates(estimates.filter((e) => e._id !== id));
       } else {
-        alert(data.error || "Delete failed");
+        await triggerAlert(data.error || "Delete failed");
       }
     } catch {
-      alert("Network error: Could not delete the estimate.");
+      await triggerAlert("Network error: Could not delete the estimate.");
     }
   };
 
@@ -79,11 +81,11 @@ export default function HistoryPage() {
       if (res.ok && data.success) {
         fetchEstimates(); // Reload the list
       } else {
-        alert(data.error || "Duplicate failed");
+        await triggerAlert(data.error || "Duplicate failed");
         setLoading(false);
       }
     } catch {
-      alert("Network error while duplicating");
+      await triggerAlert("Network error while duplicating");
       setLoading(false);
     }
   };
@@ -99,10 +101,10 @@ export default function HistoryPage() {
         setEstimates(estimates.map(e => e._id === id ? { ...e, ...editForm } : e));
         setEditingId(null);
       } else {
-        alert("Failed to update estimate details");
+        await triggerAlert("Failed to update estimate details");
       }
     } catch {
-      alert("Network error");
+      await triggerAlert("Network error");
     }
   };
 
@@ -291,6 +293,7 @@ export default function HistoryPage() {
           ))}
         </div>
       )}
+      <AlertDialog dialog={dialog} />
     </div>
   );
 }

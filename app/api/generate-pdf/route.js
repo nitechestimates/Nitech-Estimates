@@ -3,10 +3,20 @@ import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import fs from "fs";
 import path from "path";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+
+function escapeHtml(str) { if (!str) return ''; return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
 export const maxDuration = 60;
 
 export async function POST(req) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  let browser;
   try {
     const { estimateData } = await req.json();
     const data = estimateData || {};
@@ -613,7 +623,7 @@ export async function POST(req) {
       return '/usr/bin/brave-browser';
     };
 
-    const browser = await puppeteer.launch({
+    browser = await puppeteer.launch({
       args: isLocal ? [] : chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: isLocal
@@ -634,8 +644,6 @@ export async function POST(req) {
       margin: { top: '15mm', bottom: '20mm', left: '15mm', right: '15mm' },
     });
 
-    await browser.close();
-
     return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
@@ -646,6 +654,10 @@ export async function POST(req) {
 
   } catch (error) {
     console.error("PDF Generation Error:", error);
-    return NextResponse.json({ error: "Failed to generate PDF", details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'PDF generation failed' }, { status: 500 });
+  } finally {
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
   }
 }

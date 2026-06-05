@@ -1,5 +1,5 @@
 {
-  "name": "my-app",
+  "name": "nitech-estimates",
   "version": "0.1.0",
   "private": true,
   "main": "main.js",
@@ -15,7 +15,7 @@
   "build": {
     "appId": "com.nitechestimates.app",
     "productName": "Nitech Estimates",
-    "asar": false,
+    "asar": true,
     "directories": {
       "output": "dist-desktop"
     },
@@ -25,8 +25,6 @@
       "main.js",
       "package.json",
       "next.config.ts",
-      ".env",
-      ".env.local",
       "node_modules/**/*",
       "!node_modules/electron/**/*",
       "!node_modules/electron-builder/**/*",

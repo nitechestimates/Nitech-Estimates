@@ -3,8 +3,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { useState, useEffect } from "react";
+import AlertDialog, { useAlertDialog } from '@/components/AlertDialog';
 
 export default function Tabs() {
+  const { dialog, triggerAlert, triggerConfirm } = useAlertDialog();
   const pathname = usePathname();
   const router = useRouter();
   const currentEstimateId = useStore((state) => state.currentEstimateId);
@@ -79,11 +81,11 @@ export default function Tabs() {
         setShowPrompt(false);
         router.push(`/estimate-builder/billing/${currentEstimateId}`);
       } else {
-        alert("Failed to initialize billing.");
+        await triggerAlert("Failed to initialize billing.");
       }
     } catch (err) {
       console.error(err);
-      alert("Error finalizing estimate.");
+      await triggerAlert("Error finalizing estimate.");
     } finally {
       setProcessing(false);
     }
@@ -170,8 +172,8 @@ export default function Tabs() {
                 Go to Billing Section
               </button>
               <button
-                onClick={() => {
-                  if (confirm("WARNING: This will permanently delete the current bill and all custom billing changes (rates, measurements, form fields). Are you sure?")) {
+                onClick={async () => {
+                  if (await triggerConfirm("WARNING: This will permanently delete the current bill and all custom billing changes (rates, measurements, form fields). Are you sure?")) {
                     handleFinalize(true);
                   }
                 }}
@@ -190,6 +192,7 @@ export default function Tabs() {
           </div>
         </div>
       )}
+      <AlertDialog dialog={dialog} />
     </div>
   );
 }

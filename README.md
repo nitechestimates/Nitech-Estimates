@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nitech Estimates
 
-## Getting Started
+Professional construction estimate builder for civil engineering projects. Create detailed estimates, rate analysis, measurement sheets, billing, and generate professional PDF reports.
 
-First, run the development server:
+## Features
 
+- **Estimate Builder** — Create new estimates with item-level detail, quantities, and pricing
+- **Rate Analysis** — Build rate analysis sheets with SSR item integration
+- **Measurement Sheets** — Record field measurements with automatic quantity calculation
+- **Lead Charges** — Configure material lead/lift charges with distance-based calculation
+- **Abstract of Estimate** — Auto-generated summary with GST, insurance, and overhead calculations
+- **Billing** — Create running bills with measurement book (MB) tracking
+- **PDF Export** — Generate professional PDF reports for estimates and billing
+- **Data Persistence** — Cloud sync with MongoDB Atlas
+
+## Tech Stack
+
+- **Frontend:** Next.js 16, React 19, Tailwind CSS v4, Zustand
+- **Backend:** Next.js API Routes, MongoDB
+- **Auth:** NextAuth.js with Google OAuth
+- **PDF Generation:** Puppeteer
+- **Desktop:** Electron (Windows)
+
+## Prerequisites
+
+- Node.js 20+
+- MongoDB Atlas account (or local MongoDB instance)
+- Google OAuth credentials (for authentication)
+
+## Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/nitechestimates/Nitech-Estimates.git
+   cd Nitech-Estimates
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Create `.env.local`** with the following variables:
+   ```env
+   MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/<database>
+   NEXTAUTH_SECRET=<generate-with: openssl rand -base64 32>
+   NEXTAUTH_URL=http://localhost:3000
+   GOOGLE_CLIENT_ID=<your-google-client-id>
+   GOOGLE_CLIENT_SECRET=<your-google-client-secret>
+   ```
+
+4. **Run in development:**
+   ```bash
+   npm run dev
+   ```
+
+## Building
+
+### Web (Production)
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Desktop (Windows)
+```bash
+npm run desktop:build
+```
+Output will be in `dist-desktop/`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+├── app/                    # Next.js App Router pages
+│   ├── api/                # API routes (auth, estimates, billing, PDF)
+│   ├── estimate-builder/   # Main application pages
+│   ├── contact/            # Contact page
+│   └── tutorial/           # Tutorial page
+├── components/             # Shared React components
+├── lib/                    # Utilities, store, auth, DB connection
+├── public/                 # Static assets
+├── scripts/                # Data conversion utilities
+└── main.js                 # Electron main process
+```
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private — All rights reserved.

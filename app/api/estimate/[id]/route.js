@@ -10,18 +10,25 @@ export async function GET(request, context) {
 
     if (!session?.user?.email) {
       return NextResponse.json(
-        { error: "Not authenticated" },
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
     const { id } = await context.params;
 
+    let objectId;
+    try {
+      objectId = new ObjectId(id);
+    } catch {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
+
     const client = await clientPromise;
     const db = client.db("nitech_estimates");
 
     const estimate = await db.collection("estimates").findOne({
-      _id: new ObjectId(id),
+      _id: objectId,
       userId: session.user.email,
     });
 
@@ -53,18 +60,25 @@ export async function DELETE(request, context) {
 
     if (!session?.user?.email) {
       return NextResponse.json(
-        { error: "Not authenticated" },
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
     const { id } = await context.params;
 
+    let objectId;
+    try {
+      objectId = new ObjectId(id);
+    } catch {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
+
     const client = await clientPromise;
     const db = client.db("nitech_estimates");
 
     const result = await db.collection("estimates").deleteOne({
-      _id: new ObjectId(id),
+      _id: objectId,
       userId: session.user.email,
     });
 
@@ -93,12 +107,20 @@ export async function PUT(request, context) {
 
     if (!session?.user?.email) {
       return NextResponse.json(
-        { error: "Not authenticated" },
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
     const { id } = await context.params;
+
+    let objectId;
+    try {
+      objectId = new ObjectId(id);
+    } catch {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
+
     const body = await request.json();
 
     // Only allow patching specific safe fields
@@ -116,7 +138,7 @@ export async function PUT(request, context) {
     const db = client.db("nitech_estimates");
 
     const result = await db.collection("estimates").updateOne(
-      { _id: new ObjectId(id), userId: session.user.email },
+      { _id: objectId, userId: session.user.email },
       { $set: { ...patch, updatedAt: new Date() } }
     );
 

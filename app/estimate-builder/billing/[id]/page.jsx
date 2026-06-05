@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import AlertDialog, { useAlertDialog } from '@/components/AlertDialog';
 
 // Helper for formatting currency
 const formatMoney = (num) => (num || 0).toFixed(2);
@@ -53,6 +54,7 @@ export default function BillingDashboard() {
   const [activeTab, setActiveTab] = useState("front"); // "front", "certs", "excess"
   const [toastVisible, setToastVisible] = useState(false);
   const [toastType, setToastType] = useState("success");
+  const { dialog, triggerAlert, triggerConfirm } = useAlertDialog();
   
   // Custom dialogs
   const [alertInfo, setAlertInfo] = useState(null);
@@ -112,11 +114,11 @@ export default function BillingDashboard() {
           setTimeout(() => setToastVisible(false), 2000);
         }
       } else {
-        alert("Failed to save changes.");
+        await triggerAlert("Failed to save changes.");
       }
     } catch (err) {
       console.error("Save error:", err);
-      alert("Network error — could not save.");
+      await triggerAlert("Network error — could not save.");
     } finally {
       setSaving(false);
     }
@@ -148,7 +150,7 @@ export default function BillingDashboard() {
       a.remove();
     } catch (err) {
       console.error(err);
-      alert("Failed to download PDF.");
+      await triggerAlert("Failed to download PDF.");
     } finally {
       setSaving(false);
     }
@@ -220,8 +222,8 @@ export default function BillingDashboard() {
     setBilling({ ...billing, measurementItems: updatedItems });
   };
 
-  const removeMeasurementRow = (itemIdx, measIdx) => {
-    if (!billing || !confirm("Delete this measurement row?")) return;
+  const removeMeasurementRow = async (itemIdx, measIdx) => {
+    if (!billing || !await triggerConfirm("Delete this measurement row?")) return;
     const updatedItems = [...billing.measurementItems];
     const item = { ...updatedItems[itemIdx] };
     const measurements = [...(item.measurements || [])];
@@ -251,12 +253,12 @@ export default function BillingDashboard() {
   };
 
   // Reset & Clear Operations
-  const handleResetRow = (itemIdx) => {
-    if (!billing || !confirm("Reset this item to the estimate's original measurements?")) return;
+  const handleResetRow = async (itemIdx) => {
+    if (!billing || !await triggerConfirm("Reset this item to the estimate's original measurements?")) return;
     const itemId = billing.measurementItems[itemIdx].id;
     const original = (billing.originalMeasurementItems || []).find(x => x.id === itemId);
     if (!original) {
-      alert("No original measurement data found for this item.");
+      await triggerAlert("No original measurement data found for this item.");
       return;
     }
     const updatedItems = [...billing.measurementItems];
@@ -264,14 +266,14 @@ export default function BillingDashboard() {
     setBilling({ ...billing, measurementItems: updatedItems });
   };
 
-  const handleResetAllRows = () => {
-    if (!billing || !confirm("WARNING: This will reset ALL billing measurements back to the original estimate's values. Are you sure?")) return;
+  const handleResetAllRows = async () => {
+    if (!billing || !await triggerConfirm("WARNING: This will reset ALL billing measurements back to the original estimate's values. Are you sure?")) return;
     const restored = JSON.parse(JSON.stringify(billing.originalMeasurementItems || []));
     setBilling({ ...billing, measurementItems: restored });
   };
 
-  const handleClearAllRows = () => {
-    if (!billing || !confirm("WARNING: This will clear all measurements and make them blank (Dashes). Are you sure?")) return;
+  const handleClearAllRows = async () => {
+    if (!billing || !await triggerConfirm("WARNING: This will clear all measurements and make them blank (Dashes). Are you sure?")) return;
     const cleared = billing.measurementItems.map(item => ({
       ...item,
       measurements: [],
@@ -796,6 +798,7 @@ export default function BillingDashboard() {
           </div>
         </div>
       )}
+      <AlertDialog dialog={dialog} />
     </div>
   );
 }

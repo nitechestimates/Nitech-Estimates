@@ -6,9 +6,12 @@ import path from "path";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+function escapeHtml(str) { if (!str) return ''; return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
 export const maxDuration = 60;
 
 export async function POST(req) {
+  let browser;
   try {
     // 🔐 Auth check – user must be logged in to generate billing PDFs
     const session = await getServerSession(authOptions);
@@ -585,7 +588,7 @@ export async function POST(req) {
       return '/usr/bin/brave-browser';
     };
 
-    const browser = await puppeteer.launch({
+    browser = await puppeteer.launch({
       args: isLocal ? [] : chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: isLocal
@@ -606,8 +609,6 @@ export async function POST(req) {
       margin: { top: '10mm', bottom: '15mm', left: '10mm', right: '10mm' },
     });
 
-    await browser.close();
-
     return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
@@ -618,6 +619,10 @@ export async function POST(req) {
 
   } catch (error) {
     console.error("Billing PDF Generation Error:", error);
-    return NextResponse.json({ error: "Failed to generate billing PDF", details: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to generate billing PDF" }, { status: 500 });
+  } finally {
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
   }
 }

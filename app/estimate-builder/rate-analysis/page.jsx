@@ -13,6 +13,7 @@ import { CSS } from "@dnd-kit/utilities";
 import Tabs from "../components/Tabs";
 import DownloadPdfButton from "../components/DownloadPdfButton";
 import { useStore } from "@/lib/store";
+import AlertDialog, { useAlertDialog } from "@/components/AlertDialog";
 
 // ── 36 standard material names (must match leads.json keys exactly) ──────────
 const STANDARD_MATERIALS = [
@@ -192,57 +193,8 @@ function RateAnalysisContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
 
-  // ── Custom Dialog Modal State ──
-  const [customDialog, setCustomDialog] = useState(null);
-
-  const triggerAlert = (message, title = "Notification") => {
-    const previouslyActive = typeof document !== "undefined" ? document.activeElement : null;
-    return new Promise((resolve) => {
-      setCustomDialog({
-        title,
-        message,
-        isConfirm: false,
-        onConfirm: () => {
-          setCustomDialog(null);
-          resolve(true);
-          setTimeout(() => {
-            if (previouslyActive && typeof previouslyActive.focus === "function") {
-              previouslyActive.focus();
-            }
-          }, 50);
-        }
-      });
-    });
-  };
-
-  const triggerConfirm = (message, title = "Confirmation") => {
-    const previouslyActive = typeof document !== "undefined" ? document.activeElement : null;
-    return new Promise((resolve) => {
-      setCustomDialog({
-        title,
-        message,
-        isConfirm: true,
-        onConfirm: () => {
-          setCustomDialog(null);
-          resolve(true);
-          setTimeout(() => {
-            if (previouslyActive && typeof previouslyActive.focus === "function") {
-              previouslyActive.focus();
-            }
-          }, 50);
-        },
-        onCancel: () => {
-          setCustomDialog(null);
-          resolve(false);
-          setTimeout(() => {
-            if (previouslyActive && typeof previouslyActive.focus === "function") {
-              previouslyActive.focus();
-            }
-          }, 50);
-        }
-      });
-    });
-  };
+  // ── Custom Dialog Modal ──
+  const { dialog: customDialog, triggerAlert, triggerConfirm } = useAlertDialog();
 
   const loadId = searchParams.get("load");
   const nameFromURL = searchParams.get("name");
@@ -1350,45 +1302,7 @@ function RateAnalysisContent() {
       </DndContext>
 
       {/* ── Custom non-blocking alert/confirm dialog ── */}
-      {customDialog && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-slate-100 overflow-hidden flex flex-col p-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center gap-2 text-slate-950 font-extrabold text-base mb-2 select-none">
-              <span>⚠️</span> {customDialog.title}
-            </div>
-            <p className="text-sm font-semibold text-slate-700 leading-relaxed mb-6 select-none">
-              {customDialog.message}
-            </p>
-            <div className="flex gap-3">
-              {customDialog.isConfirm ? (
-                <>
-                  <button
-                    onClick={() => customDialog.onConfirm()}
-                    className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl transition cursor-pointer"
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (customDialog.onCancel) customDialog.onCancel();
-                    }}
-                    className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition cursor-pointer border"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => customDialog.onConfirm()}
-                  className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition cursor-pointer"
-                >
-                  OK
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <AlertDialog dialog={customDialog} />
     </div>
   );
 }

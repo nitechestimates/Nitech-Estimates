@@ -20,8 +20,15 @@ export async function POST(request) {
     const db = client.db("nitech_estimates");
     const estimatesCollection = db.collection("estimates");
 
+    let objectId;
+    try {
+      objectId = new ObjectId(id);
+    } catch {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
+
     const originalEstimate = await estimatesCollection.findOne({
-      _id: new ObjectId(id),
+      _id: objectId,
       userId: session.user.email,
     });
 

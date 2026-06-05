@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Tabs from "../components/Tabs";
 import { useStore } from "@/lib/store";
+import AlertDialog, { useAlertDialog } from '@/components/AlertDialog';
 
 const formatMoney = (num) => (num || 0).toFixed(2);
 
@@ -10,6 +11,7 @@ export default function AbstractPage() {
   const raBottomRows = useStore((state) => state.raBottomRows);
   const measurementItems = useStore((state) => state.measurementItems);
   const labourInsurance = useStore((state) => state.labourInsurance);
+  const { dialog, triggerAlert, triggerConfirm } = useAlertDialog();
 
   const allRaRows = [...raRows, ...raBottomRows];
   const msMap = new Map((Array.isArray(measurementItems) ? measurementItems : []).map(item => [item.id, item]));
@@ -102,12 +104,12 @@ export default function AbstractPage() {
       } else {
         console.error("Failed to save abstract changes");
         setToastVisible(false);
-        alert("Failed to save changes.");
+        await triggerAlert("Failed to save changes.");
       }
     } catch (e) {
       console.error(e);
       setToastVisible(false);
-      alert("Network error — could not save.");
+      await triggerAlert("Network error — could not save.");
     } finally {
       setSaving(false);
     }
@@ -305,6 +307,7 @@ export default function AbstractPage() {
           </table>
         </div>
       </div>
+      <AlertDialog dialog={dialog} />
     </div>
   );
 }

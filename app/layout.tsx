@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Nitech Estimates",
-  description: "Estimate Builder App",
+  description: "Professional construction estimate builder — create detailed estimates, rate analysis, measurement sheets, billing, and PDF reports.",
+  robots: "noindex, nofollow",
 };
 
 export default function RootLayout({

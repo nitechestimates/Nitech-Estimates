@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import Link from "next/link";
+import AlertDialog, { useAlertDialog } from '@/components/AlertDialog';
 
 const STANDARD_MATERIALS = [
   "Sand", "Stone ≤40mm (Crushed Metal)", "Normal Brick Sider Aggregate", "Timber",
@@ -32,6 +33,7 @@ function normaliseMaterials(mats) {
 }
 
 export default function DatasheetPage() {
+  const { dialog, triggerAlert, triggerConfirm } = useAlertDialog();
   // ── Zustand Store Hooks ──
   const yojanaList   = useStore(s => s.yojanaList) || [];
   const addYojana    = useStore(s => s.addYojana);
@@ -219,9 +221,9 @@ export default function DatasheetPage() {
     setFormAdminApprovalNo(p.adminApprovalNo || "");
   };
 
-  const handleStartCreateNew = () => {
+  const handleStartCreateNew = async () => {
     if (projectDetailsProfiles.length >= 50) {
-      alert("Maximum 50 details profiles allowed. Please delete some before creating a new one.");
+      await triggerAlert("Maximum 50 details profiles allowed. Please delete some before creating a new one.");
       return;
     }
     setActiveProfileIdToEdit("new");
@@ -244,20 +246,20 @@ export default function DatasheetPage() {
     setFormAdminApprovalNo("");
   };
 
-  const handleAddProfile = () => {
+  const handleAddProfile = async () => {
     if (!newProfileName.trim()) return;
-    if (profiles.length >= 30) return alert("Max 30 profiles per category.");
+    if (profiles.length >= 30) { await triggerAlert("Max 30 profiles per category."); return; }
     addLeadsProfile(activeCategory, newProfileName);
     setNewProfileName("");
   };
 
-  const handleAddCustomToProfile = () => {
-    if (!customLeadName.trim()) { alert("Please enter a material name."); return; }
-    if (!customLeadRate) { alert("Please enter a lead rate."); return; }
+  const handleAddCustomToProfile = async () => {
+    if (!customLeadName.trim()) { await triggerAlert("Please enter a material name."); return; }
+    if (!customLeadRate) { await triggerAlert("Please enter a lead rate."); return; }
     const rate = parseFloat(customLeadRate);
-    if (isNaN(rate) || rate < 0) { alert("Rate must be a valid positive number."); return; }
+    if (isNaN(rate) || rate < 0) { await triggerAlert("Rate must be a valid positive number."); return; }
     const km = parseFloat(customLeadKm) || 0;
-    if (km < 0) { alert("KM must be 0 or a positive number."); return; }
+    if (km < 0) { await triggerAlert("KM must be 0 or a positive number."); return; }
     const lead = { name: customLeadName.trim(), distance: km, leadCharge: rate };
     addCustomLeadToProfile(activeCategory, selectedProfileId, lead);
     setCustomLeadName(""); setCustomLeadKm(""); setCustomLeadRate("");
@@ -523,7 +525,7 @@ export default function DatasheetPage() {
                                   ✏️ Edit
                                 </button>
                                 <button 
-                                  onClick={() => { if (confirm(`Are you sure you want to delete "${item}"?`)) removeYojana(item); }} 
+                                  onClick={async () => { if (await triggerConfirm(`Are you sure you want to delete "${item}"?`)) removeYojana(item); }} 
                                   className="text-xs px-3 py-1.5 bg-red-50 hover:bg-red-100 rounded-lg text-red-600 font-bold transition cursor-pointer"
                                 >
                                   🗑️ Delete
@@ -661,7 +663,7 @@ export default function DatasheetPage() {
                                       className={`text-xs p-1 rounded ${selectedProfileId === p.id ? 'bg-white/20 hover:bg-white/30' : 'bg-slate-100 hover:bg-slate-200'} transition`}
                                     >✏️</button>
                                     <button
-                                      onClick={() => { if (confirm(`Delete template profile "${p.name}"?`)) { deleteLeadsProfile(activeCategory, p.id); if (selectedProfileId === p.id) setSelectedProfileId(null); } }}
+                                      onClick={async () => { if (await triggerConfirm(`Delete template profile "${p.name}"?`)) { deleteLeadsProfile(activeCategory, p.id); if (selectedProfileId === p.id) setSelectedProfileId(null); } }}
                                       className={`text-xs p-1 rounded ${selectedProfileId === p.id ? 'bg-white/20 hover:bg-red-500' : 'bg-red-50 hover:bg-red-100'} transition`}
                                     >🗑️</button>
                                   </div>
@@ -1315,17 +1317,17 @@ export default function DatasheetPage() {
               <div className="bg-slate-50 p-4 border-t border-slate-200 flex items-center justify-between">
                 {ratesTab !== "reference" ? (
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       if (ratesTab === "surcharges") {
-                        if (confirm("Are you sure you want to reset ALL Specific Area Surcharges to their official PWD SSR baseline defaults? This will not affect other sections.")) {
+                        if (await triggerConfirm("Are you sure you want to reset ALL Specific Area Surcharges to their official PWD SSR baseline defaults? This will not affect other sections.")) {
                           resetAreaRateIncreases();
                         }
                       } else if (ratesTab === "materials") {
-                        if (confirm("Are you sure you want to reset ALL Basic Material Rates to their official PWD SSR baseline defaults? This will not affect other sections.")) {
+                        if (await triggerConfirm("Are you sure you want to reset ALL Basic Material Rates to their official PWD SSR baseline defaults? This will not affect other sections.")) {
                           resetBasicMaterialRates();
                         }
                       } else if (ratesTab === "general") {
-                        if (confirm("Are you sure you want to reset ALL General Allowances & Royalty baseline parameters to PWD SSR defaults? This will not affect other sections.")) {
+                        if (await triggerConfirm("Are you sure you want to reset ALL General Allowances & Royalty baseline parameters to PWD SSR defaults? This will not affect other sections.")) {
                           resetGeneralAllowances();
                         }
                       }
@@ -1643,9 +1645,9 @@ export default function DatasheetPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={async () => {
                           if (!formProfileName.trim()) {
-                            alert("Please enter a Profile Name.");
+                            await triggerAlert("Please enter a Profile Name.");
                             return;
                           }
                           const profileData = {
@@ -1714,8 +1716,8 @@ export default function DatasheetPage() {
                                   ✏️ Edit details
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    if (confirm(`Are you sure you want to delete "${p.profileName}"?`)) {
+                                  onClick={async () => {
+                                    if (await triggerConfirm(`Are you sure you want to delete "${p.profileName}"?`)) {
                                       deleteProjectDetailsProfile(p.id);
                                     }
                                   }}
@@ -1765,6 +1767,7 @@ export default function DatasheetPage() {
         )}
 
       </div>
+      <AlertDialog dialog={dialog} />
     </div>
   );
 }

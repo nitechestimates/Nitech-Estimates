@@ -32,6 +32,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files
+.env
 .env.local
 .env*.local
 
@@ -41,3 +42,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE
+.cursor/
+.vscode/
+.idea/
+
+# data / sample files (should not be in repo)
+*.pdf
+*.xlsx
+*.xls
+~$*
