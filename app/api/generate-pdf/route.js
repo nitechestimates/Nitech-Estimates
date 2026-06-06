@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { rateLimit } from '@/lib/rateLimit';
 import { generatePDF } from '@/lib/pdf-generator';
 import { getEstimateHtml } from '@/lib/templates/estimateHtml';
 import { handleError } from '@/lib/errorHandler';
@@ -14,6 +15,14 @@ export async function POST(req) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rate = rateLimit(`generate-pdf:${session.user.email}`, 5, 60000);
+    if (!rate.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': Math.ceil(rate.reset / 1000).toString() } }
+      );
     }
 
     const { estimateData } = await req.json();

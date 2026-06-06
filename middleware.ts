@@ -16,7 +16,7 @@ interface RequestWithIp extends NextRequest {
   ip?: string;
 }
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // 1. Apply Rate Limiting first for configured endpoints
