@@ -10,23 +10,47 @@ function escapeHtml(str) { if (!str) return ''; return String(str).replace(/&/g,
 
 export const maxDuration = 60;
 
+// Global rate limiting/concurrency semaphore for Puppeteer instances
+let activeGenerations = 0;
+const MAX_CONCURRENT_GENERATIONS = 3;
+
 export async function POST(req) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
   }
 
+  if (activeGenerations >= MAX_CONCURRENT_GENERATIONS) {
+    return new Response(
+      JSON.stringify({ error: 'Server is busy. Please try again in a few moments.' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  activeGenerations++;
+
   let browser;
   try {
     const { estimateData } = await req.json();
     const data = estimateData || {};
+    
+    // Add size validation for incoming arrays to prevent abuse
+    const dataRows = data.rows || [];
+    const dataMeasurementItems = data.measurementItems || [];
+    if (dataRows.length > 1000 || dataMeasurementItems.length > 1000) {
+      return NextResponse.json(
+        { error: 'Payload too large: rows or measurementItems count exceeds limit' },
+        { status: 400 }
+      );
+    }
+
     const nameOfWork = data.nameOfWork || "Unknown Work";
     const isTribal = data.isTribal || false;
-    const rows = data.rows || [];
+    const rows = dataRows;
     const leadSettings = data.leadSettings || {};
     const leadCategories = Object.keys(leadSettings);
 
-    const measurementItems = data.measurementItems || [];
+    const measurementItems = dataMeasurementItems;
 
     // Convert public/zp-logo.png to Base64 for Puppeteer inline rendering
     let logoBase64 = "";
@@ -603,7 +627,8 @@ export async function POST(req) {
 
 
     // Puppeteer browser launch (same as before)
-    const isLocal = process.env.NODE_ENV === "development";
+    // Run locally if not on Vercel, if on a desktop platform (Windows/macOS), or in dev mode
+    const isLocal = !process.env.VERCEL || process.platform !== 'linux' || process.env.NODE_ENV === "development";
     const getLocalBrowserPath = () => {
       if (process.platform === 'win32') {
         const paths = [
@@ -656,6 +681,7 @@ export async function POST(req) {
     console.error("PDF Generation Error:", error);
     return NextResponse.json({ error: 'PDF generation failed' }, { status: 500 });
   } finally {
+    activeGenerations--;
     if (browser) {
       await browser.close().catch(() => {});
     }

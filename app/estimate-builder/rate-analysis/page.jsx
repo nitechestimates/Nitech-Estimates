@@ -358,12 +358,13 @@ function RateAnalysisContent() {
     fetch(`/api/estimate/${loadId}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) {
-          const loadedRows = data.data.rows || [];
-          const bRows = loadedRows.filter((r) => r.isRoyalty);
-          const standardRows = loadedRows.filter((r) => !r.isRoyalty).map((r, i) => ({ ...r, srNo: i + 1 }));
+        if (data.success && data.data) {
+          const loadedData = data.data;
+          const loadedRows = Array.isArray(loadedData.rows) ? loadedData.rows : [];
+          const bRows = loadedRows.filter((r) => r && r.isRoyalty);
+          const standardRows = loadedRows.filter((r) => r && !r.isRoyalty).map((r, i) => ({ ...r, srNo: i + 1 }));
           const bottomRows = [...(bRows.length ? bRows : defaultBottomRows)];
-          const hasLabCharges = bottomRows.some(r => r.id === "lab-charges" || r.description.toLowerCase().includes("lab"));
+          const hasLabCharges = bottomRows.some(r => r && (r.id === "lab-charges" || r.description?.toLowerCase().includes("lab")));
           if (!hasLabCharges) {
             bottomRows.push({ id: "lab-charges", isRoyalty: true, ssr: "", description: "laboratory charges ", unit: "for all test", basicRate: 3036, deduct: 0, materials: [{ id: "mat-r3", name: "", qty: 1, lead: 0 }], totalLead: 0, total: 3036, tribal: 0, netTotal: 3036, specs: "" });
           }
@@ -373,26 +374,26 @@ function RateAnalysisContent() {
           setRABottomRows(bottomRows);
           setLocalBottomRows(bottomRows);
           setEstimateMeta({
-            estimateName:     data.data.estimateName     || "",
-            nameOfWork:       data.data.nameOfWork       || "",
-            isTribal:         data.data.isTribal         || false,
-            tribalPercent:    data.data.tribalPercent    || "",
-            yojana:           data.data.yojana           || "",
-            estAmount:        data.data.estAmount        || "",
-            labourInsurance:  data.data.labourInsurance  || "",
-            year:             data.data.year             || "",
-            dist:             data.data.dist             || "",
-            taluka:           data.data.taluka           || "",
-            village:          data.data.village          || "",
-            headDivision:     data.data.headDivision     || "",
-            subDivision:      data.data.subDivision      || "",
-            deputyEngineer:   data.data.deputyEngineer   || "",
-            jrEngineer:       data.data.jrEngineer       || "",
-            adminApprovalNo:  data.data.adminApprovalNo  || "",
-            currentEstimateId: data.data._id,
+            estimateName:     loadedData.estimateName     || "",
+            nameOfWork:       loadedData.nameOfWork       || "",
+            isTribal:         loadedData.isTribal         || false,
+            tribalPercent:    loadedData.tribalPercent    || "",
+            yojana:           loadedData.yojana           || "",
+            estAmount:        loadedData.estAmount        || "",
+            labourInsurance:  loadedData.labourInsurance  || "",
+            year:             loadedData.year             || "",
+            dist:             loadedData.dist             || "",
+            taluka:           loadedData.taluka           || "",
+            village:          loadedData.village          || "",
+            headDivision:     loadedData.headDivision     || "",
+            subDivision:      loadedData.subDivision      || "",
+            deputyEngineer:   loadedData.deputyEngineer   || "",
+            jrEngineer:       loadedData.jrEngineer       || "",
+            adminApprovalNo:  loadedData.adminApprovalNo  || "",
+            currentEstimateId: loadedData._id,
           });
-          setMeasurementItems(data.data.measurementItems || []);
-          setAbstractCustomData(data.data.abstractCustomData || {});
+          setMeasurementItems(Array.isArray(loadedData.measurementItems) ? loadedData.measurementItems : []);
+          setAbstractCustomData(loadedData.abstractCustomData || {});
           syncMeasurementFromRA();
 
           // Check for outdated rates by querying batch API POST /api/get-item

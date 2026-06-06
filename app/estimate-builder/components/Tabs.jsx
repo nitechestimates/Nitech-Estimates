@@ -110,7 +110,7 @@ export default function Tabs() {
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
       <div className="flex flex-wrap gap-1.5 bg-white/60 backdrop-blur-xl p-1.5 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] border border-white/60 ring-1 ring-slate-900/5">
         {tabs.map((tab) => {
-          const isActive = pathname === tab.href;
+          const isActive = pathname.startsWith(tab.href);
           return (
             <Link
               key={tab.href}

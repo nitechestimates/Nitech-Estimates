@@ -8,8 +8,8 @@ import { ObjectId } from "mongodb"; // ← Add this import
 // Validation schema
 const estimateSchema = z.object({
   nameOfWork: z.string().min(1, "Name is required"),
-  rows: z.array(z.any()).optional().default([]),  // Allow empty rows
-  measurementItems: z.array(z.any()).optional().default([]),
+  rows: z.array(z.any()).max(1000).optional().default([]),  // Allow empty rows and limit size
+  measurementItems: z.array(z.any()).max(1000).optional().default([]),
   isTribal: z.boolean().optional(),
   estimateName: z.string().optional(),
   tribalPercent: z.string().optional(),
