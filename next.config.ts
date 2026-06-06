@@ -1,4 +1,25 @@
 import type { NextConfig } from "next";
+import { z } from "zod";
+
+// Validate environment variables on startup
+const envSchema = z.object({
+  MONGODB_URI: z.string().refine(
+    (val) => val.startsWith("mongodb://") || val.startsWith("mongodb+srv://"),
+    { message: "MONGODB_URI must be a valid connection string starting with mongodb:// or mongodb+srv://" }
+  ),
+  NEXTAUTH_SECRET: z.string().min(1, "NEXTAUTH_SECRET is required"),
+  GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
+  GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
+});
+
+const envResult = envSchema.safeParse(process.env);
+if (!envResult.success) {
+  console.error("❌ Environment validation failed:", envResult.error.format());
+  // Do not throw if we are in non-production build to avoid breaking CI steps, but log a warning.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Invalid environment variables in production build.");
+  }
+}
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,

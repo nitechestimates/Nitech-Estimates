@@ -36,37 +36,11 @@ const CATEGORIES = [
   { key: "bridges",   label: "Bridges",   icon: "🌉", color: "emerald" },
 ];
 
+import { interpolateRate as libInterpolateRate, getUnitForMaterial } from "@/lib/leadUtils";
+
 // ─── Rate helpers ─────────────────────────────────────────────────────────────
-function interpolateRate(rates, km) {
-  const entries = Object.entries(rates)
-    .map(([k, v]) => [parseFloat(k), v])
-    .sort((a, b) => a[0] - b[0]);
-  if (!entries.length) return 0;
-  if (km <= entries[0][0]) return entries[0][1];
-  if (km >= entries[entries.length - 1][0]) return entries[entries.length - 1][1];
-  for (let i = 0; i < entries.length - 1; i++) {
-    const [k0, v0] = entries[i];
-    const [k1, v1] = entries[i + 1];
-    if (km >= k0 && km <= k1) {
-      const t = (km - k0) / (k1 - k0);
-      return +(v0 + t * (v1 - v0)).toFixed(2);
-    }
-  }
-  return 0;
-}
-
 function getRateForMaterial(leadsData, materialName, km) {
-  if (!leadsData || !materialName || !km || km <= 0) return 0;
-  const groupKey = leadsData.materialToGroup?.[materialName];
-  if (!groupKey) return 0;
-  const group = leadsData.groups?.[groupKey];
-  if (!group) return 0;
-  return interpolateRate(group.rates, km);
-}
-
-function getUnitForMaterial(leadsData, materialName) {
-  const groupKey = leadsData?.materialToGroup?.[materialName];
-  return leadsData?.groups?.[groupKey]?.unit || "";
+  return libInterpolateRate(leadsData, materialName, km);
 }
 
 // ─── Toast component ──────────────────────────────────────────────────────────

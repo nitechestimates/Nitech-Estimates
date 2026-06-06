@@ -3,6 +3,14 @@ import { getServerSession } from "next-auth";
 import clientPromise from "@/lib/mongodb";
 import { authOptions } from "@/lib/auth";
 import { ObjectId } from "mongodb";
+import { handleError } from "@/lib/errorHandler";
+import { z } from "zod";
+
+const duplicateSchema = z.object({
+  id: z.string().refine((val) => ObjectId.isValid(val), {
+    message: "Invalid Estimate ID format",
+  }),
+});
 
 export async function POST(request) {
   try {
@@ -11,24 +19,22 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await request.json();
-    if (!id) {
-      return NextResponse.json({ error: "Estimate ID is required" }, { status: 400 });
+    const body = await request.json();
+    const validation = duplicateSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors.map(e => e.message).join(', ') },
+        { status: 400 }
+      );
     }
 
+    const { id } = validation.data;
     const client = await clientPromise;
     const db = client.db("nitech_estimates");
     const estimatesCollection = db.collection("estimates");
 
-    let objectId;
-    try {
-      objectId = new ObjectId(id);
-    } catch {
-      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
-    }
-
     const originalEstimate = await estimatesCollection.findOne({
-      _id: objectId,
+      _id: new ObjectId(id),
       userId: session.user.email,
     });
 
@@ -36,11 +42,9 @@ export async function POST(request) {
       return NextResponse.json({ error: "Estimate not found or access denied" }, { status: 404 });
     }
 
-    // Create duplicate
     const duplicateEstimate = { ...originalEstimate };
     delete duplicateEstimate._id;
     
-    // Append (Copy) to names to distinguish them
     if (duplicateEstimate.estimateName) {
       duplicateEstimate.estimateName += " (Copy)";
     }
@@ -48,7 +52,6 @@ export async function POST(request) {
       duplicateEstimate.nameOfWork += " (Copy)";
     }
     
-    // Reset timestamps
     duplicateEstimate.createdAt = new Date();
     duplicateEstimate.updatedAt = new Date();
 
@@ -60,10 +63,6 @@ export async function POST(request) {
       message: "Estimate duplicated successfully"
     });
   } catch (error) {
-    console.error("DUPLICATE ERROR:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to duplicate estimate");
   }
 }

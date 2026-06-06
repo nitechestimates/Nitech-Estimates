@@ -77,10 +77,12 @@ function NumericInput({ value, onChange, placeholder = "-", className = "" }) {
 
 function LocalTextInput({ value, onChange, className = "", placeholder = "", type = "text", step }) {
   const [localValue, setLocalValue] = useState(value ?? "");
+  const [prevValue, setPrevValue] = useState(value);
 
-  useEffect(() => {
+  if (value !== prevValue) {
     setLocalValue(value ?? "");
-  }, [value]);
+    setPrevValue(value);
+  }
 
   const handleBlur = () => {
     if (localValue !== value) {
@@ -111,10 +113,12 @@ function LocalTextInput({ value, onChange, className = "", placeholder = "", typ
 
 function LocalTextarea({ value, onChange, className = "", rows }) {
   const [localValue, setLocalValue] = useState(value ?? "");
+  const [prevValue, setPrevValue] = useState(value);
 
-  useEffect(() => {
+  if (value !== prevValue) {
     setLocalValue(value ?? "");
-  }, [value]);
+    setPrevValue(value);
+  }
 
   const handleBlur = () => {
     if (localValue !== value) {
@@ -135,9 +139,13 @@ function LocalTextarea({ value, onChange, className = "", rows }) {
 
 function LocalPercentInput({ value, onChange, onBlur }) {
   const [localVal, setLocalVal] = useState(value ?? 100);
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+
+  if (value !== prevValue) {
     setLocalVal(value ?? 100);
-  }, [value]);
+    setPrevValue(value);
+  }
+
   return (
     <input
       type="number"
@@ -149,10 +157,10 @@ function LocalPercentInput({ value, onChange, onBlur }) {
       onBlur={() => {
         if (localVal === "" || isNaN(localVal)) {
           onChange(100);
-          onBlur && onBlur(100);
+          if (onBlur) onBlur(100);
         } else {
           onChange(localVal);
-          onBlur && onBlur(localVal);
+          if (onBlur) onBlur(localVal);
         }
       }}
       className="w-12 border border-slate-300 rounded text-center px-1 py-0.5 text-xs bg-white text-black"
@@ -221,6 +229,24 @@ export default function MeasurementBook() {
         }),
       });
       if (res.ok) {
+        // Bulk sync RE items to MB records in DB
+        const itemsForSync = (billing.measurementItems || []).map(item => ({
+          id: item.id,
+          description: item.description || '',
+          totalQty: item.totalQty || 0,
+          unit: item.unit || '',
+          isRE: !!item.isRE
+        }));
+        
+        await fetch('/api/mb-records/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            estimateId,
+            items: itemsForSync
+          })
+        }).catch(syncErr => console.error("MB record sync failed on save:", syncErr));
+
         if (showToast) {
           setToastType("success");
           setTimeout(() => setToastVisible(false), 2000);
@@ -346,11 +372,35 @@ export default function MeasurementBook() {
     setBilling({ ...billing, measurementItems: updatedItems });
   };
 
-  const updateItemRE = (itemIdx, val) => {
+  const updateItemRE = async (itemIdx, val) => {
     if (!billing) return;
     const updatedItems = [...billing.measurementItems];
-    updatedItems[itemIdx] = { ...updatedItems[itemIdx], isRE: val };
+    const item = updatedItems[itemIdx];
+    updatedItems[itemIdx] = { ...item, isRE: val };
     setBilling({ ...billing, measurementItems: updatedItems });
+
+    // Sync individual checkbox toggle to DB
+    try {
+      if (val) {
+        await fetch('/api/mb-records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            description: item.description || '',
+            quantity: item.totalQty || 0,
+            unit: item.unit || '',
+            estimateId,
+            itemId: item.id
+          })
+        });
+      } else {
+        await fetch(`/api/mb-records/${item.id}`, {
+          method: 'DELETE'
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync MB Record RE state to DB:", err);
+    }
   };
 
   const handleResetRow = (itemIdx) => {

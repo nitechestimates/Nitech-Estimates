@@ -5,11 +5,13 @@ import { useStore } from "@/lib/store";
 
 function AutoTextarea({ value, onChange }) {
   const [localValue, setLocalValue] = useState(value ?? "");
+  const [prevValue, setPrevValue] = useState(value);
   const ref = useRef(null);
 
-  useEffect(() => {
+  if (value !== prevValue) {
     setLocalValue(value ?? "");
-  }, [value]);
+    setPrevValue(value);
+  }
 
   const adjustHeight = () => {
     if (ref.current) {
@@ -99,10 +101,12 @@ function NumericInput({ value, onChange, disabled = false }) {
 
 function LocalTextInput({ value, onChange, className = "", placeholder = "" }) {
   const [localValue, setLocalValue] = useState(value ?? "");
+  const [prevValue, setPrevValue] = useState(value);
 
-  useEffect(() => {
+  if (value !== prevValue) {
     setLocalValue(value ?? "");
-  }, [value]);
+    setPrevValue(value);
+  }
 
   const handleBlur = () => {
     if (localValue !== value) {
@@ -132,9 +136,13 @@ function LocalTextInput({ value, onChange, className = "", placeholder = "" }) {
 
 function LocalPercentInput({ value, onChange, onBlur, tabIndex }) {
   const [localVal, setLocalVal] = useState(value ?? 100);
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+
+  if (value !== prevValue) {
     setLocalVal(value ?? 100);
-  }, [value]);
+    setPrevValue(value);
+  }
+
   return (
     <input
       type="number"
@@ -147,10 +155,10 @@ function LocalPercentInput({ value, onChange, onBlur, tabIndex }) {
       onBlur={() => {
         if (localVal === "" || isNaN(localVal)) {
           onChange(100);
-          onBlur && onBlur(100);
+          if (onBlur) onBlur(100);
         } else {
           onChange(localVal);
-          onBlur && onBlur(localVal);
+          if (onBlur) onBlur(localVal);
         }
       }}
       className="w-12 border border-slate-200 rounded-xl px-1.5 py-1 text-center text-xs font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none bg-white/80 text-black shadow-sm transition-all"

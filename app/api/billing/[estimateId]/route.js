@@ -3,6 +3,31 @@ import { getServerSession } from "next-auth";
 import clientPromise from "@/lib/mongodb";
 import { authOptions } from "@/lib/auth";
 import { ObjectId } from "mongodb";
+import { handleError } from "@/lib/errorHandler";
+import { z } from "zod";
+
+const postSchema = z.object({
+  measurementItems: z.array(z.any()).max(1000).optional(),
+  abstractCustomData: z.record(z.any()).optional(),
+  nameOfWork: z.string().trim().optional(),
+  yojana: z.string().trim().optional(),
+  estAmount: z.string().trim().optional(),
+  year: z.string().trim().optional(),
+  dist: z.string().trim().optional(),
+  taluka: z.string().trim().optional(),
+  village: z.string().trim().optional(),
+  headDivision: z.string().trim().optional(),
+  subDivision: z.string().trim().optional(),
+  deputyEngineer: z.string().trim().optional(),
+  jrEngineer: z.string().trim().optional(),
+  adminApprovalNo: z.string().trim().optional()
+});
+
+const putSchema = z.object({
+  measurementItems: z.array(z.any()).max(1000),
+  abstractCustomData: z.record(z.any()),
+  extraBillingData: z.record(z.any())
+});
 
 // GET: Retrieve billing for an estimate
 export async function GET(request, context) {
@@ -13,10 +38,7 @@ export async function GET(request, context) {
     }
 
     const { estimateId } = await context.params;
-    let objectId;
-    try {
-      objectId = new ObjectId(estimateId);
-    } catch {
+    if (!ObjectId.isValid(estimateId)) {
       return NextResponse.json({ error: "Invalid estimate ID" }, { status: 400 });
     }
 
@@ -24,7 +46,7 @@ export async function GET(request, context) {
     const db = client.db("nitech_estimates");
 
     const billing = await db.collection("billings").findOne({
-      estimateId: objectId,
+      estimateId: new ObjectId(estimateId),
       userId: session.user.email,
     });
 
@@ -34,8 +56,7 @@ export async function GET(request, context) {
 
     return NextResponse.json({ success: true, exists: true, data: billing });
   } catch (error) {
-    console.error("GET BILLING ERROR:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Failed to retrieve billing");
   }
 }
 
@@ -48,22 +69,42 @@ export async function POST(request, context) {
     }
 
     const { estimateId } = await context.params;
-    let objectId;
-    try {
-      objectId = new ObjectId(estimateId);
-    } catch {
+    if (!ObjectId.isValid(estimateId)) {
       return NextResponse.json({ error: "Invalid estimate ID" }, { status: 400 });
     }
 
     const body = await request.json();
-    const { measurementItems, abstractCustomData, nameOfWork, yojana, estAmount, year, dist, taluka, village, headDivision, subDivision, deputyEngineer, jrEngineer, adminApprovalNo } = body;
+    const validation = postSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors.map(e => e.message).join(', ') },
+        { status: 400 }
+      );
+    }
+
+    const { 
+      measurementItems, 
+      abstractCustomData, 
+      nameOfWork, 
+      yojana, 
+      estAmount, 
+      year, 
+      dist, 
+      taluka, 
+      village, 
+      headDivision, 
+      subDivision, 
+      deputyEngineer, 
+      jrEngineer, 
+      adminApprovalNo 
+    } = validation.data;
 
     const client = await clientPromise;
     const db = client.db("nitech_estimates");
 
     // Check if billing already exists
     const existing = await db.collection("billings").findOne({
-      estimateId: objectId,
+      estimateId: new ObjectId(estimateId),
       userId: session.user.email,
     });
 
@@ -111,7 +152,7 @@ export async function POST(request, context) {
 
     // Store absolute copy of original measurements and abstract rates
     const billingDoc = {
-      estimateId: objectId,
+      estimateId: new ObjectId(estimateId),
       userId: session.user.email,
       measurementItems: measurementItems || [],
       originalMeasurementItems: measurementItems ? JSON.parse(JSON.stringify(measurementItems)) : [],
@@ -125,8 +166,7 @@ export async function POST(request, context) {
 
     return NextResponse.json({ success: true, id: result.insertedId });
   } catch (error) {
-    console.error("CREATE BILLING ERROR:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Failed to create billing");
   }
 }
 
@@ -139,21 +179,26 @@ export async function PUT(request, context) {
     }
 
     const { estimateId } = await context.params;
-    let objectId;
-    try {
-      objectId = new ObjectId(estimateId);
-    } catch {
+    if (!ObjectId.isValid(estimateId)) {
       return NextResponse.json({ error: "Invalid estimate ID" }, { status: 400 });
     }
 
     const body = await request.json();
-    const { measurementItems, abstractCustomData, extraBillingData } = body;
+    const validation = putSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors.map(e => e.message).join(', ') },
+        { status: 400 }
+      );
+    }
+
+    const { measurementItems, abstractCustomData, extraBillingData } = validation.data;
 
     const client = await clientPromise;
     const db = client.db("nitech_estimates");
 
     const result = await db.collection("billings").updateOne(
-      { estimateId: objectId, userId: session.user.email },
+      { estimateId: new ObjectId(estimateId), userId: session.user.email },
       {
         $set: {
           measurementItems: measurementItems || [],
@@ -170,8 +215,7 @@ export async function PUT(request, context) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("UPDATE BILLING ERROR:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Failed to update billing");
   }
 }
 
@@ -184,10 +228,7 @@ export async function DELETE(request, context) {
     }
 
     const { estimateId } = await context.params;
-    let objectId;
-    try {
-      objectId = new ObjectId(estimateId);
-    } catch {
+    if (!ObjectId.isValid(estimateId)) {
       return NextResponse.json({ error: "Invalid estimate ID" }, { status: 400 });
     }
 
@@ -195,7 +236,7 @@ export async function DELETE(request, context) {
     const db = client.db("nitech_estimates");
 
     const result = await db.collection("billings").deleteOne({
-      estimateId: objectId,
+      estimateId: new ObjectId(estimateId),
       userId: session.user.email,
     });
 
@@ -205,7 +246,6 @@ export async function DELETE(request, context) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("DELETE BILLING ERROR:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleError(error, "Failed to delete billing");
   }
 }

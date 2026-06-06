@@ -35,6 +35,41 @@ function loadEnvFiles() {
 }
 loadEnvFiles();
 
+// ── Environment Variables Validation ──────────────────────────────────────────
+function validateEnv() {
+  try {
+    const { z } = require('zod');
+    const envSchema = z.object({
+      MONGODB_URI: z.string().refine(
+        (val) => val.startsWith("mongodb://") || val.startsWith("mongodb+srv://"),
+        { message: "MONGODB_URI must be a valid connection string starting with mongodb:// or mongodb+srv://" }
+      ),
+      NEXTAUTH_SECRET: z.string().min(1, "NEXTAUTH_SECRET is required"),
+      GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
+      GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
+    });
+
+    envSchema.parse(process.env);
+  } catch (err) {
+    let errorMsg = "Application environment variables validation failed:\n\n";
+    if (err.errors) {
+      errorMsg += err.errors.map(e => `- ${e.path.join('.')}: ${e.message}`).join('\n');
+    } else {
+      errorMsg += err.message;
+    }
+    
+    try {
+      const { dialog } = require('electron');
+      dialog.showErrorBox('Configuration Error', errorMsg);
+    } catch (e) {
+      console.error("Critical Configuration Error:", errorMsg);
+    }
+    process.exit(1);
+  }
+}
+validateEnv();
+
+
 // ── Global Crash Handling and Logging ─────────────────────────────────────────
 function logCrash(err) {
   const logDir = path.join(os.homedir(), 'NitechEstimatesLogs');

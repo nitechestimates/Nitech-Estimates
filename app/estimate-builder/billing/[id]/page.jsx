@@ -9,10 +9,12 @@ const formatMoney = (num) => (num || 0).toFixed(2);
 // Focus-fix input wrapper to prevent losing focus during parent renders
 function LocalTextInput({ value, onChange, className = "", placeholder = "", type = "text", step }) {
   const [localValue, setLocalValue] = useState(value ?? "");
+  const [prevValue, setPrevValue] = useState(value);
 
-  useEffect(() => {
+  if (value !== prevValue) {
     setLocalValue(value ?? "");
-  }, [value]);
+    setPrevValue(value);
+  }
 
   const handleBlur = () => {
     if (localValue !== value) {
