@@ -229,23 +229,6 @@ export default function MeasurementBook() {
         }),
       });
       if (res.ok) {
-        // Bulk sync RE items to MB records in DB
-        const itemsForSync = (billing.measurementItems || []).map(item => ({
-          id: item.id,
-          description: item.description || '',
-          totalQty: item.totalQty || 0,
-          unit: item.unit || '',
-          isRE: !!item.isRE
-        }));
-        
-        await fetch('/api/mb-records/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            estimateId,
-            items: itemsForSync
-          })
-        }).catch(syncErr => console.error("MB record sync failed on save:", syncErr));
 
         if (showToast) {
           setToastType("success");
@@ -372,35 +355,12 @@ export default function MeasurementBook() {
     setBilling({ ...billing, measurementItems: updatedItems });
   };
 
-  const updateItemRE = async (itemIdx, val) => {
+  const updateItemRE = (itemIdx, val) => {
     if (!billing) return;
     const updatedItems = [...billing.measurementItems];
     const item = updatedItems[itemIdx];
     updatedItems[itemIdx] = { ...item, isRE: val };
     setBilling({ ...billing, measurementItems: updatedItems });
-
-    // Sync individual checkbox toggle to DB
-    try {
-      if (val) {
-        await fetch('/api/mb-records', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            description: item.description || '',
-            quantity: item.totalQty || 0,
-            unit: item.unit || '',
-            estimateId,
-            itemId: item.id
-          })
-        });
-      } else {
-        await fetch(`/api/mb-records/${item.id}`, {
-          method: 'DELETE'
-        });
-      }
-    } catch (err) {
-      console.error("Failed to sync MB Record RE state to DB:", err);
-    }
   };
 
   const handleResetRow = (itemIdx) => {
