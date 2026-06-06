@@ -1044,6 +1044,7 @@ function RateAnalysisContent() {
                   type="text"
                   value={modalFields.estimateName || ""}
                   onChange={e => setModalFields(prev => ({ ...prev, estimateName: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && handleModalSave()}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
                   placeholder="Short name for history"
                 />
@@ -1056,6 +1057,7 @@ function RateAnalysisContent() {
                   type="text"
                   value={modalFields.nameOfWork}
                   onChange={e => setModalFields(prev => ({ ...prev, nameOfWork: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && handleModalSave()}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
                   placeholder="Name of Work"
                 />
@@ -1069,6 +1071,7 @@ function RateAnalysisContent() {
                   value={modalFields.yojana || ""}
                   onChange={e => handleModalYojanaChange(e.target.value)}
                   onFocus={() => setEditYojanaDropdown(true)}
+                  onKeyDown={e => e.key === "Enter" && handleModalSave()}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
                   placeholder="Select or type new"
                 />
@@ -1128,6 +1131,7 @@ function RateAnalysisContent() {
                           return updated;
                         });
                       }}
+                      onKeyDown={e => e.key === "Enter" && handleModalSave()}
                       className="w-full border border-orange-300 bg-orange-50 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm text-gray-900 pr-8"
                       placeholder="Enter %"
                     />
@@ -1145,6 +1149,7 @@ function RateAnalysisContent() {
                     type="number" min="0"
                     value={modalFields.estAmount || ""}
                     onChange={e => setModalFields(prev => ({ ...prev, estAmount: e.target.value }))}
+                    onKeyDown={e => e.key === "Enter" && handleModalSave()}
                     className="w-full border border-gray-300 pl-7 pr-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
                     placeholder="Estimated amount in rupees"
                   />
@@ -1159,6 +1164,7 @@ function RateAnalysisContent() {
                     type="number" min="0" max="100" step="0.01"
                     value={modalFields.labourInsurance || ""}
                     onChange={e => setModalFields(prev => ({ ...prev, labourInsurance: e.target.value }))}
+                    onKeyDown={e => e.key === "Enter" && handleModalSave()}
                     className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 pr-8"
                     placeholder="Labour insurance %"
                   />
@@ -1173,6 +1179,7 @@ function RateAnalysisContent() {
                   type="text"
                   value={modalFields.year || ""}
                   onChange={e => setModalFields(prev => ({ ...prev, year: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && handleModalSave()}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
                   placeholder="e.g. 2024-25"
                 />
@@ -1182,15 +1189,15 @@ function RateAnalysisContent() {
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Dist.</label>
-                  <input type="text" value={modalFields.dist || ""} onChange={e => setModalFields(prev => ({ ...prev, dist: e.target.value }))} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="District" />
+                  <input type="text" value={modalFields.dist || ""} onChange={e => setModalFields(prev => ({ ...prev, dist: e.target.value }))} onKeyDown={e => e.key === "Enter" && handleModalSave()} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="District" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Taluka</label>
-                  <input type="text" value={modalFields.taluka || ""} onChange={e => setModalFields(prev => ({ ...prev, taluka: e.target.value }))} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Taluka" />
+                  <input type="text" value={modalFields.taluka || ""} onChange={e => setModalFields(prev => ({ ...prev, taluka: e.target.value }))} onKeyDown={e => e.key === "Enter" && handleModalSave()} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Taluka" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Village</label>
-                  <input type="text" value={modalFields.village || ""} onChange={e => setModalFields(prev => ({ ...prev, village: e.target.value }))} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Village" />
+                  <input type="text" value={modalFields.village || ""} onChange={e => setModalFields(prev => ({ ...prev, village: e.target.value }))} onKeyDown={e => e.key === "Enter" && handleModalSave()} className="w-full border border-gray-300 px-2 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Village" />
                 </div>
               </div>
 
@@ -1198,6 +1205,7 @@ function RateAnalysisContent() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Head Division</label>
                 <input type="text" value={modalFields.headDivision || ""} onChange={e => setModalFields(prev => ({ ...prev, headDivision: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && handleModalSave()}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Head Division" />
               </div>
 
@@ -1205,6 +1213,7 @@ function RateAnalysisContent() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Sub-Division</label>
                 <input type="text" value={modalFields.subDivision || ""} onChange={e => setModalFields(prev => ({ ...prev, subDivision: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && handleModalSave()}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Sub-Division" />
               </div>
 
@@ -1212,6 +1221,7 @@ function RateAnalysisContent() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Deputy Engineer</label>
                 <input type="text" value={modalFields.deputyEngineer || ""} onChange={e => setModalFields(prev => ({ ...prev, deputyEngineer: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && handleModalSave()}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Deputy Engineer" />
               </div>
 
@@ -1219,6 +1229,7 @@ function RateAnalysisContent() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Name of Jr. / Sectional Engineer</label>
                 <input type="text" value={modalFields.jrEngineer || ""} onChange={e => setModalFields(prev => ({ ...prev, jrEngineer: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && handleModalSave()}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="Jr. / Sectional Engineer" />
               </div>
 
@@ -1226,6 +1237,7 @@ function RateAnalysisContent() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Administrative Approval No.</label>
                 <input type="text" value={modalFields.adminApprovalNo || ""} onChange={e => setModalFields(prev => ({ ...prev, adminApprovalNo: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && handleModalSave()}
                   className="w-full border border-gray-300 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900" placeholder="e.g. AA/2024/XYZ/123" />
               </div>
 
@@ -1279,10 +1291,10 @@ function RateAnalysisContent() {
             <table className="w-full border-collapse text-xs relative" style={{ minWidth: "1400px" }}>
               <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider sticky top-0 z-20">
                 <tr className="text-center font-bold">
-                  <th className="border-b border-slate-200 p-3">☰</th><th className="border-b border-slate-200 p-3 w-[40px]">Sr</th><th className="border-b border-slate-200 p-3 w-[80px]">SSR</th><th className="border-b border-slate-200 p-3 min-w-[350px]">Description</th><th className="border-b border-slate-200 p-3 w-[120px]">Unit</th><th className="border-b border-slate-200 p-3 w-[90px]">Basic Rate</th><th className="border-b border-slate-200 p-3 w-[100px]">Deduct (SCADA)</th><th className="border-b border-slate-200 p-3 w-[90px]">Net (5-6)</th><th className="border-b border-slate-200 p-3 w-[140px]">Material</th><th className="border-b border-slate-200 p-3 w-[70px]">Qty</th><th className="border-b border-slate-200 p-3 w-[90px]">Lead (Rs.)</th><th className="border-b border-slate-200 p-3 w-[90px]">Total Lead</th><th className="border-b border-slate-200 p-3 w-[100px]">Total (7+11)</th><th className="border-b border-slate-200 p-3 w-[70px]">Tribal</th><th className="border-b border-slate-200 p-3 w-[100px]">Net Total</th><th className="border-b border-slate-200 p-3 w-[150px]">Specs</th><th className="border-b border-slate-200 p-3 sticky right-0 bg-slate-50/90 z-10 w-[80px] shadow-[-4px_0_15px_rgba(0,0,0,0.03)] backdrop-blur-xl">Actions</th>
+                  <th className="border border-slate-200 p-3">☰</th><th className="border border-slate-200 p-3 w-[40px]">Sr</th><th className="border border-slate-200 p-3 w-[80px]">SSR</th><th className="border border-slate-200 p-3 min-w-[350px]">Description</th><th className="border border-slate-200 p-3 w-[120px]">Unit</th><th className="border border-slate-200 p-3 w-[90px]">Basic Rate</th><th className="border border-slate-200 p-3 w-[100px]">Deduct (SCADA)</th><th className="border border-slate-200 p-3 w-[90px]">Net (5-6)</th><th className="border border-slate-200 p-3 w-[140px]">Material</th><th className="border border-slate-200 p-3 w-[70px]">Qty</th><th className="border border-slate-200 p-3 w-[90px]">Lead (Rs.)</th><th className="border border-slate-200 p-3 w-[90px]">Total Lead</th><th className="border border-slate-200 p-3 w-[100px]">Total (7+11)</th><th className="border border-slate-200 p-3 w-[70px]">Tribal</th><th className="border border-slate-200 p-3 w-[100px]">Net Total</th><th className="border border-slate-200 p-3 w-[150px]">Specs</th><th className="border border-slate-200 p-3 sticky right-0 bg-slate-50/90 z-10 w-[80px] shadow-[-4px_0_15px_rgba(0,0,0,0.03)] backdrop-blur-xl">Actions</th>
                 </tr>
                 <tr className="bg-slate-50/50 text-[10px] font-bold text-slate-400 text-center">
-                  <td className="border-b border-slate-200 p-1"></td><td className="border-b border-slate-200 p-1">1</td><td className="border-b border-slate-200 p-1">2</td><td className="border-b border-slate-200 p-1">3</td><td className="border-b border-slate-200 p-1">4</td><td className="border-b border-slate-200 p-1">5</td><td className="border-b border-slate-200 p-1">6</td><td className="border-b border-slate-200 p-1">7</td><td className="border-b border-slate-200 p-1">8</td><td className="border-b border-slate-200 p-1">9</td><td className="border-b border-slate-200 p-1">10</td><td className="border-b border-slate-200 p-1">11</td><td className="border-b border-slate-200 p-1">12</td><td className="border-b border-slate-200 p-1">13</td><td className="border-b border-slate-200 p-1">14</td><td className="border-b border-slate-200 p-1">15</td><td className="border-b border-slate-200 p-1 sticky right-0 bg-slate-50/90 z-10 shadow-[-4px_0_15px_rgba(0,0,0,0.03)] backdrop-blur-xl"></td>
+                  <td className="border border-slate-200 p-1"></td><td className="border border-slate-200 p-1">1</td><td className="border border-slate-200 p-1">2</td><td className="border border-slate-200 p-1">3</td><td className="border border-slate-200 p-1">4</td><td className="border border-slate-200 p-1">5</td><td className="border border-slate-200 p-1">6</td><td className="border border-slate-200 p-1">7</td><td className="border border-slate-200 p-1">8</td><td className="border border-slate-200 p-1">9</td><td className="border border-slate-200 p-1">10</td><td className="border border-slate-200 p-1">11</td><td className="border border-slate-200 p-1">12</td><td className="border border-slate-200 p-1">13</td><td className="border border-slate-200 p-1">14</td><td className="border border-slate-200 p-1">15</td><td className="border border-slate-200 p-1 sticky right-0 bg-slate-50/90 z-10 shadow-[-4px_0_15px_rgba(0,0,0,0.03)] backdrop-blur-xl"></td>
                 </tr>
               </thead>
               <tbody>
@@ -1330,16 +1342,16 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
   }, [filterText, materialList]);
 
   return (
-    <tr ref={setNodeRef} style={style} className="bg-white/40 hover:bg-slate-50/50 group transition-colors border-b border-slate-200 last:border-b-0">
-      <td {...attributes} {...listeners} className="border-b border-slate-200 p-2 text-center cursor-grab text-slate-400 hover:text-slate-700">☰</td>
-      <td className="border-b border-slate-200 p-2 text-center font-semibold text-slate-700">{row.srNo}</td>
-      <td className="border-b border-slate-200 p-2 text-center font-medium">{row.ssr}</td>
-      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} /></td>
-      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center text-xs whitespace-pre-wrap" /></td>
-      <td className="border-b border-slate-200 p-2"><NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} /></td>
-      <td className="border-b border-slate-200 p-2"><NumericInput value={row.deduct} onChange={(val) => updateRow(index, "deduct", val)} /></td>
-      <td className="border-b border-slate-200 p-2 text-center text-slate-700 font-medium">{formatNumber(row.netAfterDeduct)}</td>
-      <td className="border-b border-slate-200 py-1 px-1 align-top">
+    <tr ref={setNodeRef} style={style} className="bg-white/40 hover:bg-blue-50/60 group transition-colors border-b border-slate-200 last:border-b-0">
+      <td {...attributes} {...listeners} className="border border-slate-200 p-2 text-center cursor-grab text-slate-400 hover:text-slate-700">☰</td>
+      <td className="border border-slate-200 p-2 text-center font-semibold text-slate-700">{row.srNo}</td>
+      <td className="border border-slate-200 p-2 text-center font-medium">{row.ssr}</td>
+      <td className="border border-slate-200 p-2"><AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} /></td>
+      <td className="border border-slate-200 p-2"><AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center text-xs whitespace-pre-wrap" /></td>
+      <td className="border border-slate-200 p-2"><NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} /></td>
+      <td className="border border-slate-200 p-2"><NumericInput value={row.deduct} onChange={(val) => updateRow(index, "deduct", val)} /></td>
+      <td className="border border-slate-200 p-2 text-center text-slate-700 font-medium">{formatNumber(row.netAfterDeduct)}</td>
+      <td className="border border-slate-200 py-1 px-1 align-top">
         {row.materials.length === 0 ? (
           <button onClick={() => addMaterial(index)} className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold" title="Add material">+ Add Material</button>
         ) : (
@@ -1393,19 +1405,19 @@ const SortableRow = React.memo(function SortableRow({ row, index, isTribal, upda
           ))
         )}
       </td>
-      <td className="border-b border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" /></div>)}</td>
-      <td className="border-b border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" /></div>)}</td>
-      <td className="border-b border-slate-200 p-2 text-center text-slate-700">
+      <td className="border border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" /></div>)}</td>
+      <td className="border border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" /></div>)}</td>
+      <td className="border border-slate-200 p-2 text-center text-slate-700">
         {row.materials.length > 0 && row.totalLead === 0
           ? <span className="text-xs text-amber-500 font-medium italic">Add leads first</span>
           : formatNumber(row.totalLead)
         }
       </td>
-      <td className="border-b border-slate-200 p-2 text-center font-bold text-slate-800">{formatNumber(row.total)}</td>
-      <td className="border-b border-slate-200 p-2 text-center font-semibold text-slate-500">{isTribal ? formatNumber(row.tribal) : "-"}</td>
-      <td className="border-b border-slate-200 p-2 text-center font-bold text-blue-700 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
-      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.specs} onChange={(e) => updateRow(index, "specs", e.target.value)} /></td>
-      <td className="border-b border-slate-200 p-2 text-center sticky right-0 bg-white/60 group-hover:bg-slate-50/50 backdrop-blur-xl z-10 shadow-[-4px_0_15px_rgba(0,0,0,0.03)]">
+      <td className="border border-slate-200 p-2 text-center font-bold text-slate-800">{formatNumber(row.total)}</td>
+      <td className="border border-slate-200 p-2 text-center font-semibold text-slate-500">{isTribal ? formatNumber(row.tribal) : "-"}</td>
+      <td className="border border-slate-200 p-2 text-center font-bold text-blue-700 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
+      <td className="border border-slate-200 p-2"><AutoTextarea value={row.specs} onChange={(e) => updateRow(index, "specs", e.target.value)} /></td>
+      <td className="border border-slate-200 p-2 text-center sticky right-0 bg-white/60 group-hover:bg-slate-50/50 backdrop-blur-xl z-10 shadow-[-4px_0_15px_rgba(0,0,0,0.03)]">
         <div className="flex justify-center gap-3">
           <button onClick={() => refreshRow(index)} title="Refresh" className="transition-all duration-200 hover:scale-125 hover:rotate-180 active:scale-90 opacity-60 hover:opacity-100">🔄</button>
           <button onClick={() => deleteRow(row.id)} title="Delete" className="transition-all duration-200 hover:scale-125 hover:text-red-600 active:scale-90 opacity-60 hover:opacity-100">❌</button>
@@ -1425,16 +1437,16 @@ const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTri
   }, [filterText, materialList]);
 
   return (
-    <tr className="bg-slate-50/80 hover:bg-slate-50 group transition-colors border-t-2 border-slate-300">
-      <td className="border-b border-slate-200 p-2 text-center text-slate-300">📌</td>
-      <td className="border-b border-slate-200 p-2 text-center font-semibold text-slate-700">{globalIndex}</td>
-      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.ssr} onChange={(e) => updateRow(index, "ssr", e.target.value)} className="text-center font-medium" /></td>
-      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} /></td>
-      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center text-xs whitespace-pre-wrap" /></td>
-      <td className="border-b border-slate-200 p-2"><NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} /></td>
-      <td className="border-b border-slate-200 p-2"><NumericInput value={row.deduct} onChange={(val) => updateRow(index, "deduct", val)} /></td>
-      <td className="border-b border-slate-200 p-2 text-center text-slate-700 font-medium">{formatNumber(row.netAfterDeduct)}</td>
-      <td className="border-b border-slate-200 py-1 px-1 align-top">
+    <tr className="bg-slate-50/80 hover:bg-blue-50/60 group transition-colors border-t-2 border-slate-300">
+      <td className="border border-slate-200 p-2 text-center text-slate-300">📌</td>
+      <td className="border border-slate-200 p-2 text-center font-semibold text-slate-700">{globalIndex}</td>
+      <td className="border border-slate-200 p-2"><AutoTextarea value={row.ssr} onChange={(e) => updateRow(index, "ssr", e.target.value)} className="text-center font-medium" /></td>
+      <td className="border border-slate-200 p-2"><AutoTextarea value={row.description} onChange={(e) => updateRow(index, "description", e.target.value)} /></td>
+      <td className="border border-slate-200 p-2"><AutoTextarea value={row.unit} onChange={(e) => updateRow(index, "unit", e.target.value)} className="text-center text-xs whitespace-pre-wrap" /></td>
+      <td className="border border-slate-200 p-2"><NumericInput value={row.basicRate} onChange={(val) => updateRow(index, "basicRate", val)} /></td>
+      <td className="border border-slate-200 p-2"><NumericInput value={row.deduct} onChange={(val) => updateRow(index, "deduct", val)} /></td>
+      <td className="border border-slate-200 p-2 text-center text-slate-700 font-medium">{formatNumber(row.netAfterDeduct)}</td>
+      <td className="border border-slate-200 py-1 px-1 align-top">
         {row.materials.length === 0 ? (
           <button onClick={() => addMaterial(index)} className="text-green-600 text-xs px-1 hover:scale-110 transition font-bold" title="Add material">+ Add Material</button>
         ) : (
@@ -1488,19 +1500,19 @@ const StaticRow = React.memo(function StaticRow({ row, index, globalIndex, isTri
           ))
         )}
       </td>
-      <td className="border-b border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" /></div>)}</td>
-      <td className="border-b border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" /></div>)}</td>
-      <td className="border-b border-slate-200 p-2 text-center text-slate-700">
+      <td className="border border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.qty} onChange={(val) => updateMaterial(index, matIdx, "qty", val)} placeholder="Qty" /></div>)}</td>
+      <td className="border border-slate-200 py-1 px-1 align-top">{row.materials.map((mat, matIdx) => <div key={mat.id} className="mb-1"><NumericInput value={mat.lead} onChange={(val) => updateMaterial(index, matIdx, "lead", val)} placeholder="Lead" /></div>)}</td>
+      <td className="border border-slate-200 p-2 text-center text-slate-700">
         {row.materials.length > 0 && row.totalLead === 0
           ? <span className="text-xs text-amber-500 font-medium italic">Add leads first</span>
           : formatNumber(row.totalLead)
         }
       </td>
-      <td className="border-b border-slate-200 p-2 text-center font-bold text-slate-800">{formatNumber(row.total)}</td>
-      <td className="border-b border-slate-200 p-2 text-center font-semibold text-slate-500">{isTribal ? formatNumber(row.tribal) : "-"}</td>
-      <td className="border-b border-slate-200 p-2 text-center font-bold text-blue-700 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
-      <td className="border-b border-slate-200 p-2"><AutoTextarea value={row.specs} onChange={(e) => updateRow(index, "specs", e.target.value)} /></td>
-      <td className="border-b border-slate-200 p-2 text-center sticky right-0 bg-slate-50/90 z-10 shadow-[-4px_0_15px_rgba(0,0,0,0.03)] backdrop-blur-xl">
+      <td className="border border-slate-200 p-2 text-center font-bold text-slate-800">{formatNumber(row.total)}</td>
+      <td className="border border-slate-200 p-2 text-center font-semibold text-slate-500">{isTribal ? formatNumber(row.tribal) : "-"}</td>
+      <td className="border border-slate-200 p-2 text-center font-bold text-blue-700 bg-blue-50/30">{formatNumber(row.netTotal)}</td>
+      <td className="border border-slate-200 p-2"><AutoTextarea value={row.specs} onChange={(e) => updateRow(index, "specs", e.target.value)} /></td>
+      <td className="border border-slate-200 p-2 text-center sticky right-0 bg-slate-50/90 z-10 shadow-[-4px_0_15px_rgba(0,0,0,0.03)] backdrop-blur-xl">
         <div className="flex justify-center gap-3">
           <button onClick={() => clearRow()} title="Clear Row" className="transition-all duration-200 hover:scale-125 hover:text-red-600 active:scale-90 opacity-60 hover:opacity-100 text-xs">🧹</button>
         </div>

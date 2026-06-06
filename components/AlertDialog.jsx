@@ -1,6 +1,4 @@
-"use client";
-
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 /**
  * Custom dialog state — pass to <AlertDialog /> and use triggerAlert/triggerConfirm to open.
@@ -69,6 +67,25 @@ export function useAlertDialog() {
  *   <AlertDialog dialog={dialog} />
  */
 export default function AlertDialog({ dialog }) {
+  useEffect(() => {
+    if (!dialog) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        dialog.onConfirm();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        if (dialog.isConfirm && dialog.onCancel) {
+          dialog.onCancel();
+        } else {
+          dialog.onConfirm();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [dialog]);
+
   if (!dialog) return null;
 
   return (

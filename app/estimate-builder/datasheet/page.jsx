@@ -246,6 +246,38 @@ export default function DatasheetPage() {
     setFormAdminApprovalNo("");
   };
 
+  const handleSaveDetailsProfile = async () => {
+    if (!formProfileName.trim()) {
+      await triggerAlert("Please enter a Profile Name.");
+      return;
+    }
+    const profileData = {
+      profileName: formProfileName.trim(),
+      estimateName: formEstimateName,
+      nameOfWork: formNameOfWork,
+      isTribal: formIsTribal,
+      tribalPercent: formTribalPercent,
+      yojana: formYojana,
+      estAmount: formEstAmount,
+      labourInsurance: formLabourInsurance,
+      year: formYear,
+      dist: formDist,
+      taluka: formTaluka,
+      village: formVillage,
+      headDivision: formHeadDivision,
+      subDivision: formSubDivision,
+      deputyEngineer: formDeputyEngineer,
+      jrEngineer: formJrEngineer,
+      adminApprovalNo: formAdminApprovalNo
+    };
+    if (activeProfileIdToEdit === "new") {
+      addProjectDetailsProfile(profileData);
+    } else {
+      updateProjectDetailsProfile(activeProfileIdToEdit, profileData);
+    }
+    setActiveProfileIdToEdit(null);
+  };
+
   const handleAddProfile = async () => {
     if (!newProfileName.trim()) return;
     if (profiles.length >= 30) { await triggerAlert("Max 30 profiles per category."); return; }
@@ -493,6 +525,15 @@ export default function DatasheetPage() {
                               <input 
                                 value={editYojanaVal} 
                                 onChange={e => setEditYojanaVal(e.target.value)} 
+                                onKeyDown={e => {
+                                  if (e.key === "Enter") {
+                                    if (editYojanaVal.trim() && editYojanaVal !== item) {
+                                      removeYojana(item);
+                                      addYojana(editYojanaVal);
+                                    }
+                                    setEditingYojana(null);
+                                  }
+                                }}
                                 className="flex-1 border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium" 
                               />
                               <button 
@@ -647,6 +688,12 @@ export default function DatasheetPage() {
                                   <input
                                     value={renameVal}
                                     onChange={e => setRenameVal(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.key === "Enter") {
+                                        if (renameVal.trim()) renameLeadsProfile(activeCategory, p.id, renameVal);
+                                        setRenamingId(null);
+                                      }
+                                    }}
                                     className="flex-1 border border-slate-200 rounded-lg px-2 py-0.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium bg-white/60 shadow-sm"
                                     autoFocus
                                   />
@@ -1422,6 +1469,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Igatpuri Roads Standard Template..."
                           value={formProfileName}
                           onChange={(e) => setFormProfileName(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1434,6 +1482,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Igatpuri Road Repair Work"
                           value={formEstimateName}
                           onChange={(e) => setFormEstimateName(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1446,6 +1495,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Metalling and Tarring of Road"
                           value={formNameOfWork}
                           onChange={(e) => setFormNameOfWork(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1458,6 +1508,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. DPDC Scheme 2024-25"
                           value={formYojana}
                           onChange={(e) => setFormYojana(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1493,6 +1544,7 @@ export default function DatasheetPage() {
                                 placeholder="Tribal %"
                                 value={formTribalPercent}
                                 onChange={(e) => setFormTribalPercent(e.target.value)}
+                                onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                                 className="w-full border border-orange-300 bg-orange-50 px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-400"
                               />
                               <span className="absolute right-3 top-2 text-xs font-bold text-orange-500">%</span>
@@ -1509,6 +1561,7 @@ export default function DatasheetPage() {
                           placeholder="Estimated cost"
                           value={formEstAmount}
                           onChange={(e) => setFormEstAmount(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1522,6 +1575,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. 1.00"
                           value={formLabourInsurance}
                           onChange={(e) => setFormLabourInsurance(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1534,6 +1588,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. 2024-25"
                           value={formYear}
                           onChange={(e) => setFormYear(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1547,6 +1602,7 @@ export default function DatasheetPage() {
                             placeholder="District"
                             value={formDist}
                             onChange={(e) => setFormDist(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                             className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                           />
                         </div>
@@ -1557,6 +1613,7 @@ export default function DatasheetPage() {
                             placeholder="Taluka"
                             value={formTaluka}
                             onChange={(e) => setFormTaluka(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                             className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                           />
                         </div>
@@ -1567,6 +1624,7 @@ export default function DatasheetPage() {
                             placeholder="Village"
                             value={formVillage}
                             onChange={(e) => setFormVillage(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                             className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                           />
                         </div>
@@ -1580,6 +1638,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Nashik Division"
                           value={formHeadDivision}
                           onChange={(e) => setFormHeadDivision(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1592,6 +1651,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Igatpuri Sub-Division"
                           value={formSubDivision}
                           onChange={(e) => setFormSubDivision(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1604,6 +1664,7 @@ export default function DatasheetPage() {
                           placeholder="Name of Deputy Engineer"
                           value={formDeputyEngineer}
                           onChange={(e) => setFormDeputyEngineer(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1616,6 +1677,7 @@ export default function DatasheetPage() {
                           placeholder="Name of Jr. Engineer"
                           value={formJrEngineer}
                           onChange={(e) => setFormJrEngineer(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1628,6 +1690,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. AA/2024/XYZ/123"
                           value={formAdminApprovalNo}
                           onChange={(e) => setFormAdminApprovalNo(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1645,37 +1708,7 @@ export default function DatasheetPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={async () => {
-                          if (!formProfileName.trim()) {
-                            await triggerAlert("Please enter a Profile Name.");
-                            return;
-                          }
-                          const profileData = {
-                            profileName: formProfileName.trim(),
-                            estimateName: formEstimateName,
-                            nameOfWork: formNameOfWork,
-                            isTribal: formIsTribal,
-                            tribalPercent: formTribalPercent,
-                            yojana: formYojana,
-                            estAmount: formEstAmount,
-                            labourInsurance: formLabourInsurance,
-                            year: formYear,
-                            dist: formDist,
-                            taluka: formTaluka,
-                            village: formVillage,
-                            headDivision: formHeadDivision,
-                            subDivision: formSubDivision,
-                            deputyEngineer: formDeputyEngineer,
-                            jrEngineer: formJrEngineer,
-                            adminApprovalNo: formAdminApprovalNo
-                          };
-                          if (activeProfileIdToEdit === "new") {
-                            addProjectDetailsProfile(profileData);
-                          } else {
-                            updateProjectDetailsProfile(activeProfileIdToEdit, profileData);
-                          }
-                          setActiveProfileIdToEdit(null);
-                        }}
+                        onClick={handleSaveDetailsProfile}
                         className="px-5 py-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-bold rounded-xl text-xs shadow-md active:scale-95 transition cursor-pointer"
                       >
                         💾 Save Profile Details

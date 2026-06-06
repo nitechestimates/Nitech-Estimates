@@ -91,7 +91,7 @@ function NumericInput({ value, onChange, disabled = false }) {
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       disabled={disabled}
-      className={`text-center w-full border-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-2 py-1 transition-all ${disabled ? "bg-slate-100/50 text-slate-500 cursor-not-allowed" : "bg-transparent hover:bg-white/80 focus:bg-white"}`}
+      className={`text-center w-full border border-slate-200/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-2 py-1 transition-all ${disabled ? "bg-slate-100/50 text-slate-500 cursor-not-allowed" : "bg-slate-50/60 hover:bg-blue-50/80 hover:border-blue-300 focus:bg-white"}`}
       placeholder="-"
     />
   );
@@ -130,7 +130,7 @@ function LocalTextInput({ value, onChange, className = "", placeholder = "" }) {
   );
 }
 
-function LocalPercentInput({ value, onChange, onBlur }) {
+function LocalPercentInput({ value, onChange, onBlur, tabIndex }) {
   const [localVal, setLocalVal] = useState(value ?? 100);
   useEffect(() => {
     setLocalVal(value ?? 100);
@@ -142,6 +142,7 @@ function LocalPercentInput({ value, onChange, onBlur }) {
       max="100"
       step="1"
       value={localVal}
+      tabIndex={tabIndex}
       onChange={(e) => setLocalVal(e.target.value === "" ? "" : parseFloat(e.target.value))}
       onBlur={() => {
         if (localVal === "" || isNaN(localVal)) {
@@ -358,18 +359,18 @@ export default function MeasurementPage() {
       </div>
       <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm bg-white/60 backdrop-blur-xl">
         <table className="w-full border-collapse text-sm">
-          <thead className="bg-slate-50/90 text-slate-600 text-xs uppercase tracking-wider sticky top-0 z-10 border-b border-slate-200">
+          <thead className="bg-slate-50/90 text-slate-600 text-xs uppercase tracking-wider sticky top-0 z-10 border border-slate-200">
             <tr className="text-center font-bold">
-              <th className="border-b border-slate-200 p-3 w-[50px]">Sr. No.</th>
-              <th className="border-b border-slate-200 p-3 w-[350px]">DESCRIPTION OF ITEM</th>
-              <th className="border-b border-slate-200 p-3 w-[220px]">PARTICULARS (Measurement Name)</th>
-              <th className="border-b border-slate-200 p-3 w-[80px]">No.</th>
-              <th className="border-b border-slate-200 p-3 w-[100px]">L.</th>
-              <th className="border-b border-slate-200 p-3 w-[100px]">B/W</th>
-              <th className="border-b border-slate-200 p-3 w-[100px]">H/D.</th>
-              <th className="border-b border-slate-200 p-3 w-[120px]">TOTAL</th>
-              <th className="border-b border-slate-200 p-3 w-[80px]">UNIT</th>
-              <th className="border-b border-slate-200 p-3 w-[60px]"></th>
+              <th className="border border-slate-200 p-3 w-[50px]">Sr. No.</th>
+              <th className="border border-slate-200 p-3 w-[350px]">DESCRIPTION OF ITEM</th>
+              <th className="border border-slate-200 p-3 w-[220px]">PARTICULARS (Measurement Name)</th>
+              <th className="border border-slate-200 p-3 w-[80px]">No.</th>
+              <th className="border border-slate-200 p-3 w-[100px]">L.</th>
+              <th className="border border-slate-200 p-3 w-[100px]">B/W</th>
+              <th className="border border-slate-200 p-3 w-[100px]">H/D.</th>
+              <th className="border border-slate-200 p-3 w-[120px]">TOTAL</th>
+              <th className="border border-slate-200 p-3 w-[80px]">UNIT</th>
+              <th className="border border-slate-200 p-3 w-[60px]"></th>
             </tr>
           </thead>
           <tbody>
@@ -402,19 +403,20 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
 
   return (
     <React.Fragment>
-      <tr className="bg-white/40 border-t border-slate-200 group hover:bg-slate-50/50 transition-colors">
-        <td className="border-b border-slate-200 p-3 text-center font-medium text-slate-700 align-top" rowSpan={rowSpan}><div className="mt-2">{item?.srNo}</div></td>
-        <td className="border-b border-slate-200 p-3 align-top" rowSpan={rowSpan}>
+      <tr className="bg-white/40 border border-slate-200 group hover:bg-blue-50/60 transition-colors">
+        <td className="border border-slate-200 p-3 text-center font-medium text-slate-700 align-top" rowSpan={rowSpan}><div className="mt-2">{item?.srNo}</div></td>
+        <td className="border border-slate-200 p-3 align-top" rowSpan={rowSpan}>
           <AutoTextarea value={item?.description || ""} onChange={(val) => updateDescription(itemIdx, val)} />
-          <div className="mt-4 mb-2 flex justify-start"><button onClick={() => addMeasurement(itemIdx)} className="text-blue-700 bg-blue-50/80 hover:bg-blue-100 border border-blue-200 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors shadow-sm">+ Add Meas</button></div>
+          <div className="mt-4 mb-2 flex justify-start"><button onClick={() => addMeasurement(itemIdx)} tabIndex={-1} className="text-blue-700 bg-blue-50/80 hover:bg-blue-100 border border-blue-200 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors shadow-sm">+ Add Meas</button></div>
         </td>
         {measCount > 0 ? (
           <>
-            <td className="border-b border-slate-200 p-2">
+            <td className="border border-slate-200 p-2">
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => copyAboveMeasurement(itemIdx, 0)}
+                  tabIndex={-1}
                   className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all shrink-0 font-extrabold text-xs"
                   title={itemIdx > 0 ? "Copy measurements from last row of item above" : "Duplicate this row below"}
                 >
@@ -423,36 +425,37 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
                 <LocalTextInput
                   value={measurements[0]?.description || ""}
                   onChange={(val) => updateMeasurement(itemIdx, 0, "description", val)}
-                  className="w-full bg-transparent px-3 py-1.5 text-left border border-transparent rounded-xl text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-black hover:border-slate-200 hover:bg-white/50"
+                  className="w-full bg-slate-50/60 px-3 py-1.5 text-left border border-slate-200/50 rounded-xl text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-black hover:border-blue-300 hover:bg-blue-50/80"
                   placeholder="e.g. below soling"
                 />
               </div>
             </td>
-            <td className="border-b border-slate-200 p-2"><NumericInput value={measurements[0]?.no} onChange={(val) => updateMeasurement(itemIdx, 0, "no", val)} /></td>
-            <td className="border-b border-slate-200 p-2"><NumericInput value={measurements[0]?.l} onChange={(val) => updateMeasurement(itemIdx, 0, "l", val)} /></td>
-            <td className="border-b border-slate-200 p-2"><NumericInput value={measurements[0]?.b} onChange={(val) => updateMeasurement(itemIdx, 0, "b", val)} /></td>
-            <td className="border-b border-slate-200 p-2"><NumericInput value={measurements[0]?.h} onChange={(val) => updateMeasurement(itemIdx, 0, "h", val)} /></td>
-            <td className="border-b border-slate-200 p-3 text-center font-medium text-slate-800">{measurements[0]?.total === 0 || !measurements[0]?.total ? "-" : Number(measurements[0].total).toFixed(3)}</td>
-            <td className="border-b border-slate-200 p-3 text-center font-medium text-slate-500 whitespace-pre-line align-middle" rowSpan={measCount}>{item?.unit}</td>
-            <td className="border-b border-slate-200 p-3 text-center"><button onClick={() => removeMeasurement(itemIdx, 0)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all" title="Delete">❌</button></td>
+            <td className="border border-slate-200 p-2"><NumericInput value={measurements[0]?.no} onChange={(val) => updateMeasurement(itemIdx, 0, "no", val)} /></td>
+            <td className="border border-slate-200 p-2"><NumericInput value={measurements[0]?.l} onChange={(val) => updateMeasurement(itemIdx, 0, "l", val)} /></td>
+            <td className="border border-slate-200 p-2"><NumericInput value={measurements[0]?.b} onChange={(val) => updateMeasurement(itemIdx, 0, "b", val)} /></td>
+            <td className="border border-slate-200 p-2"><NumericInput value={measurements[0]?.h} onChange={(val) => updateMeasurement(itemIdx, 0, "h", val)} /></td>
+            <td className="border border-slate-200 p-3 text-center font-medium text-slate-800">{measurements[0]?.total === 0 || !measurements[0]?.total ? "-" : Number(measurements[0].total).toFixed(3)}</td>
+            <td className="border border-slate-200 p-3 text-center font-medium text-slate-500 whitespace-pre-line align-middle" rowSpan={measCount}>{item?.unit}</td>
+            <td className="border border-slate-200 p-3 text-center"><button onClick={() => removeMeasurement(itemIdx, 0)} tabIndex={-1} className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all" title="Delete">❌</button></td>
           </>
         ) : (
           <>
-            <td className="border-b border-slate-200 p-4 text-center text-slate-400 italic" colSpan={6}>Click &ldquo;+ Add Meas&rdquo; to enter measurements</td>
-            <td className="border-b border-slate-200 p-3 text-center font-medium text-slate-500 whitespace-pre-line align-middle">{item?.unit}</td>
-            <td className="border-b border-slate-200 p-3"></td>
+            <td className="border border-slate-200 p-4 text-center text-slate-400 italic" colSpan={6}>Click &ldquo;+ Add Meas&rdquo; to enter measurements</td>
+            <td className="border border-slate-200 p-3 text-center font-medium text-slate-500 whitespace-pre-line align-middle">{item?.unit}</td>
+            <td className="border border-slate-200 p-3"></td>
           </>
         )}
       </tr>
       {measCount > 1 && measurements.slice(1).map((meas, mIdx) => {
         const measIdx = mIdx + 1;
         return (
-          <tr key={meas?.id || measIdx} className="bg-white/40 hover:bg-slate-50/50 transition-colors">
-            <td className="border-b border-slate-200 p-2">
+          <tr key={meas?.id || measIdx} className="bg-white/40 border border-slate-200 hover:bg-blue-50/60 transition-colors">
+            <td className="border border-slate-200 p-2">
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => copyAboveMeasurement(itemIdx, measIdx)}
+                  tabIndex={-1}
                   className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all shrink-0 font-extrabold text-xs"
                   title="Copy measurements from row above"
                 >
@@ -461,28 +464,29 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
                 <LocalTextInput
                   value={meas?.description || ""}
                   onChange={(val) => updateMeasurement(itemIdx, measIdx, "description", val)}
-                  className="w-full bg-transparent px-3 py-1.5 text-left border border-transparent rounded-xl text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-black hover:border-slate-200 hover:bg-white/50"
+                  className="w-full bg-slate-50/60 px-3 py-1.5 text-left border border-slate-200/50 rounded-xl text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-black hover:border-blue-300 hover:bg-blue-50/80"
                   placeholder="e.g. left side"
                 />
               </div>
             </td>
-            <td className="border-b border-slate-200 p-2"><NumericInput value={meas?.no} onChange={(val) => updateMeasurement(itemIdx, measIdx, "no", val)} /></td>
-            <td className="border-b border-slate-200 p-2"><NumericInput value={meas?.l} onChange={(val) => updateMeasurement(itemIdx, measIdx, "l", val)} /></td>
-            <td className="border-b border-slate-200 p-2"><NumericInput value={meas?.b} onChange={(val) => updateMeasurement(itemIdx, measIdx, "b", val)} /></td>
-            <td className="border-b border-slate-200 p-2"><NumericInput value={meas?.h} onChange={(val) => updateMeasurement(itemIdx, measIdx, "h", val)} /></td>
-            <td className="border-b border-slate-200 p-3 text-center font-medium text-slate-800">{meas?.total === 0 || !meas?.total ? "-" : Number(meas.total).toFixed(3)}</td>
-            <td className="border-b border-slate-200 p-3 text-center"><button onClick={() => removeMeasurement(itemIdx, measIdx)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all" title="Delete">❌</button></td>
+            <td className="border border-slate-200 p-2"><NumericInput value={meas?.no} onChange={(val) => updateMeasurement(itemIdx, measIdx, "no", val)} /></td>
+            <td className="border border-slate-200 p-2"><NumericInput value={meas?.l} onChange={(val) => updateMeasurement(itemIdx, measIdx, "l", val)} /></td>
+            <td className="border border-slate-200 p-2"><NumericInput value={meas?.b} onChange={(val) => updateMeasurement(itemIdx, measIdx, "b", val)} /></td>
+            <td className="border border-slate-200 p-2"><NumericInput value={meas?.h} onChange={(val) => updateMeasurement(itemIdx, measIdx, "h", val)} /></td>
+            <td className="border border-slate-200 p-3 text-center font-medium text-slate-800">{meas?.total === 0 || !meas?.total ? "-" : Number(meas.total).toFixed(3)}</td>
+            <td className="border border-slate-200 p-3 text-center"><button onClick={() => removeMeasurement(itemIdx, measIdx)} tabIndex={-1} className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all" title="Delete">❌</button></td>
           </tr>
         );
       })}
-      <tr className="bg-slate-50/80 border-b-2 border-slate-300">
-        <td colSpan={5} className="border-b border-slate-200 p-3 font-medium text-slate-700 text-xs align-middle">
+      <tr className="bg-slate-50/80 border-t-2 border-slate-300">
+        <td colSpan={5} className="border border-slate-200 p-3 font-medium text-slate-700 text-xs align-middle">
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={item?.usePercent || false}
+                  tabIndex={-1}
                   onChange={(e) => updateItemPercent(itemIdx, e.target.checked, item?.percentValue || 100)}
                   className="rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer transition-colors"
                 />
@@ -493,6 +497,7 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
                 <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-150">
                   <LocalPercentInput
                     value={item?.percentValue !== undefined ? item.percentValue : 100}
+                    tabIndex={-1}
                     onChange={(val) => {
                       updateItemPercent(itemIdx, true, val);
                     }}
@@ -513,7 +518,7 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
             <span className="uppercase text-xs tracking-wider font-bold text-slate-500">Total Qty:</span>
           </div>
         </td>
-        <td className="border-b border-slate-200 p-3 text-center align-middle">
+        <td className="border border-slate-200 p-3 text-center align-middle">
           {item?.usePercent && (
             <div className="text-[14px] text-amber-600 font-medium leading-none mb-1" title="Raw sum before %">
               {rawSum.toFixed(3)}
@@ -523,10 +528,10 @@ const MeasurementRow = React.memo(function MeasurementRow({ item, itemIdx, addMe
             {item?.totalQty === 0 || !item?.totalQty ? "-" : Number(item.totalQty).toFixed(3)}
           </div>
         </td>
-        <td className="border-b border-slate-200 p-3 text-center font-medium text-slate-700 align-middle">
+        <td className="border border-slate-200 p-3 text-center font-medium text-slate-700 align-middle">
           {item?.unit}
         </td>
-        <td className="border-b border-slate-200 p-3"></td>
+        <td className="border border-slate-200 p-3"></td>
       </tr>
     </React.Fragment>
   );

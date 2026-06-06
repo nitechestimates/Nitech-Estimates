@@ -124,6 +124,18 @@ export default function BillingDashboard() {
     }
   };
 
+  // Ctrl+S key listener for manual saving
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        handleSave(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [billing]);
+
   // Trigger PDF Generation download
   const handleDownloadPDF = async () => {
     if (!billing || !estimate) return;
@@ -415,7 +427,7 @@ export default function BillingDashboard() {
   const tenderGrandTotal = tenderSubtotal + tenderRoyaltyTotal;
 
   return (
-    <div className="p-4 bg-slate-50 min-h-screen text-slate-900 animate-fade-in-up">
+    <>
       {/* Toast Alert */}
       <div className={`fixed bottom-6 right-6 z-50 transition-all duration-500 ${toastVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
         <div className="bg-slate-900 text-white text-sm font-medium px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
@@ -432,6 +444,8 @@ export default function BillingDashboard() {
           )}
         </div>
       </div>
+
+      <div className="p-4 bg-slate-50 min-h-screen text-slate-900 animate-fade-in-up">
 
       {/* Header Panel */}
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl p-6 shadow-[0_4px_30px_rgba(0,0,0,0.03)] mb-6">
@@ -723,23 +737,23 @@ export default function BillingDashboard() {
             </div>
 
             <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
-              <table className="w-full text-xs border-collapse">
-                <thead className="sticky top-0 bg-slate-50/90 backdrop-blur-sm text-slate-600 text-xs uppercase tracking-wider text-center font-bold z-10 border-b border-slate-200">
+              <table className="w-full text-xs border-collapse border border-slate-200">
+                <thead className="sticky top-0 bg-slate-50/90 backdrop-blur-sm text-slate-600 text-xs uppercase tracking-wider text-center font-bold z-10 border border-slate-200">
                   <tr>
-                    <th className="p-3 border-b border-slate-200" rowSpan={2}>Item No</th>
-                    <th className="p-3 border-b border-slate-200" rowSpan={2}>Description</th>
-                    <th className="p-3 border-b border-slate-200" colSpan={3}>TENDER (Estimate original)</th>
-                    <th className="p-3 border-b border-slate-200" colSpan={3}>EXECUTED (Billing current)</th>
-                    <th className="p-3 border-b border-slate-200" rowSpan={2}>Excess / Saving Amount (₹)</th>
-                    <th className="p-3 border-b border-slate-200" rowSpan={2}>Remarks</th>
+                    <th className="p-3 border border-slate-200" rowSpan={2}>Item No</th>
+                    <th className="p-3 border border-slate-200" rowSpan={2}>Description</th>
+                    <th className="p-3 border border-slate-200" colSpan={3}>TENDER (Estimate original)</th>
+                    <th className="p-3 border border-slate-200" colSpan={3}>EXECUTED (Billing current)</th>
+                    <th className="p-3 border border-slate-200" rowSpan={2}>Excess / Saving Amount (₹)</th>
+                    <th className="p-3 border border-slate-200" rowSpan={2}>Remarks</th>
                   </tr>
                   <tr>
-                    <th className="p-2 border-b border-slate-200">Qty</th>
-                    <th className="p-2 border-b border-slate-200">Rate</th>
-                    <th className="p-2 border-b border-slate-200">Amount</th>
-                    <th className="p-2 border-b border-slate-200">Qty</th>
-                    <th className="p-2 border-b border-slate-200">Rate</th>
-                    <th className="p-2 border-b border-slate-200">Amount</th>
+                    <th className="p-2 border border-slate-200">Qty</th>
+                    <th className="p-2 border border-slate-200">Rate</th>
+                    <th className="p-2 border border-slate-200">Amount</th>
+                    <th className="p-2 border border-slate-200">Qty</th>
+                    <th className="p-2 border border-slate-200">Rate</th>
+                    <th className="p-2 border border-slate-200">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -747,34 +761,34 @@ export default function BillingDashboard() {
                     const diff = row.executedAmount - row.tenderAmount;
                     const color = diff < 0 ? "text-green-700 bg-green-50/30" : diff > 0 ? "text-red-700 bg-red-50/30" : "text-slate-800";
                     return (
-                      <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="border-b border-slate-100 p-3 text-center font-bold text-slate-700">{row.srNo}</td>
-                        <td className="border-b border-slate-100 p-3 text-left leading-relaxed">{row.description}</td>
-                        <td className="border-b border-slate-100 p-3 text-right">{row.tenderQty.toFixed(3)}</td>
-                        <td className="border-b border-slate-100 p-3 text-right">₹{row.tenderRate.toFixed(2)}</td>
-                        <td className="border-b border-slate-100 p-3 text-right font-semibold">₹{row.tenderAmount.toFixed(2)}</td>
-                        <td className="border-b border-slate-100 p-3 text-right font-semibold">{row.executedQty.toFixed(3)}</td>
-                        <td className="border-b border-slate-100 p-3 text-right">₹{row.executedRate.toFixed(2)}</td>
-                        <td className="border-b border-slate-100 p-3 text-right font-black">₹{row.executedAmount.toFixed(2)}</td>
-                        <td className={`border-b border-slate-100 p-3 text-right font-black ${color}`}>
+                      <tr key={row.id} className="hover:bg-blue-50/60 transition-colors">
+                        <td className="border border-slate-200 p-3 text-center font-bold text-slate-700">{row.srNo}</td>
+                        <td className="border border-slate-200 p-3 text-left leading-relaxed">{row.description}</td>
+                        <td className="border border-slate-200 p-3 text-right">{row.tenderQty.toFixed(3)}</td>
+                        <td className="border border-slate-200 p-3 text-right">₹{row.tenderRate.toFixed(2)}</td>
+                        <td className="border border-slate-200 p-3 text-right font-semibold">₹{row.tenderAmount.toFixed(2)}</td>
+                        <td className="border border-slate-200 p-3 text-right font-semibold">{row.executedQty.toFixed(3)}</td>
+                        <td className="border border-slate-200 p-3 text-right">₹{row.executedRate.toFixed(2)}</td>
+                        <td className="border border-slate-200 p-3 text-right font-black">₹{row.executedAmount.toFixed(2)}</td>
+                        <td className={`border border-slate-200 p-3 text-right font-black ${color}`}>
                           {diff === 0 ? "₹0.00" : (diff > 0 ? "+ " : "- ") + "₹" + Math.abs(diff).toFixed(2)}
                         </td>
-                        <td className={`border-b border-slate-100 p-3 text-center font-extrabold uppercase tracking-wider text-[9px] ${color}`}>
+                        <td className={`border border-slate-200 p-3 text-center font-extrabold uppercase tracking-wider text-[9px] ${color}`}>
                           {diff === 0 ? "No Change" : diff < 0 ? "Saving" : "Excess"}
                         </td>
                       </tr>
                     );
                   })}
                   <tr className="bg-slate-900 text-white font-bold text-xs">
-                    <td colSpan={2} className="p-4 text-right">GRAND TOTAL VALUE COMPARISON:</td>
-                    <td colSpan={2}></td>
-                    <td className="p-4 text-right font-black text-blue-300">₹{tenderGrandTotal.toFixed(2)}</td>
-                    <td colSpan={2}></td>
-                    <td className="p-4 text-right font-black text-emerald-300 font-mono">₹{executedGrandTotal.toFixed(2)}</td>
-                    <td className={`p-4 text-right font-black text-sm ${executedGrandTotal - tenderGrandTotal < 0 ? "text-green-400" : "text-red-400"}`}>
+                    <td colSpan={2} className="border border-slate-800 p-4 text-right">GRAND TOTAL VALUE COMPARISON:</td>
+                    <td colSpan={2} className="border border-slate-800"></td>
+                    <td className="border border-slate-800 p-4 text-right font-black text-blue-300">₹{tenderGrandTotal.toFixed(2)}</td>
+                    <td colSpan={2} className="border border-slate-800"></td>
+                    <td className="border border-slate-800 p-4 text-right font-black text-emerald-300 font-mono">₹{executedGrandTotal.toFixed(2)}</td>
+                    <td className={`border border-slate-800 p-4 text-right font-black text-sm ${executedGrandTotal - tenderGrandTotal < 0 ? "text-green-400" : "text-red-400"}`}>
                       {(executedGrandTotal - tenderGrandTotal < 0 ? "- " : "+ ") + "₹" + Math.abs(executedGrandTotal - tenderGrandTotal).toFixed(2)}
                     </td>
-                    <td className="p-4 text-center uppercase font-black text-[10px]">
+                    <td className="border border-slate-800 p-4 text-center uppercase font-black text-[10px]">
                       {executedGrandTotal - tenderGrandTotal < 0 ? "Net Saving" : "Net Excess"}
                     </td>
                   </tr>
@@ -800,5 +814,6 @@ export default function BillingDashboard() {
       )}
       <AlertDialog dialog={dialog} />
     </div>
-  );
+  </>
+);
 }

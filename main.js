@@ -68,7 +68,7 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
-const { app, BrowserWindow, session } = require('electron');
+const { app, BrowserWindow, session, Menu } = require('electron');
 const { spawn } = require('child_process');
 const net = require('net');
 
@@ -221,6 +221,7 @@ function openLoginWindow() {
       contextIsolation: true,
     },
   });
+  loginWindow.setMenu(null);
 
   const loginUrl = `http://localhost:${PORT}/api/auth/signin/google`;
   loginWindow.loadURL(loginUrl);
@@ -253,6 +254,7 @@ function openLoginWindow() {
 
 // ── Main window ───────────────────────────────────────────────────────────────
 async function createWindow() {
+  Menu.setApplicationMenu(null);
   // Intercept login click
   app.on('web-contents-created', (_, contents) => {
     contents.on('will-navigate', (event, url) => {
@@ -303,6 +305,7 @@ async function createWindow() {
     show: false,
     backgroundColor: '#f9fafb',
   });
+  mainWindow.setMenu(null);
 
   // Uncomment temporarily to debug issues:
   // mainWindow.webContents.openDevTools();

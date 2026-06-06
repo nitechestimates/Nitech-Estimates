@@ -59,6 +59,7 @@ function NumericInput({ value, onChange, placeholder = "-", className = "" }) {
     }
   };
 
+  const finalClassName = className || "text-center w-full border border-slate-200/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded px-1.5 py-0.5 transition-all bg-slate-50/60 hover:bg-blue-50/80 hover:border-blue-300 focus:bg-white text-xs text-slate-800 font-bold";
   return (
     <input
       ref={inputRef}
@@ -68,7 +69,7 @@ function NumericInput({ value, onChange, placeholder = "-", className = "" }) {
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
-      className={className}
+      className={finalClassName}
       placeholder={placeholder}
     />
   );
@@ -235,6 +236,18 @@ export default function MeasurementBook() {
     }
   };
 
+  // Ctrl+S key listener for manual saving
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        handleSave(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [billing]);
+
   // ── Measurement helpers ───────────────────────────────────────────
   const recalcItemTotal = (item) => {
     const sum = (Array.isArray(item?.measurements) ? item.measurements : []).reduce(
@@ -330,6 +343,13 @@ export default function MeasurementBook() {
     if (!billing) return;
     const updatedItems = [...billing.measurementItems];
     updatedItems[itemIdx] = { ...updatedItems[itemIdx], description: val };
+    setBilling({ ...billing, measurementItems: updatedItems });
+  };
+
+  const updateItemRE = (itemIdx, val) => {
+    if (!billing) return;
+    const updatedItems = [...billing.measurementItems];
+    updatedItems[itemIdx] = { ...updatedItems[itemIdx], isRE: val };
     setBilling({ ...billing, measurementItems: updatedItems });
   };
 
@@ -522,23 +542,7 @@ export default function MeasurementBook() {
 
   // ── Render ────────────────────────────────────────────────────────
   return (
-    <div className="p-4 bg-slate-50 min-h-screen text-slate-900 animate-fade-in-up">
-      <style dangerouslySetInnerHTML={{__html: `
-        .scrollbar-thin::-webkit-scrollbar {
-          width: 4px;
-          height: 4px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 2px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-      `}} />
+    <>
       {/* Toast */}
       <div
         className={`fixed bottom-6 right-6 z-50 transition-all duration-500 ${
@@ -563,11 +567,29 @@ export default function MeasurementBook() {
               <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
-              <span>Saved successfully</span>
+              <span>Saved</span>
             </>
           )}
         </div>
       </div>
+
+      <div className="p-4 bg-slate-50 min-h-screen text-slate-900 animate-fade-in-up">
+        <style dangerouslySetInnerHTML={{__html: `
+          .scrollbar-thin::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+          }
+          .scrollbar-thin::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
+          }
+          .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+          }
+        `}} />
 
       {/* Header */}
       <div className="max-w-[96%] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm mb-6">
@@ -606,6 +628,7 @@ export default function MeasurementBook() {
       <div className="max-w-[96%] mx-auto flex gap-2 overflow-x-auto border-b border-slate-300 mb-6 pb-2">
         {[
           { key: "measurements", label: "📐 MB Measurements" },
+          { key: "record_entry", label: "📝 MB Record Entry" },
           { key: "abstract", label: "📋 MB Abstract" },
         ].map((t) => (
           <button
@@ -690,22 +713,34 @@ export default function MeasurementBook() {
                             <div className="mt-4 flex gap-2 flex-wrap">
                               <button
                                 onClick={() => addMeasurementRow(itemIdx)}
+                                tabIndex={-1}
                                 className="text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-sm"
                               >
                                 + Add Meas
                               </button>
                               <button
                                 onClick={() => handleResetRow(itemIdx)}
+                                tabIndex={-1}
                                 className="text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-sm"
                               >
                                 Reset to Original
                               </button>
                               <button
                                 onClick={() => handleClearItem(itemIdx)}
+                                tabIndex={-1}
                                 className="text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-sm"
                               >
                                 Clear to Dashes
                               </button>
+                              <label className="flex items-center gap-1.5 cursor-pointer select-none text-xs font-bold text-blue-700 bg-blue-50/80 hover:bg-blue-100 border border-blue-200 rounded-lg px-2.5 py-1 transition shadow-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={item.isRE || false}
+                                  onChange={(e) => updateItemRE(itemIdx, e.target.checked)}
+                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer"
+                                />
+                                <span>RE</span>
+                              </label>
                             </div>
                           </td>
 
@@ -715,6 +750,7 @@ export default function MeasurementBook() {
                                 <div className="flex items-center gap-1">
                                   <button
                                     onClick={() => duplicateMeasurementRow(itemIdx, 0)}
+                                    tabIndex={-1}
                                     className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition font-extrabold text-xs"
                                     title="Duplicate row below"
                                   >
@@ -725,7 +761,7 @@ export default function MeasurementBook() {
                                     onChange={(val) =>
                                       updateMeasurementField(itemIdx, 0, "description", val)
                                     }
-                                    className="w-full bg-transparent px-1.5 py-0.5 text-xs border border-transparent hover:border-slate-300 rounded focus:outline-none focus:border-blue-400"
+                                    className="w-full bg-slate-50/60 px-1.5 py-0.5 text-xs border border-slate-200/50 rounded focus:outline-none focus:border-blue-400 focus:bg-white hover:border-blue-300 hover:bg-blue-50/80 transition-all text-black font-semibold"
                                     placeholder="Particulars"
                                   />
                                 </div>
@@ -763,6 +799,7 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[80px] w-[85px]">
                                 <button
                                   onClick={() => removeMeasurementRow(itemIdx, 0)}
+                                  tabIndex={-1}
                                   className="text-red-400 hover:text-red-600 transition-all duration-200 hover:scale-110 active:scale-95 inline-block text-xs font-semibold"
                                 >
                                   ❌ Delete
@@ -786,11 +823,12 @@ export default function MeasurementBook() {
                         {measurements.slice(1).map((meas, measIdx) => {
                           const actualIdx = measIdx + 1;
                           return (
-                            <tr key={meas.id || actualIdx} className="bg-white hover:bg-slate-50">
+                            <tr key={meas.id || actualIdx} className="bg-white/40 hover:bg-blue-50/60 transition-colors">
                               <td className="border p-1 bg-white">
                                 <div className="flex items-center gap-1">
                                   <button
                                     onClick={() => duplicateMeasurementRow(itemIdx, actualIdx)}
+                                    tabIndex={-1}
                                     className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition font-extrabold text-xs"
                                     title="Duplicate row below"
                                   >
@@ -801,7 +839,7 @@ export default function MeasurementBook() {
                                     onChange={(val) =>
                                       updateMeasurementField(itemIdx, actualIdx, "description", val)
                                     }
-                                    className="w-full bg-transparent px-1.5 py-0.5 text-xs border border-transparent hover:border-slate-300 rounded focus:outline-none focus:border-blue-400"
+                                    className="w-full bg-slate-50/60 px-1.5 py-0.5 text-xs border border-slate-200/50 rounded focus:outline-none focus:border-blue-400 focus:bg-white hover:border-blue-300 hover:bg-blue-50/80 transition-all text-black font-semibold"
                                     placeholder="Particulars"
                                   />
                                 </div>
@@ -836,6 +874,7 @@ export default function MeasurementBook() {
                               <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[80px] w-[85px]">
                                 <button
                                   onClick={() => removeMeasurementRow(itemIdx, actualIdx)}
+                                  tabIndex={-1}
                                   className="text-red-400 hover:text-red-600 transition-all duration-200 hover:scale-110 active:scale-95 inline-block text-xs font-semibold"
                                 >
                                   ❌ Delete
@@ -869,6 +908,261 @@ export default function MeasurementBook() {
           </div>
         )}
 
+        {/* ── TAB 1.5: RECORD ENTRY ──────────────────────────────────── */}
+        {activeTab === "record_entry" && (
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm animate-fade-in-up">
+            <div className="flex justify-between items-center border-b pb-4 mb-4">
+              <div>
+                <h2 className="text-lg font-black text-slate-800">MB Record Entry Sheet</h2>
+                <p className="text-xs text-slate-500">View and edit billing items marked for Record Entry (RE).</p>
+              </div>
+            </div>
+
+            {!(billing.measurementItems || []).some(item => item.isRE) ? (
+              <div className="text-center text-slate-500 py-16 border border-dashed rounded-3xl bg-slate-50/50 mt-4 font-semibold text-sm">
+                No items marked as Record Entry (RE) yet. Go to <button onClick={() => setActiveTab("measurements")} className="text-blue-600 hover:underline font-extrabold focus:outline-none bg-transparent border-none p-0 cursor-pointer">MB Measurements</button> and check the &ldquo;RE&rdquo; box on any item to view it here.
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-inner">
+                <table className="w-full text-sm bg-white">
+                  <thead className="bg-slate-100 border-b border-slate-200 text-slate-700">
+                    <tr className="text-center font-bold">
+                      <th className="border p-1 w-[45px] min-w-[40px] whitespace-nowrap text-xs">Sr. No.</th>
+                      <th className="border p-1 w-[320px] min-w-[250px] text-xs">DESCRIPTION OF ITEM</th>
+                      <th className="border p-1 w-[180px] min-w-[130px] text-xs">PARTICULARS (Measurement Name)</th>
+                      <th className="border p-1 w-[40px] min-w-[35px] whitespace-nowrap text-xs">No.</th>
+                      <th className="border p-1 w-[50px] min-w-[40px] whitespace-nowrap text-xs">L.</th>
+                      <th className="border p-1 w-[50px] min-w-[40px] whitespace-nowrap text-xs">B/W</th>
+                      <th className="border p-1 w-[50px] min-w-[40px] whitespace-nowrap text-xs">H/D.</th>
+                      <th className="border p-1 w-[85px] min-w-[70px] whitespace-nowrap text-xs">TOTAL</th>
+                      <th className="border p-1 w-[70px] min-w-[55px] whitespace-nowrap text-xs">UNIT</th>
+                      <th className="border p-1 w-[85px] min-w-[80px] whitespace-nowrap text-xs">ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      let reCount = 0;
+                      return (billing.measurementItems || []).map((item, itemIdx) => {
+                        if (!item.isRE) return null;
+                        reCount++;
+                        const measurements = item.measurements || [];
+                        const measCount = measurements.length;
+                        const rowSpan = measCount > 0 ? measCount + 1 : 2;
+
+                        return (
+                          <React.Fragment key={item.id}>
+                            {/* Main Item Row */}
+                            <tr className="bg-slate-50/50 border-t-2 border-slate-200">
+                              <td className="border p-2 text-center font-bold text-slate-700 align-top" rowSpan={rowSpan}>
+                                {reCount}
+                              </td>
+                              <td className="border p-2 align-top font-semibold text-slate-800 leading-relaxed" rowSpan={rowSpan}>
+                                <LocalTextarea
+                                  value={item.description || ""}
+                                  onChange={(val) => updateItemDescription(itemIdx, val)}
+                                  className="w-full h-[70px] min-h-[70px] max-h-[100px] resize-none overflow-y-auto bg-transparent border-none p-1 focus:ring-0 focus:outline-none text-black text-xs leading-normal scrollbar-thin"
+                                  rows={3}
+                                />
+                                <div className="mt-4 flex gap-2 flex-wrap">
+                                  <button
+                                    onClick={() => addMeasurementRow(itemIdx)}
+                                    tabIndex={-1}
+                                    className="text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-sm"
+                                  >
+                                    + Add Meas
+                                  </button>
+                                  <button
+                                    onClick={() => handleResetRow(itemIdx)}
+                                    tabIndex={-1}
+                                    className="text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-sm"
+                                  >
+                                    Reset to Original
+                                  </button>
+                                  <button
+                                    onClick={() => handleClearItem(itemIdx)}
+                                    tabIndex={-1}
+                                    className="text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-sm"
+                                  >
+                                    Clear to Dashes
+                                  </button>
+                                  <label className="flex items-center gap-1.5 cursor-pointer select-none text-xs font-bold text-blue-700 bg-blue-50/80 hover:bg-blue-100 border border-blue-200 rounded-lg px-2.5 py-1 transition shadow-sm">
+                                    <input
+                                      type="checkbox"
+                                      checked={item.isRE || false}
+                                      onChange={(e) => updateItemRE(itemIdx, e.target.checked)}
+                                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer"
+                                    />
+                                    <span>RE</span>
+                                  </label>
+                                </div>
+                              </td>
+
+                              {measurements.length > 0 ? (
+                                <>
+                                  <td className="border p-1 bg-white">
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => duplicateMeasurementRow(itemIdx, 0)}
+                                        tabIndex={-1}
+                                        className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition font-extrabold text-xs"
+                                        title="Duplicate row below"
+                                      >
+                                        ↓
+                                      </button>
+                                      <LocalTextInput
+                                        value={measurements[0].description || ""}
+                                        onChange={(val) =>
+                                          updateMeasurementField(itemIdx, 0, "description", val)
+                                        }
+                                        className="w-full bg-slate-50/60 px-1.5 py-0.5 text-xs border border-slate-200/50 rounded focus:outline-none focus:border-blue-400 focus:bg-white hover:border-blue-300 hover:bg-blue-50/80 transition-all text-black font-semibold"
+                                        placeholder="Particulars"
+                                      />
+                                    </div>
+                                  </td>
+                                  <td className="border p-1 bg-white">
+                                    <NumericInput
+                                      value={measurements[0].no}
+                                      onChange={(v) => updateMeasurementField(itemIdx, 0, "no", v)}
+                                    />
+                                  </td>
+                                  <td className="border p-1 bg-white">
+                                    <NumericInput
+                                      value={measurements[0].l}
+                                      onChange={(v) => updateMeasurementField(itemIdx, 0, "l", v)}
+                                    />
+                                  </td>
+                                  <td className="border p-1 bg-white">
+                                    <NumericInput
+                                      value={measurements[0].b}
+                                      onChange={(v) => updateMeasurementField(itemIdx, 0, "b", v)}
+                                    />
+                                  </td>
+                                  <td className="border p-1 bg-white">
+                                    <NumericInput
+                                      value={measurements[0].h}
+                                      onChange={(v) => updateMeasurementField(itemIdx, 0, "h", v)}
+                                    />
+                                  </td>
+                                  <td className="border p-2 text-center font-bold text-blue-900 bg-slate-50/50">
+                                    {measurements[0].total ? measurements[0].total.toFixed(3) : "-"}
+                                  </td>
+                                  <td className="border p-2 text-center font-semibold text-slate-500 align-middle bg-slate-50/50" rowSpan={measCount}>
+                                    {item.unit}
+                                  </td>
+                                  <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[80px] w-[85px]">
+                                    <button
+                                      onClick={() => removeMeasurementRow(itemIdx, 0)}
+                                      tabIndex={-1}
+                                      className="text-red-400 hover:text-red-600 transition-all duration-200 hover:scale-110 active:scale-95 inline-block text-xs font-semibold"
+                                    >
+                                      ❌ Delete
+                                    </button>
+                                  </td>
+                                </>
+                              ) : (
+                                <>
+                                  <td className="border p-4 text-center text-slate-400 italic bg-slate-50" colSpan={6}>
+                                    Click &ldquo;+ Add Meas&rdquo; to add billing quantities
+                                  </td>
+                                  <td className="border p-2 text-center font-semibold text-slate-500 align-middle bg-slate-50/50">
+                                    {item.unit}
+                                  </td>
+                                  <td className="border p-2 bg-slate-50 min-w-[80px] w-[85px]"></td>
+                                </>
+                              )}
+                            </tr>
+
+                            {/* Extra measurement rows */}
+                            {measurements.slice(1).map((meas, measIdx) => {
+                              const actualIdx = measIdx + 1;
+                              return (
+                                <tr key={meas.id || actualIdx} className="bg-white/40 hover:bg-blue-50/60 transition-colors">
+                                  <td className="border p-1 bg-white">
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => duplicateMeasurementRow(itemIdx, actualIdx)}
+                                        tabIndex={-1}
+                                        className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition font-extrabold text-xs"
+                                        title="Duplicate row below"
+                                      >
+                                        ↓
+                                      </button>
+                                      <LocalTextInput
+                                        value={meas.description || ""}
+                                        onChange={(val) =>
+                                          updateMeasurementField(itemIdx, actualIdx, "description", val)
+                                        }
+                                        className="w-full bg-slate-50/60 px-1.5 py-0.5 text-xs border border-slate-200/50 rounded focus:outline-none focus:border-blue-400 focus:bg-white hover:border-blue-300 hover:bg-blue-50/80 transition-all text-black font-semibold"
+                                        placeholder="Particulars"
+                                      />
+                                    </div>
+                                  </td>
+                                  <td className="border p-1 bg-white">
+                                    <NumericInput
+                                      value={meas.no}
+                                      onChange={(v) => updateMeasurementField(itemIdx, actualIdx, "no", v)}
+                                    />
+                                  </td>
+                                  <td className="border p-1 bg-white">
+                                    <NumericInput
+                                      value={meas.l}
+                                      onChange={(v) => updateMeasurementField(itemIdx, actualIdx, "l", v)}
+                                    />
+                                  </td>
+                                  <td className="border p-1 bg-white">
+                                    <NumericInput
+                                      value={meas.b}
+                                      onChange={(v) => updateMeasurementField(itemIdx, actualIdx, "b", v)}
+                                    />
+                                  </td>
+                                  <td className="border p-1 bg-white">
+                                    <NumericInput
+                                      value={meas.h}
+                                      onChange={(v) => updateMeasurementField(itemIdx, actualIdx, "h", v)}
+                                    />
+                                  </td>
+                                  <td className="border p-2 text-center font-bold text-blue-900 bg-slate-50/50">
+                                    {meas.total ? meas.total.toFixed(3) : "-"}
+                                  </td>
+                                  <td className="border p-2 text-center bg-white whitespace-nowrap min-w-[80px] w-[85px]">
+                                    <button
+                                      onClick={() => removeMeasurementRow(itemIdx, actualIdx)}
+                                      tabIndex={-1}
+                                      className="text-red-400 hover:text-red-600 transition-all duration-200 hover:scale-110 active:scale-95 inline-block text-xs font-semibold"
+                                    >
+                                      ❌ Delete
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+
+                            {/* Total row */}
+                            <tr className="bg-slate-50 font-bold">
+                              <td colSpan={5} className="border p-2.5 text-xs text-slate-700 align-middle">
+                                <div className="flex items-center justify-end px-2">
+                                  <span className="uppercase text-xs tracking-wider font-bold">Total Qty:</span>
+                                </div>
+                              </td>
+                              <td className="border p-2 text-center font-black text-blue-950 text-[16px] bg-slate-100/50 align-middle">
+                                {item.totalQty ? item.totalQty.toFixed(3) : "-"}
+                              </td>
+                              <td className="border p-2 text-center font-semibold text-slate-500 bg-slate-100/50 align-middle">
+                                {item.unit}
+                              </td>
+                              <td className="border p-2 min-w-[80px] w-[85px]"></td>
+                            </tr>
+                          </React.Fragment>
+                        );
+                      });
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── TAB 2: ABSTRACT ───────────────────────────────────────── */}
         {activeTab === "abstract" && (
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm animate-fade-in-up">
@@ -891,7 +1185,7 @@ export default function MeasurementBook() {
                 </thead>
                 <tbody>
                   {standardRows.map((row) => (
-                    <tr key={row.id} className="hover:bg-slate-50/50">
+                    <tr key={row.id} className="hover:bg-blue-50/60">
                       <td className="border p-2.5 text-center font-bold text-slate-700">{row.srNo}</td>
                       <td className="border p-2.5 text-left leading-relaxed">{row.description}</td>
                       <td className="border p-2.5 text-right font-semibold text-slate-800">
@@ -926,6 +1220,7 @@ export default function MeasurementBook() {
                             <input
                               type="checkbox"
                               checked={row.useReducedRate}
+                              tabIndex={-1}
                               onChange={(e) => updateReducedRateCheckbox(row.id, e.target.checked)}
                               className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
                             />
@@ -995,7 +1290,7 @@ export default function MeasurementBook() {
 
                   {/* Royalty */}
                   {royaltyRows.map((row) => (
-                    <tr key={row.id} className="bg-blue-50/25 hover:bg-slate-50/50">
+                    <tr key={row.id} className="bg-blue-50/25 hover:bg-blue-50/60">
                       <td className="border p-2.5 text-center font-bold text-blue-900">{row.srNo}</td>
                       <td className="border p-2.5 text-left font-semibold text-blue-950">{row.description}</td>
                       <td className="border p-2.5 text-right font-bold text-blue-900">
@@ -1040,5 +1335,6 @@ export default function MeasurementBook() {
         )}
       </div>
     </div>
-  );
+  </>
+);
 }

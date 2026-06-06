@@ -221,87 +221,87 @@ export default function AbstractPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl shadow-sm border border-slate-200">
-          <table className="w-full text-sm border-collapse">
-            <thead className="sticky top-0 bg-slate-50/90 backdrop-blur-md text-slate-600 text-xs uppercase tracking-wider z-10 border-b border-slate-200">
+        <div className="overflow-x-auto rounded-2xl shadow-sm border border-slate-200 bg-white/60 backdrop-blur-xl">
+          <table className="w-full text-sm border-collapse border border-slate-200">
+            <thead className="sticky top-0 bg-slate-50/90 backdrop-blur-md text-slate-600 text-xs uppercase tracking-wider z-10 border border-slate-200">
               <tr className="text-center font-bold">
-                <th className="p-3 w-[60px] border-b border-slate-200">Sr. No.</th>
-                <th className="p-3 w-[380px] border-b border-slate-200">DESCRIPTION OF ITEM</th>
-                <th className="p-3 w-[200px] border-b border-slate-200">SPECIFICATIONS</th>
-                <th className="p-3 w-[80px] border-b border-slate-200">QTY</th>
-                <th className="p-3 w-[80px] border-b border-slate-200">UNIT</th>
-                <th className="p-3 w-[140px] border-b border-slate-200">RATE (Rs.)</th>
-                <th className="p-3 w-[120px] border-b border-slate-200">AMOUNT (Rs.)</th>
+                <th className="p-3 w-[60px] border border-slate-200">Sr. No.</th>
+                <th className="p-3 w-[380px] border border-slate-200">DESCRIPTION OF ITEM</th>
+                <th className="p-3 w-[200px] border border-slate-200">SPECIFICATIONS</th>
+                <th className="p-3 w-[80px] border border-slate-200">QTY</th>
+                <th className="p-3 w-[80px] border border-slate-200">UNIT</th>
+                <th className="p-3 w-[140px] border border-slate-200">RATE (Rs.)</th>
+                <th className="p-3 w-[120px] border border-slate-200">AMOUNT (Rs.)</th>
               </tr>
             </thead>
             <tbody>
               {standardRows.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="border-b border-slate-100 p-3 text-center font-semibold text-slate-700">{row.srNo}</td>
-                  <td className="border-b border-slate-100 p-3 text-left leading-relaxed">{row.description}</td>
-                  <td className="border-b border-slate-100 p-3 text-left text-xs text-slate-500 italic">{row.specs}</td>
-                  <td className="border-b border-slate-100 p-3 text-right font-medium">{row.qty.toFixed(3)}</td>
-                  <td className="border-b border-slate-100 p-3 text-center text-slate-600 text-xs">{row.unit}</td>
+                <tr key={row.id} className="hover:bg-blue-50/60 transition-colors">
+                  <td className="border border-slate-200 p-3 text-center font-semibold text-slate-700">{row.srNo}</td>
+                  <td className="border border-slate-200 p-3 text-left leading-relaxed">{row.description}</td>
+                  <td className="border border-slate-200 p-3 text-left text-xs text-slate-500 italic">{row.specs}</td>
+                  <td className="border border-slate-200 p-3 text-right font-medium">{row.qty.toFixed(3)}</td>
+                  <td className="border border-slate-200 p-3 text-center text-slate-600 text-xs">{row.unit}</td>
                   
                   {/* Rate Column */}
-                  <td className="border-b border-slate-100 p-3 text-right font-semibold text-slate-900">
+                  <td className="border border-slate-200 p-3 text-right font-semibold text-slate-900">
                     {formatMoney(row.rate)}
                   </td>
                   
-                  <td className="border-b border-slate-100 p-3 text-right font-bold text-slate-900">{formatMoney(row.amount)}</td>
+                  <td className="border border-slate-200 p-3 text-right font-bold text-slate-900">{formatMoney(row.amount)}</td>
                 </tr>
               ))}
 
               {/* Standard Items subtotal */}
               <tr className="bg-slate-50 font-bold text-slate-800 border-b border-slate-200">
-                <td colSpan="6" className="p-3 text-right uppercase tracking-wider text-[11px] text-slate-500">TOTAL (Cost of work proper):</td>
-                <td className="p-3 text-right font-extrabold text-slate-900">{formatMoney(standardTotal)}</td>
+                <td colSpan="6" className="border border-slate-200 p-3 text-right uppercase tracking-wider text-[11px] text-slate-500">TOTAL (Cost of work proper):</td>
+                <td className="border border-slate-200 p-3 text-right font-extrabold text-slate-900">{formatMoney(standardTotal)}</td>
               </tr>
 
               {/* Add For GST */}
-              <tr className="bg-white hover:bg-slate-50 transition-colors text-slate-800 font-bold text-[13px] border-b border-slate-100">
-                <td colSpan="3" className="p-3 text-right">Add For GST</td>
-                <td className="p-3 text-center text-slate-500">18.00 %</td>
-                <td colSpan="2" className="p-3"></td>
-                <td className="p-3 text-right text-slate-900">{formatMoney(gstAmount)}</td>
+              <tr className="bg-white/40 hover:bg-blue-50/60 transition-colors text-slate-800 font-bold text-[13px] border-b border-slate-100">
+                <td colSpan="3" className="border border-slate-200 p-3 text-right">Add For GST</td>
+                <td className="border border-slate-200 p-3 text-center text-slate-500">18.00 %</td>
+                <td colSpan="2" className="border border-slate-200"></td>
+                <td className="border border-slate-200 p-3 text-right text-slate-900">{formatMoney(gstAmount)}</td>
               </tr>
 
               {/* Add Labour Insurance */}
-              <tr className="bg-white hover:bg-slate-50 transition-colors text-slate-800 font-bold text-[13px] border-b border-slate-100">
-                <td colSpan="3" className="p-3 text-right">Add Labour Insurance</td>
-                <td className="p-3 text-center text-slate-500">{insuranceRate.toFixed(2)} %</td>
-                <td colSpan="2" className="p-3"></td>
-                <td className="p-3 text-right text-slate-900">{formatMoney(insuranceAmount)}</td>
+              <tr className="bg-white/40 hover:bg-blue-50/60 transition-colors text-slate-800 font-bold text-[13px] border-b border-slate-100">
+                <td colSpan="3" className="border border-slate-200 p-3 text-right">Add Labour Insurance</td>
+                <td className="border border-slate-200 p-3 text-center text-slate-500">{insuranceRate.toFixed(2)} %</td>
+                <td colSpan="2" className="border border-slate-200"></td>
+                <td className="border border-slate-200 p-3 text-right text-slate-900">{formatMoney(insuranceAmount)}</td>
               </tr>
 
               {/* Subtotal with taxes */}
               <tr className="bg-slate-50 font-bold text-slate-800 border-b border-slate-200">
-                <td colSpan="6" className="p-3 text-right uppercase tracking-wider text-[11px] text-slate-500">TOTAL:</td>
-                <td className="p-3 text-right font-extrabold text-slate-900">{formatMoney(subTotalWithTax)}</td>
+                <td colSpan="6" className="border border-slate-200 p-3 text-right uppercase tracking-wider text-[11px] text-slate-500">TOTAL:</td>
+                <td className="border border-slate-200 p-3 text-right font-extrabold text-slate-900">{formatMoney(subTotalWithTax)}</td>
               </tr>
 
               {/* Royalty & Lab charges rows */}
               {royaltyRows.map((row) => (
-                <tr key={row.id} className="bg-white hover:bg-slate-50 font-semibold text-slate-800 transition-colors border-b border-slate-100">
-                  <td className="p-3 text-center font-bold text-slate-700">{row.srNo}</td>
-                  <td className="p-3 text-left">{row.description}</td>
-                  <td className="p-3 text-left text-xs text-slate-500 italic">{row.specs}</td>
-                  <td className="p-3 text-right">{row.qty.toFixed(3)}</td>
-                  <td className="p-3 text-center text-slate-500 text-xs">{row.unit}</td>
+                <tr key={row.id} className="bg-white/40 hover:bg-blue-50/60 font-semibold text-slate-800 transition-colors border-b border-slate-100">
+                  <td className="border border-slate-200 p-3 text-center font-bold text-slate-700">{row.srNo}</td>
+                  <td className="border border-slate-200 p-3 text-left">{row.description}</td>
+                  <td className="border border-slate-200 p-3 text-left text-xs text-slate-500 italic">{row.specs}</td>
+                  <td className="border border-slate-200 p-3 text-right">{row.qty.toFixed(3)}</td>
+                  <td className="border border-slate-200 p-3 text-center text-slate-500 text-xs">{row.unit}</td>
                   
                   {/* Royalty Rate */}
-                  <td className="p-3 text-right font-semibold text-slate-900">
+                  <td className="border border-slate-200 p-3 text-right font-semibold text-slate-900">
                     {formatMoney(row.rate)}
                   </td>
                   
-                  <td className="p-3 text-right font-bold text-slate-900">{formatMoney(row.amount)}</td>
+                  <td className="border border-slate-200 p-3 text-right font-bold text-slate-900">{formatMoney(row.amount)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot className="bg-slate-50/80 border-t border-slate-200">
               <tr className="text-[14px]">
-                <td colSpan="6" className="p-4 text-right uppercase tracking-wider font-black text-slate-700">TOTAL RS. (Grand Total):</td>
-                <td className="p-4 text-right font-black text-slate-900 text-base">{formatMoney(grandTotal)}</td>
+                <td colSpan="6" className="border border-slate-200 p-4 text-right uppercase tracking-wider font-black text-slate-700">TOTAL RS. (Grand Total):</td>
+                <td className="border border-slate-200 p-4 text-right font-black text-slate-900 text-base">{formatMoney(grandTotal)}</td>
               </tr>
             </tfoot>
           </table>
