@@ -71,16 +71,37 @@ validateEnv();
 
 
 // ── Global Crash Handling and Logging ─────────────────────────────────────────
+function rotateLogFile(logPath) {
+  try {
+    if (fs.existsSync(logPath)) {
+      const stats = fs.statSync(logPath);
+      const maxSizeBytes = 5 * 1024 * 1024; // 5 MB
+      if (stats.size > maxSizeBytes) {
+        const backupPath = logPath + '.old';
+        if (fs.existsSync(backupPath)) {
+          fs.unlinkSync(backupPath);
+        }
+        fs.renameSync(logPath, backupPath);
+      }
+    }
+  } catch (e) {
+    console.error('Error rotating logs:', e);
+  }
+}
+
 function logCrash(err) {
   const logDir = path.join(os.homedir(), 'NitechEstimatesLogs');
   try {
     if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
     const logPath = path.join(logDir, 'crash.log');
+    rotateLogFile(logPath);
     const msg = `[${new Date().toISOString()}] CRASH:\n${err && err.stack ? err.stack : err}\n\n`;
     fs.appendFileSync(logPath, msg);
   } catch (e) {
     try {
-      fs.appendFileSync(path.join(os.tmpdir(), 'nitech_crash.log'), `[${new Date().toISOString()}] CRASH:\n${err && err.stack ? err.stack : err}\n\n`);
+      const tempPath = path.join(os.tmpdir(), 'nitech_crash.log');
+      rotateLogFile(tempPath);
+      fs.appendFileSync(tempPath, `[${new Date().toISOString()}] CRASH:\n${err && err.stack ? err.stack : err}\n\n`);
     } catch (e2) {}
   }
 }
@@ -103,9 +124,14 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
-const { app, BrowserWindow, session, Menu } = require('electron');
+const { app, BrowserWindow, session, Menu, ipcMain } = require('electron');
 const { spawn } = require('child_process');
 const net = require('net');
+
+// Register secure IPC handlers
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
 
 const PORT = 3000;
 
@@ -209,6 +235,7 @@ async function startNextServer() {
     const logDir = path.join(os.homedir(), 'NitechEstimatesLogs');
     if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
     const logFile = path.join(logDir, 'server.log');
+    rotateLogFile(logFile);
     const logStream = fs.createWriteStream(logFile, { flags: 'a' });
     logStream.on('error', (e) => console.warn('Log stream error:', e));
     nextProcess.stdout.on('data', d => { const s = d.toString().trim(); console.log('[Next]', s); try { logStream.write(`[STDOUT] ${s}\n`); } catch(e){} });
@@ -335,7 +362,11 @@ async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280, height: 820,
     minWidth: 960, minHeight: 640,
-    webPreferences: { nodeIntegration: false, contextIsolation: true },
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+    },
     autoHideMenuBar: true,
     show: false,
     backgroundColor: '#f9fafb',

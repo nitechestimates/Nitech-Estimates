@@ -1,7 +1,25 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { rateLimit } from "@/lib/rateLimit";
 import data from "@/app/lib/data.json";
 
 export async function GET(req) {
+  // Auth check
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit check
+  const rate = rateLimit(`search-items:${session.user.email}`, 100, 60000);
+  if (!rate.success) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": Math.ceil(rate.reset / 1000).toString() } }
+    );
+  }
+
   const { searchParams } = new URL(req.url);
   const query = searchParams.get("q");
 

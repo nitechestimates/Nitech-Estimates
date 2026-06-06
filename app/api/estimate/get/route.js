@@ -22,7 +22,7 @@ export async function GET() {
     //    Sort by creation date (newest first) – safe now that createdAt exists
     const estimates = await db
       .collection("estimates")
-      .find({ userId: session.user.email })
+      .find({ userId: session.user.email, deletedAt: { $exists: false } })
       .sort({ createdAt: -1 })
       .toArray();
 

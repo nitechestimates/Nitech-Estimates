@@ -48,6 +48,7 @@ export async function GET(request, context) {
     const billing = await db.collection("billings").findOne({
       estimateId: new ObjectId(estimateId),
       userId: session.user.email,
+      deletedAt: { $exists: false },
     });
 
     if (!billing) {
@@ -106,6 +107,7 @@ export async function POST(request, context) {
     const existing = await db.collection("billings").findOne({
       estimateId: new ObjectId(estimateId),
       userId: session.user.email,
+      deletedAt: { $exists: false },
     });
 
     if (existing) {
@@ -198,7 +200,7 @@ export async function PUT(request, context) {
     const db = client.db("nitech_estimates");
 
     const result = await db.collection("billings").updateOne(
-      { estimateId: new ObjectId(estimateId), userId: session.user.email },
+      { estimateId: new ObjectId(estimateId), userId: session.user.email, deletedAt: { $exists: false } },
       {
         $set: {
           measurementItems: measurementItems || [],
@@ -235,12 +237,12 @@ export async function DELETE(request, context) {
     const client = await clientPromise;
     const db = client.db("nitech_estimates");
 
-    const result = await db.collection("billings").deleteOne({
-      estimateId: new ObjectId(estimateId),
-      userId: session.user.email,
-    });
+    const result = await db.collection("billings").updateOne(
+      { estimateId: new ObjectId(estimateId), userId: session.user.email, deletedAt: { $exists: false } },
+      { $set: { deletedAt: new Date() } }
+    );
 
-    if (result.deletedCount === 0) {
+    if (result.matchedCount === 0) {
       return NextResponse.json({ error: "Billing not found" }, { status: 404 });
     }
 

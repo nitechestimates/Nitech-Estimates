@@ -30,6 +30,7 @@ export async function GET(request, context) {
     const estimate = await db.collection("estimates").findOne({
       _id: objectId,
       userId: session.user.email,
+      deletedAt: { $exists: false },
     });
 
     if (!estimate) {
@@ -77,12 +78,12 @@ export async function DELETE(request, context) {
     const client = await clientPromise;
     const db = client.db("nitech_estimates");
 
-    const result = await db.collection("estimates").deleteOne({
-      _id: objectId,
-      userId: session.user.email,
-    });
+    const result = await db.collection("estimates").updateOne(
+      { _id: objectId, userId: session.user.email, deletedAt: { $exists: false } },
+      { $set: { deletedAt: new Date() } }
+    );
 
-    if (result.deletedCount === 0) {
+    if (result.matchedCount === 0) {
       return NextResponse.json(
         { error: "Not found" },
         { status: 404 }
@@ -138,7 +139,7 @@ export async function PUT(request, context) {
     const db = client.db("nitech_estimates");
 
     const result = await db.collection("estimates").updateOne(
-      { _id: objectId, userId: session.user.email },
+      { _id: objectId, userId: session.user.email, deletedAt: { $exists: false } },
       { $set: { ...patch, updatedAt: new Date() } }
     );
 
