@@ -9,6 +9,7 @@ const rateLimitMap = new Map<string, number[]>();
 const LIMITS: Record<string, { limit: number; window: number }> = {
   "/api/estimate/save": { limit: 10, window: 60 * 1000 },      // 10 requests per minute
   "/api/generate-pdf": { limit: 5, window: 60 * 1000 },        // 5 requests per minute
+  "/api/billing/generate-pdf": { limit: 5, window: 60 * 1000 }, // 5 requests per minute
   "/api/search-items": { limit: 60, window: 60 * 1000 },       // 60 requests per minute
 };
 
@@ -87,5 +88,6 @@ export const config = {
     "/api/estimate/save",
     "/api/search-items",
     "/api/generate-pdf",
+    "/api/billing/generate-pdf",
   ],
 };
