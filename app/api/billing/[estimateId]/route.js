@@ -8,7 +8,7 @@ import { z } from "zod";
 
 const postSchema = z.object({
   measurementItems: z.array(z.any()).max(1000).optional(),
-  abstractCustomData: z.record(z.any()).optional(),
+  abstractCustomData: z.any().optional(),
   nameOfWork: z.string().trim().optional(),
   yojana: z.string().trim().optional(),
   estAmount: z.string().trim().optional(),
@@ -25,8 +25,8 @@ const postSchema = z.object({
 
 const putSchema = z.object({
   measurementItems: z.array(z.any()).max(1000),
-  abstractCustomData: z.record(z.any()),
-  extraBillingData: z.record(z.any())
+  abstractCustomData: z.any(),
+  extraBillingData: z.any()
 });
 
 // GET: Retrieve billing for an estimate
