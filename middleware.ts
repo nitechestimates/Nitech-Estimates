@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-
-// In-memory rate limiting map.
-const rateLimitMap = new Map<string, number[]>();
+import { rateLimit } from "./lib/rateLimit";
 
 // Configuration: limit and window in milliseconds
 const LIMITS: Record<string, { limit: number; window: number }> = {
@@ -43,40 +41,18 @@ export async function middleware(req: NextRequest) {
     const ip = req.headers.get("x-forwarded-for") || (req as RequestWithIp).ip || "127.0.0.1";
     const key = `${pathname}:${ip}`;
 
-    const now = Date.now();
-    if (!rateLimitMap.has(key)) {
-      rateLimitMap.set(key, []);
-    }
-
-    const timestamps = rateLimitMap.get(key) || [];
-    const validTimestamps = timestamps.filter(ts => now - ts < limitConfig.window);
-
-    if (validTimestamps.length >= limitConfig.limit) {
+    const rate = await rateLimit(key, limitConfig.limit, limitConfig.window);
+    if (!rate.success) {
       return new NextResponse(
         JSON.stringify({ error: "Too many requests. Please try again later." }),
         {
           status: 429,
           headers: {
             "Content-Type": "application/json",
-            "Retry-After": Math.ceil((limitConfig.window - (now - validTimestamps[0])) / 1000).toString(),
+            "Retry-After": Math.ceil(rate.reset / 1000).toString(),
           },
         }
       );
-    }
-
-    validTimestamps.push(now);
-    rateLimitMap.set(key, validTimestamps);
-
-    // Prune cache periodically to avoid memory leaks
-    if (rateLimitMap.size > 1000) {
-      for (const [mapKey, times] of rateLimitMap.entries()) {
-        const filtered = times.filter(ts => now - ts < 60 * 1000);
-        if (filtered.length === 0) {
-          rateLimitMap.delete(mapKey);
-        } else {
-          rateLimitMap.set(mapKey, filtered);
-        }
-      }
     }
   }
 
