@@ -46,6 +46,14 @@ function buildAlert(
   if (hasSession) return HIDDEN;
 
   if (errorParam) {
+    if (errorParam === "unauthenticated") {
+      return {
+        visible: true,
+        type: "info",
+        title: "Access Restricted",
+        message: "You must be signed in to access the Nitech Estimate Builder. Please sign in with your Google account.",
+      };
+    }
     const known = ERROR_MESSAGES[errorParam];
     if (known) {
       return {

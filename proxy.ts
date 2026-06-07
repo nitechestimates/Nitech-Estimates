@@ -76,8 +76,9 @@ export async function proxy(req: NextRequest) {
     });
 
     if (!token) {
-      // Redirect to login page if unauthenticated
+      // Redirect to login page if unauthenticated, appending error flag
       const loginUrl = new URL("/", req.url);
+      loginUrl.searchParams.set("error", "unauthenticated");
       return NextResponse.redirect(loginUrl);
     }
   }
