@@ -141,6 +141,7 @@ export async function POST(req) {
       totalGST,
       LABOUR_INSURANCE_RATE,
       totalLabourInsurance,
+      subTotalWithTax,
       grandTotal,
       standardRows,
       royaltyRows,
