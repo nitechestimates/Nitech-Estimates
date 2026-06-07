@@ -8,7 +8,13 @@ import { z } from 'zod';
 
 const putSchema = z.object({
   name: z.string().trim().min(1).optional(),
-  materials: z.array(z.string()).optional(),
+  materials: z.array(z.union([
+    z.string(),
+    z.object({
+      name: z.string().trim().min(1),
+      km: z.number().min(0)
+    })
+  ])).optional(),
   customLeads: z.array(z.object({
     name: z.string().trim().min(1),
     distance: z.number().min(0),
@@ -36,7 +42,7 @@ export async function PUT(request, { params }) {
     const validation = putSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: validation.error.errors.map(e => e.message).join(', ') },
+        { error: validation.error.issues.map(e => e.message).join(', ') },
         { status: 400 }
       );
     }

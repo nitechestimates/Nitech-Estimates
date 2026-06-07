@@ -804,9 +804,34 @@ export default function DatasheetPage() {
               </div>
 
               {/* Footer */}
-              <div className="bg-slate-50/80 backdrop-blur-md p-4 border-t border-slate-200 flex justify-end">
+              <div className="bg-slate-50/80 backdrop-blur-md p-4 border-t border-slate-200 flex justify-end gap-2">
+                {selectedProfileId && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await useStore.getState().saveLeadsProfile(activeCategory, selectedProfileId);
+                        await triggerAlert("Profile saved successfully to database.", "Success");
+                      } catch (err) {
+                        await triggerAlert("Failed to save profile: " + err.message, "Error");
+                      }
+                    }}
+                    className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold rounded-xl shadow-md active:scale-95 transition cursor-pointer"
+                  >
+                    Save Changes
+                  </button>
+                )}
                 <button
-                  onClick={() => { setProfileModalOpen(false); setSelectedProfileId(null); }}
+                  onClick={async () => {
+                    if (selectedProfileId) {
+                      try {
+                        await useStore.getState().saveLeadsProfile(activeCategory, selectedProfileId);
+                      } catch (err) {
+                        console.error("Auto-saving on close failed:", err);
+                      }
+                    }
+                    setProfileModalOpen(false);
+                    setSelectedProfileId(null);
+                  }}
                   className="px-6 py-2.5 bg-gradient-to-r from-slate-800 to-slate-900 text-white text-sm font-bold rounded-xl shadow-md active:scale-95 transition cursor-pointer"
                 >
                   Save &amp; Close Template
@@ -1419,7 +1444,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Igatpuri Roads Standard Template..."
                           value={formProfileName}
                           onChange={(e) => setFormProfileName(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1432,7 +1457,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Igatpuri Road Repair Work"
                           value={formEstimateName}
                           onChange={(e) => setFormEstimateName(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1445,22 +1470,29 @@ export default function DatasheetPage() {
                           placeholder="e.g. Metalling and Tarring of Road"
                           value={formNameOfWork}
                           onChange={(e) => setFormNameOfWork(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
 
-                      {/* Yojana / Fund */}
+                      {/* Yojana / Fund Dropdown */}
                       <div>
                         <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Yojana / Fund</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. DPDC Scheme 2024-25"
+                        <select
                           value={formYojana}
                           onChange={(e) => setFormYojana(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
-                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
-                        />
+                          className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-8"
+                        >
+                          <option value="">Select Yojana / Fund...</option>
+                          {formYojana && !yojanaList.includes(formYojana) && (
+                            <option value={formYojana}>{formYojana}</option>
+                          )}
+                          {yojanaList.map((yojana) => (
+                            <option key={yojana} value={yojana}>
+                              {yojana}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
                       {/* Area Type Surcharge Selector */}
@@ -1494,7 +1526,7 @@ export default function DatasheetPage() {
                                 placeholder="Tribal %"
                                 value={formTribalPercent}
                                 onChange={(e) => setFormTribalPercent(e.target.value)}
-                                onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                                 className="w-full border border-orange-300 bg-orange-50 px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-400"
                               />
                               <span className="absolute right-3 top-2 text-xs font-bold text-orange-500">%</span>
@@ -1511,7 +1543,7 @@ export default function DatasheetPage() {
                           placeholder="Estimated cost"
                           value={formEstAmount}
                           onChange={(e) => setFormEstAmount(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1525,7 +1557,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. 1.00"
                           value={formLabourInsurance}
                           onChange={(e) => setFormLabourInsurance(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1538,7 +1570,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. 2024-25"
                           value={formYear}
                           onChange={(e) => setFormYear(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1552,7 +1584,7 @@ export default function DatasheetPage() {
                             placeholder="District"
                             value={formDist}
                             onChange={(e) => setFormDist(e.target.value)}
-                            onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                             className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                           />
                         </div>
@@ -1563,7 +1595,7 @@ export default function DatasheetPage() {
                             placeholder="Taluka"
                             value={formTaluka}
                             onChange={(e) => setFormTaluka(e.target.value)}
-                            onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                             className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                           />
                         </div>
@@ -1574,7 +1606,7 @@ export default function DatasheetPage() {
                             placeholder="Village"
                             value={formVillage}
                             onChange={(e) => setFormVillage(e.target.value)}
-                            onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                             className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                           />
                         </div>
@@ -1588,7 +1620,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Nashik Division"
                           value={formHeadDivision}
                           onChange={(e) => setFormHeadDivision(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1601,7 +1633,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. Igatpuri Sub-Division"
                           value={formSubDivision}
                           onChange={(e) => setFormSubDivision(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1614,7 +1646,7 @@ export default function DatasheetPage() {
                           placeholder="Name of Deputy Engineer"
                           value={formDeputyEngineer}
                           onChange={(e) => setFormDeputyEngineer(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1627,7 +1659,7 @@ export default function DatasheetPage() {
                           placeholder="Name of Jr. Engineer"
                           value={formJrEngineer}
                           onChange={(e) => setFormJrEngineer(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>
@@ -1640,7 +1672,7 @@ export default function DatasheetPage() {
                           placeholder="e.g. AA/2024/XYZ/123"
                           value={formAdminApprovalNo}
                           onChange={(e) => setFormAdminApprovalNo(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleSaveDetailsProfile()}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }}
                           className="w-full border border-slate-200 bg-white/60 shadow-sm rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                         />
                       </div>

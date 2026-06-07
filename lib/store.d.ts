@@ -89,6 +89,7 @@ export type StoreState = {
   setMeasurementItems: (items: MeasurementItem[]) => void;
   setEstimateMeta: (meta: Partial<Record<string, unknown>>) => void;
   syncMeasurementFromRA: () => void;
+  saveLeadsProfile: (category: string, id: string) => Promise<void>;
   [key: string]: unknown;
 };
 
