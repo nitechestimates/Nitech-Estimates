@@ -56,6 +56,7 @@ export async function POST(req) {
       logger.warn("Could not load ZP logo:", { error: err.message });
     }
 
+    const eRows = eData.rows || [];
     const {
       abstractRows,
       standardRows,
