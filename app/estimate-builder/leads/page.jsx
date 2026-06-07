@@ -274,11 +274,13 @@ export default function LeadsPage() {
       const matName = typeof matEntry === "string" ? matEntry : matEntry.name;
       const matKm   = typeof matEntry === "string" ? 0 : (matEntry.km || 0);
       if (!updated[matName]) {
-        updated[matName] = { distance: matKm, leadCharge: 0, unit: getUnitForMaterial(leadsData, matName), type: "regular" };
+        const leadCharge = leadsData ? getRateForMaterial(leadsData, matName, matKm) : 0;
+        updated[matName] = { distance: matKm, leadCharge, unit: getUnitForMaterial(leadsData, matName), type: "regular" };
         if (!newOrder.includes(matName)) newOrder.push(matName);
       } else if (matKm > 0 && updated[matName].distance === 0) {
         // If the material already exists but has no distance set, fill it in from the profile
-        updated[matName] = { ...updated[matName], distance: matKm };
+        const leadCharge = leadsData ? getRateForMaterial(leadsData, matName, matKm) : updated[matName].leadCharge;
+        updated[matName] = { ...updated[matName], distance: matKm, leadCharge };
       }
     });
     // Add custom leads from profile
