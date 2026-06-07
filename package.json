@@ -8,7 +8,7 @@
     "build": "next build",
     "build:webpack": "next build --webpack",
     "start": "next start",
-    "lint": "eslint app lib components middleware.ts",
+    "lint": "eslint app lib components proxy.ts",
     "desktop:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
     "desktop:build": "npm run build:webpack && electron-builder build --win --x64",
     "test:unit": "vitest run",
