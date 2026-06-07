@@ -5,6 +5,7 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { ObjectId } from "mongodb"; // ← Add this import
 import { rateLimit } from "@/lib/rateLimit";
+import { logger } from "@/lib/logger";
 
 // Validation schema
 const estimateSchema = z.object({
@@ -148,7 +149,7 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    console.error("SAVE ERROR:", error);
+    logger.error("SAVE ERROR:", error);
     const errorMsg = error.name === "MongoServerSelectionError" || error.name === "MongoNetworkError" || error.message?.includes("ENOTFOUND")
       ? "Database connection failed. Please check your internet connection."
       : "Internal Server Error";

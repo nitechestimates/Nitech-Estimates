@@ -60,4 +60,16 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+let finalConfig = nextConfig;
+try {
+  const { withSentryConfig } = require("@sentry/nextjs");
+  finalConfig = withSentryConfig(nextConfig, {
+    silent: true,
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+  });
+} catch {
+  // Sentry not installed — use plain Next.js config
+}
+
+export default finalConfig;

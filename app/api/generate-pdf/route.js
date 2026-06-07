@@ -7,6 +7,7 @@ import { rateLimit } from '@/lib/rateLimit';
 import { generatePDF } from '@/lib/pdf-generator';
 import { getEstimateHtml } from '@/lib/templates/estimateHtml';
 import { handleError } from '@/lib/errorHandler';
+import { logger } from '@/lib/logger';
 
 export const maxDuration = 60;
 
@@ -53,7 +54,7 @@ export async function POST(req) {
         logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
       }
     } catch (err) {
-      console.warn("Could not load ZP logo image:", err);
+      logger.warn("Could not load ZP logo image:", { error: err.message });
     }
 
     const msMap = new Map((Array.isArray(measurementItems) ? measurementItems : []).map(item => [item.id, item]));

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import clientPromise from "@/lib/mongodb";
 import { authOptions } from "@/lib/auth";
+import { rateLimit } from "@/lib/rateLimit";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -12,6 +14,14 @@ export async function GET() {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
+      );
+    }
+
+    const rate = await rateLimit(`estimate-get:${session.user.email}`, 30, 60000);
+    if (!rate.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": Math.ceil(rate.reset / 1000).toString() } }
       );
     }
 
@@ -29,7 +39,7 @@ export async function GET() {
     return NextResponse.json(JSON.parse(JSON.stringify(estimates)));
 
   } catch (error) {
-    console.error("🔥 FETCH ERROR:", error);
+    logger.error("🔥 FETCH ERROR:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

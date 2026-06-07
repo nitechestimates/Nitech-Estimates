@@ -8,6 +8,7 @@ import { generatePDF } from '@/lib/pdf-generator';
 import { getBillingHtml } from '@/lib/templates/billingHtml';
 import { handleError } from '@/lib/errorHandler';
 import { calculateBilling } from '@/lib/billingMath';
+import { logger } from '@/lib/logger';
 
 export const maxDuration = 60;
 
@@ -52,7 +53,7 @@ export async function POST(req) {
         logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
       }
     } catch (err) {
-      console.warn("Could not load ZP logo:", err);
+      logger.warn("Could not load ZP logo:", { error: err.message });
     }
 
     const {

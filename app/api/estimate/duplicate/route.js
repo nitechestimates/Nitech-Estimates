@@ -4,6 +4,7 @@ import clientPromise from "@/lib/mongodb";
 import { authOptions } from "@/lib/auth";
 import { ObjectId } from "mongodb";
 import { handleError } from "@/lib/errorHandler";
+import { rateLimit } from "@/lib/rateLimit";
 import { z } from "zod";
 
 const duplicateSchema = z.object({
@@ -17,6 +18,14 @@ export async function POST(request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rate = await rateLimit(`estimate-duplicate:${session.user.email}`, 10, 60000);
+    if (!rate.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": Math.ceil(rate.reset / 1000).toString() } }
+      );
     }
 
     const body = await request.json();

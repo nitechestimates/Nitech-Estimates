@@ -4,6 +4,7 @@ import clientPromise from "@/lib/mongodb";
 import { authOptions } from "@/lib/auth";
 import { ObjectId } from "mongodb";
 import { handleError } from "@/lib/errorHandler";
+import { rateLimit } from "@/lib/rateLimit";
 import { z } from "zod";
 
 const postSchema = z.object({
@@ -37,6 +38,14 @@ export async function GET(request, context) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const rate = await rateLimit(`billing-get:${session.user.email}`, 30, 60000);
+    if (!rate.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": Math.ceil(rate.reset / 1000).toString() } }
+      );
+    }
+
     const { estimateId } = await context.params;
     if (!ObjectId.isValid(estimateId)) {
       return NextResponse.json({ error: "Invalid estimate ID" }, { status: 400 });
@@ -67,6 +76,14 @@ export async function POST(request, context) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rate = await rateLimit(`billing-post:${session.user.email}`, 10, 60000);
+    if (!rate.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": Math.ceil(rate.reset / 1000).toString() } }
+      );
     }
 
     const { estimateId } = await context.params;
@@ -180,6 +197,14 @@ export async function PUT(request, context) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const rate = await rateLimit(`billing-put:${session.user.email}`, 20, 60000);
+    if (!rate.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": Math.ceil(rate.reset / 1000).toString() } }
+      );
+    }
+
     const { estimateId } = await context.params;
     if (!ObjectId.isValid(estimateId)) {
       return NextResponse.json({ error: "Invalid estimate ID" }, { status: 400 });
@@ -227,6 +252,14 @@ export async function DELETE(request, context) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rate = await rateLimit(`billing-delete:${session.user.email}`, 10, 60000);
+    if (!rate.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": Math.ceil(rate.reset / 1000).toString() } }
+      );
     }
 
     const { estimateId } = await context.params;

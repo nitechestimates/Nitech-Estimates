@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
 import { authOptions } from "@/lib/auth"; // ✅ Fixed path using absolute alias
+import { rateLimit } from "@/lib/rateLimit";
+import { logger } from "@/lib/logger";
 
 export async function GET(request, context) {
   try {
@@ -12,6 +14,14 @@ export async function GET(request, context) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
+      );
+    }
+
+    const rate = await rateLimit(`estimate-id-get:${session.user.email}`, 60, 60000);
+    if (!rate.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": Math.ceil(rate.reset / 1000).toString() } }
       );
     }
 
@@ -46,7 +56,7 @@ export async function GET(request, context) {
     });
 
   } catch (error) {
-    console.error("GET ONE ERROR:", error);
+    logger.error("GET ONE ERROR:", error);
 
     return NextResponse.json(
       { error: "Internal Server Error" },
@@ -93,7 +103,7 @@ export async function DELETE(request, context) {
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error("DELETE ERROR:", error);
+    logger.error("DELETE ERROR:", error);
 
     return NextResponse.json(
       { error: "Internal Server Error" },
@@ -150,7 +160,7 @@ export async function PUT(request, context) {
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error("PUT ERROR:", error);
+    logger.error("PUT ERROR:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

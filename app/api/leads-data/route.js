@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { rateLimit } from "@/lib/rateLimit";
 import fs from "fs/promises";
 import path from "path";
+import { logger } from "@/lib/logger";
 
 // Cache the parsed JSON to avoid re-reading the file on every request
 let cachedLeads = null;
@@ -31,7 +32,7 @@ export async function GET() {
     }
     return NextResponse.json(cachedLeads);
   } catch (error) {
-    console.error("Error reading leads.json:", error);
+    logger.error("Error reading leads.json:", error);
     return NextResponse.json({ error: "Failed to load lead data" }, { status: 500 });
   }
 }
