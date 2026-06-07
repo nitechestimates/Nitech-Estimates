@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   }
 
   // Rate limit check
-  const rate = rateLimit(`get-item:${session.user.email}`, 100, 60000);
+  const rate = await rateLimit(`get-item:${session.user.email}`, 100, 60000);
   if (!rate.success) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     }
 
     // Rate limit check
-    const rate = rateLimit(`get-item-post:${session.user.email}`, 100, 60000);
+    const rate = await rateLimit(`get-item-post:${session.user.email}`, 100, 60000);
     if (!rate.success) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },

@@ -17,7 +17,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rate = rateLimit(`generate-pdf:${session.user.email}`, 5, 60000);
+    const rate = await rateLimit(`generate-pdf:${session.user.email}`, 5, 60000);
     if (!rate.success) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },

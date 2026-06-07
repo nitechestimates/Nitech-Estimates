@@ -33,6 +33,11 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["mongodb", "@mongodb-js/saslprep", "mongodb-client-encryption"],
 
   async headers() {
+    const isProd = process.env.NODE_ENV === "production";
+    const cspValue = isProd
+      ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self';"
+      : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: http: https:;";
+
     return [
       {
         source: "/(.*)",
@@ -47,7 +52,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: http: https:;",
+            value: cspValue,
           },
         ],
       },

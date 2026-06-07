@@ -17,7 +17,7 @@ export async function GET() {
     }
 
     // Rate limit check
-    const rate = rateLimit(`leads-data:${session.user.email}`, 100, 60000);
+    const rate = await rateLimit(`leads-data:${session.user.email}`, 100, 60000);
     if (!rate.success) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },

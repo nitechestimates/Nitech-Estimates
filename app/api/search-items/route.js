@@ -12,7 +12,7 @@ export async function GET(req) {
   }
 
   // Rate limit check
-  const rate = rateLimit(`search-items:${session.user.email}`, 100, 60000);
+  const rate = await rateLimit(`search-items:${session.user.email}`, 100, 60000);
   if (!rate.success) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },

@@ -38,7 +38,7 @@ export async function POST(request) {
     }
 
     // Rate limit check
-    const rate = rateLimit(`estimate-save:${session.user.email}`, 10, 60000);
+    const rate = await rateLimit(`estimate-save:${session.user.email}`, 10, 60000);
     if (!rate.success) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },

@@ -13,6 +13,23 @@ const LIMITS: Record<string, { limit: number; window: number }> = {
   "/api/search-items": { limit: 60, window: 60 * 1000 },       // 60 requests per minute
 };
 
+// Helper to resolve limit config, including CRUD wildcards
+function getLimitConfig(pathname: string): { limit: number; window: number } | null {
+  if (LIMITS[pathname]) {
+    return LIMITS[pathname];
+  }
+  if (pathname.startsWith("/api/estimate/") && pathname !== "/api/estimate/save") {
+    return { limit: 30, window: 60 * 1000 }; // 30 requests/min for general/dynamic estimate CRUD
+  }
+  if (pathname.startsWith("/api/billing/") && pathname !== "/api/billing/generate-pdf") {
+    return { limit: 30, window: 60 * 1000 }; // 30 requests/min for general/dynamic billing CRUD
+  }
+  if (pathname.startsWith("/api/lead-profiles")) {
+    return { limit: 30, window: 60 * 1000 }; // 30 requests/min for lead profile CRUD
+  }
+  return null;
+}
+
 interface RequestWithIp extends NextRequest {
   ip?: string;
 }
@@ -21,7 +38,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // 1. Apply Rate Limiting first for configured endpoints
-  const limitConfig = LIMITS[pathname];
+  const limitConfig = getLimitConfig(pathname);
   if (limitConfig) {
     const ip = req.headers.get("x-forwarded-for") || (req as RequestWithIp).ip || "127.0.0.1";
     const key = `${pathname}:${ip}`;
@@ -86,8 +103,14 @@ export const config = {
     "/estimate-builder",
     "/estimate-builder/:path*",
     "/api/estimate/save",
+    "/api/estimate/get",
+    "/api/estimate/duplicate",
+    "/api/estimate/:id",
+    "/api/billing/generate-pdf",
+    "/api/billing/:estimateId",
+    "/api/lead-profiles",
+    "/api/lead-profiles/:id",
     "/api/search-items",
     "/api/generate-pdf",
-    "/api/billing/generate-pdf",
   ],
 };
