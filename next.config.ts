@@ -15,9 +15,9 @@ const envSchema = z.object({
 const envResult = envSchema.safeParse(process.env);
 if (!envResult.success) {
   console.error("❌ Environment validation failed:", envResult.error.format());
-  // Do not throw if we are in non-production build to avoid breaking CI steps, but log a warning.
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("Invalid environment variables in production build.");
+  // Fail fast in production or development, but bypass for headless CI pipelines to keep CI runs green.
+  if (process.env.NODE_ENV === "production" || (process.env.NODE_ENV === "development" && process.env.CI !== "true")) {
+    throw new Error("Invalid or missing environment variables. Please check your .env.local file.");
   }
 }
 

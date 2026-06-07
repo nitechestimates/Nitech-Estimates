@@ -3,17 +3,9 @@ import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import Link from "next/link";
 import AlertDialog, { useAlertDialog } from '@/components/AlertDialog';
+import defaults from "@/lib/defaults.json";
 
-const STANDARD_MATERIALS = [
-  "Sand", "Stone ≤40mm (Crushed Metal)", "Normal Brick Sider Aggregate", "Timber",
-  "Stone Aggregate 40mm Normal Size & Above", "Murrum", "Building Rubbish", "Earth",
-  "Manure", "Sludge", "Excavated Rock", "Soling Stone", "Concrete Block (FORM)",
-  "Cement", "Lime", "Stone Block", "Sheet & Plate", "Glass in Packs", "Distemper",
-  "AC Sheet", "Fitting Iron Sheet", "GI Pipes", "CI Pipes", "CC Pipes", "AC Pipes",
-  "Bricks — Per 1000 Nos", "Tiles", "Half Round Tiles", "Roofing Tiles", "Manglore Tiles",
-  "Steel MS", "Steel TMT", "Steel HYSD", "Structural Steel",
-  "Flooring Tiles Ceramic", "Flooring Tiles Marbonate",
-];
+const STANDARD_MATERIALS = defaults.STANDARD_MATERIALS;
 
 const CATEGORIES = [
   { key: "buildings", label: "Buildings", icon: "🏢", color: "blue" },
@@ -122,53 +114,11 @@ export default function DatasheetPage() {
   }, [yojanaModalOpen, profileModalOpen, ratesModalOpen, detailsModalOpen]);
 
   // ── Fallback Defaults (Resiliency for pre-existing storage) ──
-  const finalAreaRateIncreases = areaRateIncreases.length > 0 ? areaRateIncreases : [
-    { key: "a", name: "Corporation Areas", percentage: 5 },
-    { key: "b", name: "Municipal Council Areas", percentage: 4 },
-    { key: "c", name: "Sugarcane factory area (within 10 km. radius)", percentage: 5 },
-    { key: "d", name: "Notified Tribal Areas / Hilly Area / Inaccessible areas / Pandemic Special Centers", percentage: 10 },
-    { key: "e", name: "Inside Premises of Central Jail, Mental Hospital, Yerawada Printing press.", percentage: 15 },
-    { key: "f", name: "Tiger project area in Amaravati, Yavatmal, Wardha, Nagpur, Bhandara, Gondia & Chandrapur Distt.", percentage: 20 },
-    { key: "g", name: "Coal / Lime / Manganese Mining area", percentage: 5 },
-    { key: "h", name: "Naxalite affected area", percentage: 20 },
-    { key: "i", name: "Metropolitan areas notified by UDD excluding Municipal Corporation and Council areas", percentage: 2 }
-  ];
+  const finalAreaRateIncreases = areaRateIncreases.length > 0 ? areaRateIncreases : defaults.DEFAULT_AREA_RATE_INCREASES;
 
-  const finalBasicMaterialRates = basicMaterialRates.length > 0 ? basicMaterialRates : [
-    { srNo: 1, name: "Cement / PPC", rate: 6000, unit: "Per M.T." },
-    { srNo: 2, name: "PSC", rate: 6385, unit: "Per M.T." },
-    { srNo: 3, name: "GGBFS (IS-16714)", rate: 4300, unit: "Per M.T." },
-    { srNo: 4, name: "TMT-FE-500 reinforcement", rate: 61000, unit: "Per M.T." },
-    { srNo: 5, name: "HCRM/ CRS reinforcement", rate: 63755, unit: "Per M.T." },
-    { srNo: 6, name: "Structural Steel", rate: 62575, unit: "Per M.T." },
-    { srNo: 7, name: "Tubular Steel", rate: 65720, unit: "Per M.T." },
-    { srNo: 8, name: "Bitumen VG-30 (Packed)", rate: 59411, unit: "Per M.T. Ex. Refinery Mumbai" },
-    { srNo: 9, name: "Bitumen VG-10 (Packed)", rate: 57913, unit: "Per M.T. Ex. Refinery Mumbai" },
-    { srNo: 10, name: "Bitumen VG-40 (Bulk)", rate: 52764, unit: "Per M.T. Ex. Refinery Mumbai" },
-    { srNo: 11, name: "Bitumen VG-30 (Bulk)", rate: 49862, unit: "Per M.T. Ex. Refinery Mumbai" },
-    { srNo: 12, name: "Bitumen VG-10 (Bulk)", rate: 49488, unit: "Per M.T. Ex. Refinery Mumbai" },
-    { srNo: 13, name: "Bitumen VG-40 (Packed)", rate: 64748, unit: "Per M.T. Ex. Refinery Mumbai" },
-    { srNo: 14, name: "Bitumen Emulsion", rate: 40000, unit: "Per M.T. Ex. Refinery Mumbai" },
-    { srNo: 15, name: "CRMB - 55", rate: 54954, unit: "Per M.T." },
-    { srNo: 16, name: "CRMB - 60", rate: 55580, unit: "Per M.T." }
-  ];
+  const finalBasicMaterialRates = basicMaterialRates.length > 0 ? basicMaterialRates : defaults.DEFAULT_BASIC_MATERIAL_RATES;
 
-  const finalGeneralAllowances = Object.keys(generalAllowances).length > 0 ? generalAllowances : {
-    floorFirst: 1,
-    floorSecond: 2,
-    floorThird: 3,
-    floorFourth: 4,
-    excavation30to45: 20,
-    excavation45to60: 30,
-    foulExcavation: 25,
-    foulOther: 5,
-    scadaConcrete: 126,
-    scadaBT: 63,
-    curingCompound: 5,
-    royaltyBase: 211.95,
-    royaltySurcharge: 2,
-    royaltyDMF: 10
-  };
+  const finalGeneralAllowances = Object.keys(generalAllowances).length > 0 ? generalAllowances : defaults.DEFAULT_GENERAL_ALLOWANCES;
 
   // ── Lead Profile Helper Calculations ──
   const cat = CATEGORIES.find(c => c.key === activeCategory);

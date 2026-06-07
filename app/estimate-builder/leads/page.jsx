@@ -17,18 +17,10 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import Tabs from "../components/Tabs";
 import { useStore } from "@/lib/store";
+import defaults from "@/lib/defaults.json";
 
 // ─── Standard materials ───────────────────────────────────────────────────────
-const STANDARD_MATERIALS = [
-  "Sand","Stone ≤40mm (Crushed Metal)","Normal Brick Sider Aggregate","Timber",
-  "Stone Aggregate 40mm Normal Size & Above","Murrum","Building Rubbish","Earth",
-  "Manure","Sludge","Excavated Rock","Soling Stone","Concrete Block (FORM)",
-  "Cement","Lime","Stone Block","Sheet & Plate","Glass in Packs","Distemper",
-  "AC Sheet","Fitting Iron Sheet","GI Pipes","CI Pipes","CC Pipes","AC Pipes",
-  "Bricks — Per 1000 Nos","Tiles","Half Round Tiles","Roofing Tiles","Manglore Tiles",
-  "Steel MS","Steel TMT","Steel HYSD","Structural Steel",
-  "Flooring Tiles Ceramic","Flooring Tiles Marbonate",
-];
+const STANDARD_MATERIALS = defaults.STANDARD_MATERIALS;
 
 const CATEGORIES = [
   { key: "buildings", label: "Buildings", icon: "🏢", color: "blue"    },

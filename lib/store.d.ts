@@ -21,6 +21,57 @@ export type ProjectDetailsProfile = {
   adminApprovalNo?: string;
 };
 
+export type MaterialItem = {
+  name?: string;
+  qty?: number;
+  lead?: number;
+};
+
+export type EstimateRow = {
+  id: string;
+  srNo?: number;
+  description?: string;
+  specs?: string;
+  qty?: number;
+  unit?: string;
+  basicRate?: number;
+  deduct?: number;
+  rate?: number;
+  amount?: number;
+  isRoyalty?: boolean;
+  materials?: MaterialItem[];
+  netAfterDeduct?: number;
+  totalLead?: number;
+  total?: number;
+  tribal?: number;
+  netTotal?: number;
+  useReducedRate?: boolean;
+  reducedRate?: number | null;
+  [key: string]: unknown;
+};
+
+export type MeasurementSubItem = {
+  id: string | number;
+  description?: string;
+  no?: string;
+  l?: string;
+  b?: string;
+  h?: string;
+  total?: number;
+};
+
+export type MeasurementItem = {
+  id: string;
+  srNo?: number;
+  description?: string;
+  unit?: string;
+  totalQty?: number;
+  usePercent?: boolean;
+  percentValue?: number;
+  measurements?: MeasurementSubItem[];
+  [key: string]: unknown;
+};
+
 export type StoreState = {
   yojanaList: string[];
   addYojana: (item: string) => void;
@@ -30,12 +81,12 @@ export type StoreState = {
   addProjectDetailsProfile: (profile: ProjectDetailsProfile) => void;
   deleteProjectDetailsProfile: (id: string) => void;
   updateProjectDetailsProfile: (id: string, updates: Partial<ProjectDetailsProfile>) => void;
-  raRows: Record<string, unknown>[];
-  raBottomRows: Record<string, unknown>[];
-  measurementItems: Record<string, unknown>[];
-  setRARows: (rows: Record<string, unknown>[]) => void;
-  setRABottomRows: (rows: Record<string, unknown>[]) => void;
-  setMeasurementItems: (items: Record<string, unknown>[]) => void;
+  raRows: EstimateRow[];
+  raBottomRows: EstimateRow[];
+  measurementItems: MeasurementItem[];
+  setRARows: (rows: EstimateRow[]) => void;
+  setRABottomRows: (rows: EstimateRow[]) => void;
+  setMeasurementItems: (items: MeasurementItem[]) => void;
   setEstimateMeta: (meta: Partial<Record<string, unknown>>) => void;
   syncMeasurementFromRA: () => void;
   [key: string]: unknown;

@@ -14,46 +14,11 @@ import Tabs from "../components/Tabs";
 import DownloadPdfButton from "../components/DownloadPdfButton";
 import { useStore } from "@/lib/store";
 import AlertDialog, { useAlertDialog } from "@/components/AlertDialog";
+import defaults from "@/lib/defaults.json";
 
 // ── 36 standard material names (must match leads.json keys exactly) ──────────
-const STANDARD_MATERIALS = [
-  "Sand",
-  "Stone ≤40mm (Crushed Metal)",
-  "Normal Brick Sider Aggregate",
-  "Timber",
-  "Stone Aggregate 40mm Normal Size & Above",
-  "Murrum",
-  "Building Rubbish",
-  "Earth",
-  "Manure",
-  "Sludge",
-  "Excavated Rock",
-  "Soling Stone",
-  "Concrete Block (FORM)",
-  "Cement",
-  "Lime",
-  "Stone Block",
-  "Sheet & Plate",
-  "Glass in Packs",
-  "Distemper",
-  "AC Sheet",
-  "Fitting Iron Sheet",
-  "GI Pipes",
-  "CI Pipes",
-  "CC Pipes",
-  "AC Pipes",
-  "Bricks — Per 1000 Nos",
-  "Tiles",
-  "Half Round Tiles",
-  "Roofing Tiles",
-  "Manglore Tiles",
-  "Steel MS",
-  "Steel TMT",
-  "Steel HYSD",
-  "Structural Steel",
-  "Flooring Tiles Ceramic",
-  "Flooring Tiles Marbonate",
-];
+const STANDARD_MATERIALS = defaults.STANDARD_MATERIALS;
+
 
 // ========== Helper: Get default materials based on description ==========
 function getDefaultMaterialsForDescription(description, leadSettings) {
@@ -181,11 +146,7 @@ function AutoTextarea({ value, onChange, className = "text-left" }) {
   );
 }
 
-const defaultBottomRows = [
-  { id: "royalty-sand", isRoyalty: true, ssr: "", description: "Royalty Charges ( sand)", unit: "Cum", basicRate: 237.37, deduct: 0, materials: [{ id: "mat-r1", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" },
-  { id: "royalty-others", isRoyalty: true, ssr: "", description: "Royalty Charges ( others)", unit: "Cum", basicRate: 216.18, deduct: 0, materials: [{ id: "mat-r2", name: "", qty: 0, lead: 0 }], totalLead: 0, total: 0, tribal: 0, netTotal: 0, specs: "" },
-  { id: "lab-charges", isRoyalty: true, ssr: "", description: "laboratory charges ", unit: "for all test", basicRate: 3036, deduct: 0, materials: [{ id: "mat-r3", name: "", qty: 1, lead: 0 }], totalLead: 0, total: 3036, tribal: 0, netTotal: 3036, specs: "" }
-];
+const defaultBottomRows = defaults.defaultBottomRows;
 
 const formatNumber = (num) => (num !== undefined && num !== null && !isNaN(num) ? Number(num).toFixed(3) : "0.000");
 

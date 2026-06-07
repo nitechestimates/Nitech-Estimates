@@ -38,7 +38,18 @@ export async function proxy(req: NextRequest) {
   // 1. Apply Rate Limiting first for configured endpoints
   const limitConfig = getLimitConfig(pathname);
   if (limitConfig) {
-    const ip = req.headers.get("x-forwarded-for") || (req as RequestWithIp).ip || "127.0.0.1";
+    // Resolve client IP securely to prevent spoofing in proxy environments
+    const xRealIp = req.headers.get("x-real-ip");
+    const xForwardedFor = req.headers.get("x-forwarded-for");
+    let ip = "127.0.0.1";
+    if (xRealIp) {
+      ip = xRealIp.trim();
+    } else if (xForwardedFor) {
+      const parts = xForwardedFor.split(",");
+      ip = parts[0].trim();
+    } else {
+      ip = (req as RequestWithIp).ip || "127.0.0.1";
+    }
     const key = `${pathname}:${ip}`;
 
     const rate = await rateLimit(key, limitConfig.limit, limitConfig.window);
