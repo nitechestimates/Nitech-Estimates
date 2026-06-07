@@ -405,7 +405,7 @@ export default function LeadsPage() {
 
         {/* ─── Regular Lead Form ───────────────────────────────────────────── */}
         {mode === "regular" && (
-          <div className="bg-white/60 backdrop-blur-xl border border-blue-200/50 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] p-5 mb-5">
+          <div className="relative z-30 bg-white/60 backdrop-blur-xl border border-blue-200/50 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] p-5 mb-5">
             <h2 className="text-base font-bold text-blue-800 mb-4 flex items-center gap-2">
               <span className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xs font-bold">R</span>
               Add Regular Lead
