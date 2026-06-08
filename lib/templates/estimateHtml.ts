@@ -1,5 +1,34 @@
 import { escapeHtml } from "../escapeHtml";
 
+interface EstimateData {
+  logoBase64?: string;
+  dist?: string;
+  headDivision?: string;
+  subDivision?: string;
+  nameOfWork?: string;
+  estAmount?: string | number;
+  adminApprovalNo?: string;
+  yojana?: string;
+  year?: string;
+  jrEngineer?: string;
+  deputyEngineer?: string;
+  totalAmount: number;
+  GST_RATE: number;
+  totalGST: number;
+  LABOUR_INSURANCE_RATE: number;
+  totalLabourInsurance: number;
+  subTotalWithTax: number;
+  grandTotal: number;
+  standardRows?: any[];
+  royaltyRows?: any[];
+  measurementItems?: any[];
+  leadCategories?: string[];
+  leadSettings?: Record<string, any>;
+  isTribal?: boolean;
+  tribalPercent?: string | number;
+  rows?: any[];
+}
+
 export function getEstimateHtml({
   logoBase64,
   dist,
@@ -27,7 +56,7 @@ export function getEstimateHtml({
   isTribal,
   tribalPercent,
   rows
-}) {
+}: EstimateData) {
   // Escape user-supplied strings to prevent HTML injection
   dist = escapeHtml(dist);
   headDivision = escapeHtml(headDivision);
@@ -39,36 +68,36 @@ export function getEstimateHtml({
   jrEngineer = escapeHtml(jrEngineer);
   deputyEngineer = escapeHtml(deputyEngineer);
 
-  standardRows = (standardRows || []).map(r => ({
+  standardRows = (standardRows || []).map((r: any) => ({
     ...r,
     description: escapeHtml(r.description),
     specs: escapeHtml(r.specs),
     unit: escapeHtml(r.unit),
   }));
 
-  royaltyRows = (royaltyRows || []).map(r => ({
+  royaltyRows = (royaltyRows || []).map((r: any) => ({
     ...r,
     description: escapeHtml(r.description),
     specs: escapeHtml(r.specs),
     unit: escapeHtml(r.unit),
   }));
 
-  rows = (rows || []).map(r => ({
+  rows = (rows || []).map((r: any) => ({
     ...r,
     description: escapeHtml(r.description),
     specs: escapeHtml(r.specs),
     unit: escapeHtml(r.unit),
-    materials: (r.materials || []).map(m => ({
+    materials: (r.materials || []).map((m: any) => ({
       ...m,
       name: escapeHtml(m.name),
     })),
   }));
 
-  measurementItems = (measurementItems || []).map(item => ({
+  measurementItems = (measurementItems || []).map((item: any) => ({
     ...item,
     description: escapeHtml(item.description),
     unit: escapeHtml(item.unit),
-    measurements: (item.measurements || []).map(m => ({
+    measurements: (item.measurements || []).map((m: any) => ({
       ...m,
       description: escapeHtml(m.description),
     })),
@@ -399,7 +428,7 @@ export function getEstimateHtml({
         const totalQty = item.totalQty || 0;
         const usePercent = item.usePercent || false;
         const percentValue = item.percentValue !== undefined ? item.percentValue : 100;
-        const rawSum = measurements.reduce((sum, m) => sum + (m.total || 0), 0);
+        const rawSum = measurements.reduce((sum: number, m: any) => sum + (m.total || 0), 0);
 
         let footerRowsHtml = "";
         if (usePercent) {
@@ -439,7 +468,7 @@ export function getEstimateHtml({
             <td class="center bold" style="font-size:14px;">${idx + 1}</td>
             <td class="left" colspan="7">${item.description || ''}</td>
           </tr>
-          ${measurements.map(meas => `
+          ${measurements.map((meas: any) => `
             <tr>
               <td></td>
               <td class="left pl-4">${meas.description || ''}</td>
@@ -538,10 +567,10 @@ export function getEstimateHtml({
     </thead>
     <tbody>
       ${rows.map((row, i) => {
-        const materialsHtml = (row.materials || []).map(mat => `<div style="border-bottom:1px dotted #ccc; padding:2px 0;">${mat.name || ''}</div>`).join('');
-        const qtyHtml = (row.materials || []).map(mat => `<div style="border-bottom:1px dotted #ccc; padding:2px 0;">${(mat.qty || 0).toFixed(2)}</div>`).join('');
-        const netLeadHtml = (row.materials || []).map(mat => `<div style="border-bottom:1px dotted #ccc; padding:2px 0; color:#3b82f6; font-weight:bold;">${(mat.lead || 0).toFixed(2)}</div>`).join('');
-        const totalLeadHtml = (row.materials || []).map(mat => `<div style="border-bottom:1px dotted #ccc; padding:2px 0;">${((mat.lead || 0) * (mat.qty || 0)).toFixed(2)}</div>`).join('');
+        const materialsHtml = (row.materials || []).map((mat: any) => `<div style="border-bottom:1px dotted #ccc; padding:2px 0;">${mat.name || ''}</div>`).join('');
+        const qtyHtml = (row.materials || []).map((mat: any) => `<div style="border-bottom:1px dotted #ccc; padding:2px 0;">${(mat.qty || 0).toFixed(2)}</div>`).join('');
+        const netLeadHtml = (row.materials || []).map((mat: any) => `<div style="border-bottom:1px dotted #ccc; padding:2px 0; color:#3b82f6; font-weight:bold;">${(mat.lead || 0).toFixed(2)}</div>`).join('');
+        const totalLeadHtml = (row.materials || []).map((mat: any) => `<div style="border-bottom:1px dotted #ccc; padding:2px 0;">${((mat.lead || 0) * (mat.qty || 0)).toFixed(2)}</div>`).join('');
         return `
           <tr>
             <td class="center bold">${i+1}</td>

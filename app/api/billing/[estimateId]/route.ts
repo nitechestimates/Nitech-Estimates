@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import clientPromise from "@/lib/mongodb";
 import { authOptions } from "@/lib/auth";
@@ -31,7 +31,7 @@ const putSchema = z.object({
 });
 
 // GET: Retrieve billing for an estimate
-export async function GET(request, context) {
+export async function GET(request: NextRequest, context: any) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -71,7 +71,7 @@ export async function GET(request, context) {
 }
 
 // POST: Finalize estimate & initialize billing
-export async function POST(request, context) {
+export async function POST(request: NextRequest, context: any) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -95,7 +95,7 @@ export async function POST(request, context) {
     const validation = postSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: validation.error.errors.map(e => e.message).join(', ') },
+        { error: "Validation failed", details: (validation.error as any).errors.map((e: any) => e.message) },
         { status: 400 }
       );
     }
@@ -190,7 +190,7 @@ export async function POST(request, context) {
 }
 
 // PUT: Save updated billing measurements, abstract rates, and form fields
-export async function PUT(request, context) {
+export async function PUT(request: NextRequest, context: any) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -214,7 +214,7 @@ export async function PUT(request, context) {
     const validation = putSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: validation.error.errors.map(e => e.message).join(', ') },
+        { error: (validation.error as any).errors.map((e: any) => e.message).join(', ') },
         { status: 400 }
       );
     }
@@ -247,7 +247,7 @@ export async function PUT(request, context) {
 }
 
 // DELETE: Remove billing document (for regeneration flow)
-export async function DELETE(request, context) {
+export async function DELETE(request: NextRequest, context: any) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {

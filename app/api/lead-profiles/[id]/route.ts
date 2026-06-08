@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import clientPromise from '@/lib/mongodb';
@@ -22,7 +22,38 @@ const putSchema = z.object({
   })).optional()
 });
 
-export async function PUT(request, { params }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const client = await clientPromise;
+    const db = client.db("nitech_estimates");
+
+    const existingProfile = await db.collection("lead_profiles").findOne({
+      id,
+      userId: session.user.email
+    });
+
+    if (!existingProfile) {
+      return NextResponse.json({ error: 'Lead profile not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      id: (existingProfile as any).id,
+      name: (existingProfile as any).name,
+      materials: (existingProfile as any).materials || [],
+      customLeads: (existingProfile as any).customLeads || []
+    });
+  } catch (error) {
+    return handleError(error, 'Failed to fetch lead profile');
+  }
+}
+
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -50,7 +81,7 @@ export async function PUT(request, { params }) {
     const client = await clientPromise;
     const db = client.db("nitech_estimates");
 
-    const updateData = {};
+    const updateData: any = {};
     if (validation.data.name !== undefined) updateData.name = validation.data.name;
     if (validation.data.materials !== undefined) updateData.materials = validation.data.materials;
     if (validation.data.customLeads !== undefined) updateData.customLeads = validation.data.customLeads;
@@ -70,7 +101,7 @@ export async function PUT(request, { params }) {
   }
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request: NextRequest, { params }: any) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {

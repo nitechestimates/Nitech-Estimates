@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { getServerSession } from "next-auth";
@@ -12,7 +12,7 @@ import { logger } from '@/lib/logger';
 
 export const maxDuration = 60;
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -52,7 +52,7 @@ export async function POST(req) {
         const logoBuffer = fs.readFileSync(logoPath);
         logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
       }
-    } catch (err) {
+    } catch (err: any) {
       logger.warn("Could not load ZP logo:", { error: err.message });
     }
 
@@ -68,9 +68,9 @@ export async function POST(req) {
       executedSubtotal,
       executedGrandTotal,
       tenderGrandTotal
-    } = calculateBilling(measurementItems, eRows, abstractCustomData, originalMeasurementItems, eData.labourInsurance);
+    } = calculateBilling(measurementItems, eRows, abstractCustomData, originalMeasurementItems, eData.labourInsurance) as any;
 
-    const formatMoney = (val) => (val || 0).toFixed(2);
+    const formatMoney = (val: number) => (val || 0).toFixed(2);
 
     const htmlContent = getBillingHtml({
       logoBase64,
@@ -99,7 +99,7 @@ export async function POST(req) {
       margin: { top: '10mm', bottom: '15mm', left: '10mm', right: '10mm' }
     });
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBuffer as any, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
@@ -107,7 +107,7 @@ export async function POST(req) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     if (error.status === 503) {
       return NextResponse.json({ error: error.message }, { status: 503 });
     }

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import clientPromise from '@/lib/mongodb';
@@ -42,8 +42,8 @@ export async function GET() {
     };
 
     profiles.forEach(p => {
-      if (result[p.category]) {
-        result[p.category].push({
+      if (result[p.category as keyof typeof result]) {
+        (result[p.category as keyof typeof result] as any[]).push({
           id: p.id,
           name: p.name,
           materials: p.materials || [],
@@ -58,7 +58,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {

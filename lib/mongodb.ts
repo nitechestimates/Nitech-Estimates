@@ -1,8 +1,10 @@
 import { MongoClient } from "mongodb";
 
-const globalWithMongo = global;
+declare const globalThis: { _mongoClientPromise?: Promise<MongoClient> | null };
 
-function getClientPromise() {
+const globalWithMongo = globalThis;
+
+function getClientPromise(): Promise<MongoClient> {
   if (globalWithMongo._mongoClientPromise) {
     return globalWithMongo._mongoClientPromise;
   }
@@ -44,10 +46,11 @@ function getClientPromise() {
 }
 
 // Export a thenable proxy so all existing `await clientPromise` calls work
-const clientPromise = {
-  then: (res, rej) => getClientPromise().then(res, rej),
-  catch: (rej) => getClientPromise().catch(rej),
-  finally: (fin) => getClientPromise().finally(fin),
+const clientPromise: PromiseLike<MongoClient> = {
+  then: <TResult1 = MongoClient, TResult2 = never>(
+    res?: ((value: MongoClient) => TResult1 | PromiseLike<TResult1>) | null,
+    rej?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
+  ): PromiseLike<TResult1 | TResult2> => getClientPromise().then(res, rej),
 };
 
 export default clientPromise;

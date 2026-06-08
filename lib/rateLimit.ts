@@ -1,4 +1,4 @@
-const rateLimitMap = new Map();
+const rateLimitMap: Map<string, any> = new Map();
 let lastCleanup = Date.now();
 
 // Cleanup expired entries to avoid memory leaks
@@ -12,7 +12,7 @@ function cleanup() {
   lastCleanup = now;
 }
 
-function rateLimitMemory(key, limit, windowMs) {
+function rateLimitMemory(key: string, limit: number, windowMs: number) {
   const now = Date.now();
 
   // Run cleanup every 5 minutes or if the map size is too large
@@ -54,7 +54,7 @@ function rateLimitMemory(key, limit, windowMs) {
  * @param {number} windowMs - Window duration in milliseconds (default 1 minute)
  * @returns {Promise<{ success: boolean, count: number, reset: number }>}
  */
-export async function rateLimit(key, limit = 60, windowMs = 60000) {
+export async function rateLimit(key: string, limit = 60, windowMs = 60000) {
   const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
@@ -107,7 +107,7 @@ export async function rateLimit(key, limit = 60, windowMs = 60000) {
         }
         return { success: true, count, reset: resetMs };
       }
-    } catch (err) {
+    } catch (err: any) {
       console.warn("Upstash Redis error, falling back to local memory:", err.message);
     }
   }

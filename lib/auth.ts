@@ -1,3 +1,4 @@
+import { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
 /**
@@ -8,12 +9,13 @@ import GoogleProvider from "next-auth/providers/google";
  * IMPORTANT: Do NOT export this from the route.js file directly —
  * Next.js App Router only allows HTTP method exports from route files.
  */
-export const authOptions = {
+export const authOptions: AuthOptions = {
+  // @ts-ignore - trustHost is used by some NextAuth versions
   trustHost: true,
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
           prompt: "select_account",
@@ -23,7 +25,7 @@ export const authOptions = {
       },
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET!,
   // Force cookie to work over HTTP (needed for Electron on localhost)
   cookies: {
     sessionToken: {
@@ -41,7 +43,7 @@ export const authOptions = {
       const allowedEmailsEnv = process.env.ALLOWED_EMAILS;
       if (allowedEmailsEnv) {
         const allowed = allowedEmailsEnv.split(",").map(e => e.trim().toLowerCase());
-        return allowed.includes(user?.email?.toLowerCase());
+        return allowed.includes(user?.email?.toLowerCase() || '');
       }
       return true;
     },

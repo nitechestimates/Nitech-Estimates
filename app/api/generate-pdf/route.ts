@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { getServerSession } from 'next-auth';
@@ -11,7 +11,7 @@ import { logger } from '@/lib/logger';
 
 export const maxDuration = 60;
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -53,14 +53,14 @@ export async function POST(req) {
         const logoBuffer = fs.readFileSync(logoPath);
         logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
       }
-    } catch (err) {
+    } catch (err: any) {
       logger.warn("Could not load ZP logo image:", { error: err.message });
     }
 
     const msMap = new Map((Array.isArray(measurementItems) ? measurementItems : []).map(item => [item.id, item]));
     const abstractCustomData = data.abstractCustomData || {};
 
-    const abstractRows = rows.map((raItem, idx) => {
+    const abstractRows = rows.map((raItem: any, idx: number) => {
       const msItem = msMap.get(raItem.id);
       const totalQty = msItem?.totalQty || 0;
       
@@ -88,10 +88,10 @@ export async function POST(req) {
       };
     });
 
-    const standardRows = abstractRows.filter(r => !r.isRoyalty);
-    const royaltyRows = abstractRows.filter(r => r.isRoyalty);
+    const standardRows = abstractRows.filter((r: any) => !r.isRoyalty);
+    const royaltyRows = abstractRows.filter((r: any) => r.isRoyalty);
 
-    const totalAmount = standardRows.reduce((sum, r) => sum + r.amount, 0);
+    const totalAmount = standardRows.reduce((sum: number, r: any) => sum + r.amount, 0);
 
     const GST_RATE = 18;
     let LABOUR_INSURANCE_RATE = 0.5;
@@ -105,9 +105,9 @@ export async function POST(req) {
     const totalLabourInsurance = (totalAmount * LABOUR_INSURANCE_RATE) / 100;
     const subTotalWithTax = totalAmount + totalGST + totalLabourInsurance;
 
-    const royaltySandRow = royaltyRows.find(r => r.id === "royalty-sand" || r.description.toLowerCase().includes("sand"));
-    const royaltyOthersRow = royaltyRows.find(r => r.id === "royalty-others" || r.description.toLowerCase().includes("others"));
-    const labChargesRow = royaltyRows.find(r => r.id === "lab-charges" || r.description.toLowerCase().includes("lab"));
+    const royaltySandRow = royaltyRows.find((r: any) => r.id === "royalty-sand" || r.description.toLowerCase().includes("sand"));
+    const royaltyOthersRow = royaltyRows.find((r: any) => r.id === "royalty-others" || r.description.toLowerCase().includes("others"));
+    const labChargesRow = royaltyRows.find((r: any) => r.id === "lab-charges" || r.description.toLowerCase().includes("lab"));
 
     const totalRoyaltySand = royaltySandRow ? royaltySandRow.amount : 0;
     const totalRoyaltyOthers = royaltyOthersRow ? royaltyOthersRow.amount : 0;
@@ -157,7 +157,7 @@ export async function POST(req) {
       margin: { top: '15mm', bottom: '20mm', left: '15mm', right: '15mm' }
     });
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBuffer as any, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
@@ -165,7 +165,7 @@ export async function POST(req) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     if (error.status === 503) {
       return NextResponse.json({ error: error.message }, { status: 503 });
     }

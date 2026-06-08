@@ -7,7 +7,7 @@ import path from "path";
 import { logger } from "@/lib/logger";
 
 // Cache the parsed JSON to avoid re-reading the file on every request
-let cachedLeads = null;
+let cachedLeads: any = null;
 
 export async function GET() {
   try {

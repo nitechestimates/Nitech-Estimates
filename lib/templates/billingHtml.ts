@@ -1,5 +1,28 @@
 import { escapeHtml } from "../escapeHtml";
 
+interface BillingData {
+  logoBase64?: string;
+  extra?: Record<string, any>;
+  nameOfWork?: string;
+  headDivision?: string;
+  subDivision?: string;
+  yojana?: string;
+  year?: string;
+  estAmount?: string | number;
+  adminApprovalNo?: string;
+  standardRows?: any[];
+  royaltyRows?: any[];
+  executedStandardTotal: number;
+  gstAmount: number;
+  insuranceRate: number;
+  insuranceAmount: number;
+  executedSubtotal: number;
+  executedGrandTotal: number;
+  tenderGrandTotal: number;
+  abstractRows?: any[];
+  formatMoney: (val: number) => string;
+}
+
 export function getBillingHtml({
   logoBase64,
   extra,
@@ -21,7 +44,7 @@ export function getBillingHtml({
   tenderGrandTotal,
   abstractRows,
   formatMoney
-}) {
+}: BillingData) {
   // Escape user-supplied strings to prevent HTML injection
   nameOfWork = escapeHtml(nameOfWork);
   headDivision = escapeHtml(headDivision);
@@ -30,7 +53,7 @@ export function getBillingHtml({
   year = escapeHtml(year);
   adminApprovalNo = escapeHtml(adminApprovalNo);
 
-  const cleanExtra = {};
+  const cleanExtra: Record<string, any> = {};
   for (const [key, value] of Object.entries(extra || {})) {
     cleanExtra[key] = typeof value === 'string' ? escapeHtml(value) : value;
   }
@@ -140,7 +163,7 @@ export function getBillingHtml({
           <tr><td><strong>Major Head:</strong></td><td>${yojana ? "PLAN WORKS" : "NON PLAN WORKS"}</td></tr>
           <tr><td><strong>Minor Head:</strong></td><td>ORIGINAL WORKS / Communications</td></tr>
           <tr><td><strong>Sub-Head:</strong></td><td>Roads & Bridges / Buildings</td></tr>
-          <tr><td><strong>Sanctioned Provision:</strong></td><td>Rs. ${formatMoney(parseFloat(estAmount))}</td></tr>
+          <tr><td><strong>Sanctioned Provision:</strong></td><td>Rs. ${formatMoney(parseFloat(String(estAmount)))}</td></tr>
           <tr><td><strong>Expenditure incurred:</strong></td><td>Rs. ${formatMoney(executedGrandTotal)}</td></tr>
         </table>
       </div>
@@ -249,7 +272,7 @@ export function getBillingHtml({
       </tr>
       <tr>
         <td colSpan="5" class="right">Limited to W.O.Amount:</td>
-        <td class="right bold">${formatMoney(parseFloat(estAmount))}</td>
+        <td class="right bold">${formatMoney(parseFloat(String(estAmount)))}</td>
         <td></td>
       </tr>
       <tr>
@@ -298,7 +321,7 @@ export function getBillingHtml({
     </p>
 
     <table style="width:100%; border:none; margin-top:35px; font-size:12px; font-weight:bold;">
-      <tr><td style="width:40%;">Estimated Amount Rs:</td><td>Rs. ${formatMoney(parseFloat(estAmount))}</td></tr>
+      <tr><td style="width:40%;">Estimated Amount Rs:</td><td>Rs. ${formatMoney(parseFloat(String(estAmount)))}</td></tr>
       <tr><td>Expenditure incurred Rs:</td><td>Rs. ${formatMoney(executedGrandTotal)}</td></tr>
     </table>
 

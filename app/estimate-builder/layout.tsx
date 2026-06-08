@@ -3,13 +3,13 @@
 import React, { useEffect } from "react";
 import { useStore } from "@/lib/store";
 
-export default function EstimateBuilderLayout({ children }) {
+export default function EstimateBuilderLayout({ children }: { children: React.ReactNode }) {
   const fetchLeadsProfiles = useStore((state) => state.fetchLeadsProfiles);
   const setEstimateMeta = useStore((state) => state.setEstimateMeta);
 
   useEffect(() => {
     // 1. Fetch Lead Profiles on mount
-    fetchLeadsProfiles();
+    (fetchLeadsProfiles as any)();
 
     // 2. Fetch last used estimate from MongoDB
     const fetchLastEstimate = async () => {
@@ -62,7 +62,7 @@ export default function EstimateBuilderLayout({ children }) {
             }
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to load last estimate from DB:", err);
       }
     };
@@ -72,11 +72,11 @@ export default function EstimateBuilderLayout({ children }) {
 
   // 3. Bind global keyboard shortcuts for Undo (Ctrl+Z) and Redo (Ctrl+Y)
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
         if (e.key === "z" || e.key === "Z") {
           // Check if the focused element is a standard input/textarea/editable
-          const activeEl = document.activeElement;
+          const activeEl = document.activeElement as HTMLElement | null;
           const isTextInput = activeEl && (
             activeEl.tagName === "INPUT" ||
             activeEl.tagName === "TEXTAREA" ||
@@ -85,10 +85,10 @@ export default function EstimateBuilderLayout({ children }) {
           
           if (!isTextInput) {
             e.preventDefault();
-            useStore.getState().undo();
+            (useStore.getState() as any).undo();
           }
         } else if (e.key === "y" || e.key === "Y") {
-          const activeEl = document.activeElement;
+          const activeEl = document.activeElement as HTMLElement | null;
           const isTextInput = activeEl && (
             activeEl.tagName === "INPUT" ||
             activeEl.tagName === "TEXTAREA" ||
@@ -97,7 +97,7 @@ export default function EstimateBuilderLayout({ children }) {
 
           if (!isTextInput) {
             e.preventDefault();
-            useStore.getState().redo();
+            (useStore.getState() as any).redo();
           }
         }
       }

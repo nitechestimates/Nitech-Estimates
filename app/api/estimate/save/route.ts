@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import clientPromise from "@/lib/mongodb";
 import { z } from "zod";
@@ -30,7 +30,7 @@ const estimateSchema = z.object({
   abstractCustomData: z.any().optional().default({}),
 });
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     // Auth check
     const session = await getServerSession(authOptions);
@@ -142,8 +142,8 @@ export async function POST(request) {
       success: true,
       id: result.insertedId,
     });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+  } catch (error: any) {
+    if (error && error.name === "ZodError") {
       return NextResponse.json(
         { error: "Invalid data", details: error.errors },
         { status: 400 }

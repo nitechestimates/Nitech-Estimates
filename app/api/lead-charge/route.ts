@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { rateLimit } from '@/lib/rateLimit';
@@ -10,12 +10,12 @@ import { handleError } from '@/lib/errorHandler';
 const querySchema = z.object({
   material: z.string().trim().min(1, 'Material parameter is required'),
   distance: z.preprocess(
-    (val) => (val === null || val === undefined ? NaN : parseFloat(val)),
+    (val: any) => (val === null || val === undefined ? NaN : parseFloat(val as string)),
     z.number().min(0, 'Distance must be a non-negative number')
   ),
 });
 
-export async function GET(request) {
+export async function GET(request: NextRequest) {
   try {
     // Auth check
     const session = await getServerSession(authOptions);
@@ -39,7 +39,7 @@ export async function GET(request) {
 
     if (!validation.success) {
       return NextResponse.json(
-        { error: validation.error.errors.map(e => e.message).join(', ') },
+        { error: (validation.error as any).errors.map((e: any) => e.message).join(', ') },
         { status: 400 }
       );
     }

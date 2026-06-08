@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { rateLimit } from "@/lib/rateLimit";
 import data from "@/app/lib/data.json";
 
-export async function GET(req) {
+export async function GET(req: NextRequest) {
   // Auth check
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {

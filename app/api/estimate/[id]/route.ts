@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth"; // ✅ Fixed path using absolute alias
 import { rateLimit } from "@/lib/rateLimit";
 import { logger } from "@/lib/logger";
 
-export async function GET(request, context) {
+export async function GET(request: NextRequest, context: any) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -65,7 +65,7 @@ export async function GET(request, context) {
   }
 }
 
-export async function DELETE(request, context) {
+export async function DELETE(request: NextRequest, context: any) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -112,7 +112,7 @@ export async function DELETE(request, context) {
   }
 }
 
-export async function PUT(request, context) {
+export async function PUT(request: NextRequest, context: any) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -136,7 +136,7 @@ export async function PUT(request, context) {
 
     // Only allow patching specific safe fields
     const allowedFields = ["leadSettings", "leadOrder", "estimateName", "nameOfWork", "measurementItems"];
-    const patch = {};
+    const patch: any = {};
     for (const key of allowedFields) {
       if (body[key] !== undefined) patch[key] = body[key];
     }

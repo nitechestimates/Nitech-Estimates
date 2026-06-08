@@ -4,7 +4,7 @@
  * @param {any} val - The value to escape
  * @returns {string} The escaped string
  */
-export function escapeHtml(val) {
+export function escapeHtml(val: any) {
   if (val === null || val === undefined) return "";
   const str = String(val);
   return str

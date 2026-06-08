@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import clientPromise from "@/lib/mongodb";
 import { authOptions } from "@/lib/auth";
@@ -13,7 +13,7 @@ const duplicateSchema = z.object({
   }),
 });
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -32,7 +32,7 @@ export async function POST(request) {
     const validation = duplicateSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: validation.error.errors.map(e => e.message).join(', ') },
+        { error: (validation.error as any).errors.map((e: any) => e.message).join(', ') },
         { status: 400 }
       );
     }
@@ -52,7 +52,7 @@ export async function POST(request) {
     }
 
     const duplicateEstimate = { ...originalEstimate };
-    delete duplicateEstimate._id;
+    delete (duplicateEstimate as any)._id;
     
     if (duplicateEstimate.estimateName) {
       duplicateEstimate.estimateName += " (Copy)";

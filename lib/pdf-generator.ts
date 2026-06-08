@@ -5,14 +5,19 @@ import path from "path";
 import os from "os";
 
 // Concurrency Queue Settings
-const queue = [];
+interface QueueTask {
+  fn: () => Promise<Buffer>;
+  resolve: (value: Buffer) => void;
+  reject: (reason?: any) => void;
+}
+const queue: QueueTask[] = [];
 let activeGenerations = 0;
 const MAX_CONCURRENT_GENERATIONS = 3;
 
 /**
  * Enqueue a generation task and process the queue.
  */
-function enqueue(fn) {
+function enqueue(fn: () => Promise<Buffer>): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     queue.push({ fn, resolve, reject });
     processQueue();
@@ -28,7 +33,12 @@ function processQueue() {
   }
 
   activeGenerations++;
-  const { fn, resolve, reject } = queue.shift();
+  const task = queue.shift();
+  if (!task) {
+    activeGenerations--;
+    return;
+  }
+  const { fn, resolve, reject } = task;
 
   fn()
     .then(resolve)
@@ -43,7 +53,7 @@ function processQueue() {
  * Generates a PDF buffer from an HTML template using Puppeteer.
  * Automatically throttles concurrency using an in-memory queue.
  */
-export async function generatePDF(htmlTemplate, pdfOptions = {}) {
+export async function generatePDF(htmlTemplate: string, pdfOptions: any = {}): Promise<Buffer> {
   return enqueue(async () => {
     let browser;
     try {
@@ -73,18 +83,20 @@ export async function generatePDF(htmlTemplate, pdfOptions = {}) {
         ? (process.env.LOCAL_CHROME_PATH || getLocalBrowserPath())
         : await chromium.executablePath();
 
-      browser = await puppeteer.launch({
-        args: isLocal ? [] : chromium.args,
-        defaultViewport: chromium.defaultViewport,
+      const launchOptions: any = {
+        args: isLocal ? [] : (chromium as any).args,
+        defaultViewport: (chromium as any).defaultViewport,
         executablePath,
-        headless: isLocal ? "new" : chromium.headless,
+        headless: isLocal ? "new" : (chromium as any).headless,
         ignoreHTTPSErrors: true,
-      });
+      };
+
+      browser = await puppeteer.launch(launchOptions);
 
       const page = await browser.newPage();
       await page.setContent(htmlTemplate, { waitUntil: 'networkidle0' });
 
-      const mergedOptions = {
+      const mergedOptions: any = {
         format: 'A4',
         printBackground: true,
         displayHeaderFooter: true,
@@ -94,7 +106,7 @@ export async function generatePDF(htmlTemplate, pdfOptions = {}) {
       };
 
       const pdfBuffer = await page.pdf(mergedOptions);
-      return pdfBuffer;
+      return pdfBuffer as unknown as Buffer;
     } finally {
       if (browser) {
         await browser.close().catch(() => {});
